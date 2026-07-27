@@ -1,0 +1,33 @@
+# Streamlit theme + server config for the Kannada/Tulu tutor.
+#
+# The chrome is turned off HERE rather than hidden with CSS. Streamlit renames its
+# internal data-testids between releases, so a stylesheet that hides the toolbar
+# is one upgrade away from a Deploy button reappearing over a child's flashcard.
+# The settings below are supported API and cannot regress that way.
+
+[theme]
+# The light theme is forced, not inherited. This app runs on classroom tablets and
+# projectors, and a child whose device is set to dark mode would otherwise get a
+# dark page wrapped around a flashcard designed for a light one.
+base = "light"
+primaryColor = "#5B5BD6"              # indigo: buttons, progress, accents
+backgroundColor = "#EEF1FA"           # the tint the glass floats on (app.py paints
+                                      # the aurora over it — keep them in sync)
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#171A2B"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# "minimal" removes the developer toolbar completely — no Deploy button, no
+# hamburger, no three-dot menu over the card. ("viewer", which this used before,
+# still leaves the three-dot menu in the corner.)
+toolbarMode = "minimal"
+showErrorDetails = false              # a stack trace is not for a seven-year-old
+
+[server]
+# A recording of a child saying one word is a few hundred KB. 5 MB is ample, and
+# caps what a malformed or hostile upload can park in memory.
+maxUploadSize = 5

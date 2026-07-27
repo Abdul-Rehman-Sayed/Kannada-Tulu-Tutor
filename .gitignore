@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+
+# Learner data — private (real children's names and scores). Never commit.
+data/tutor.db
+
+# Regenerable caches.
+# data/audio/ is gTTS output; `python validate_asr.py` rebuilds it, and keeping
+# it out of the repo also keeps Google-derived audio out of what you redistribute
+# (see LICENCES.md).
+data/audio/
+data/placeholders/
+data/asr_transcripts.json
+data/contact_sheet*.jpg
+
+# The speech model: ~250 MB, far past GitHub's file limit, and rebuildable with
+# `python convert_model.py`. The app falls back to downloading it from the
+# HuggingFace Hub when this directory is absent, so a fresh clone still runs.
+models/
+
+# Local secrets.
+.streamlit/secrets.toml
+
+# NOT ignored, deliberately:
+#   data/vocabulary.csv        the curriculum — the heart of the project
+#   data/images/               the pictures, and CREDITS.csv, which is the
+#                              attribution the CC licences require. Shipping the
+#                              images without CREDITS.csv would breach them.
