@@ -76,37 +76,75 @@ def start_model_warmup():
     return True
 
 
-def recogniser_status(sidebar=True):
+# The load is SETTLED once it can no longer change on its own: ready, or failed.
+_SETTLED = (pronunciation.READY, pronunciation.FAILED)
+
+
+def _status_caption():
     """
     Say what the speech recogniser is doing. Out loud, always.
 
     The first load takes ~8-10 seconds. The app used to show nothing at all
     during it — a child would tap the microphone and the page would simply sit
     there. The wait cannot be removed; the silence about it can.
+
+    Writes to whatever container it is called in, because the polling wrapper
+    below is a fragment and a fragment may not address st.sidebar itself — the
+    sidebar caller wraps it in `with st.sidebar`.
     """
-    target = st.sidebar if sidebar else st
     state = pronunciation.load_state()
 
     if state == pronunciation.READY:
         if pronunciation.is_kannada_model():
-            target.caption(":material/check_circle: Speech scoring ready")
+            st.caption(":material/check_circle: Speech scoring ready")
         else:
             # Stock whisper's Kannada is too weak to grade a child fairly — say
             # so rather than silently marking correct answers wrong.
-            target.warning(
+            st.warning(
                 "The Kannada speech model could not be loaded, so scoring is "
                 "unreliable. Listening still works.",
                 icon=":material/warning:",
             )
     elif state == pronunciation.FAILED:
-        target.error(
+        st.error(
             "The speech recogniser could not start, so nothing will be marked. "
             "Listening and reading still work.",
             icon=":material/error:",
         )
     else:
-        target.caption(":material/hourglass_top: Waking the speech recogniser "
-                       "(first time only, about 10 seconds)…")
+        st.caption(":material/hourglass_top: Waking the speech recogniser "
+                   "(first time only, about 4-5 minutes)…")
+
+
+def recogniser_status():
+    """
+    The status line — and, while the model is still coming up, the WAIT for it.
+
+    This deliberately blocks instead of polling. Two polling designs were tried
+    and both broke the page:
+
+      * a plain render is never repainted (Streamlit renders once and stops), so
+        the caption froze on "Waking…" while the recogniser was in fact live —
+        the page claiming minutes of delay over an 8-second load;
+      * an st.fragment(run_every=2) DID repaint, but it reruns while
+        st.audio_input holds a live MediaRecorder, remounting the recorder faster
+        than it tears down until the browser's main thread died ("Page
+        Unresponsive" mid-recording). It is also called from two places in one
+        script run (sidebar + student page), which collides.
+
+    get_model() simply joins the warm-up thread's in-flight load via _MODEL_LOCK,
+    so this waits exactly as long as the load has left to run — measured 6.6s from
+    a cold start, and ZERO once loaded, because get_model() returns the cached
+    instance without taking the lock. One spinner, once per server, then never
+    again. Nothing to get stuck on.
+    """
+    if pronunciation.load_state() not in _SETTLED:
+        with st.spinner("Waking the speech recogniser (first time only)…"):
+            try:
+                pronunciation.get_model()
+            except Exception:
+                pass  # load_state() is now FAILED; the caption below says so
+    _status_caption()
 
 
 # Scoring a recording. What the child is asked to say is `spoken_form`, NOT the
@@ -142,9 +180,11 @@ def score_recording(sid, concept, wav_bytes):
         st.session_state.last_result = {"error": str(e)}
         return
 
-    if not heard.strip():
-        # The recogniser produced nothing. A capture problem, not a wrong
-        # answer — no attempt is logged and the child stays on this card.
+    if not heard.strip() or pronunciation.is_silence_filler(heard):
+        # The recogniser produced nothing — either literally empty, or its
+        # no-speech filler ("ಮುಕ್ತಾಯ"), which is what a microphone that captured
+        # no voice comes back as. A capture problem, not a wrong answer — no
+        # attempt is logged and the child stays on this card.
         st.session_state.last_result = {"retry": pronunciation.NO_SPEECH, "stats": stats}
         return
 
@@ -165,8 +205,18 @@ def score_recording(sid, concept, wav_bytes):
     )
 
     if outcome == pronunciation.OUTCOME_RETRY:
+        # TOO_QUIET tells the child "the room was louder than your voice — move
+        # closer". That is a claim about LEVEL, so it may only be made when the
+        # clip was actually quiet. A close mic or a noise-cancelling headset (AGC
+        # + suppression) lifts the room tone toward the voice, so a plainly loud
+        # word measures snr 1.7-3.0 — under MIN_SNR — at an absolute peak of
+        # 0.8-0.95. Keying the message on snr alone therefore told children who
+        # were loud and clear to speak up: the "it says it can't hear me even
+        # though I'm shouting" bug. The retry itself is unchanged and still free;
+        # only what we claim about it is now checked against the level.
         reason = (pronunciation.TOO_QUIET
-                  if stats.get("snr", 99) < pronunciation.MIN_SNR
+                  if (stats.get("snr", 99) < pronunciation.MIN_SNR
+                      and stats.get("peak", 0.0) < pronunciation.LOUD_ENOUGH)
                   else pronunciation.NOT_RECOGNISED)
         st.session_state.last_result = {"retry": reason, "stats": stats}
         return
@@ -543,7 +593,8 @@ def app_sidebar(user, mastered=None, total=None, by_level=None):
             if t:
                 st.sidebar.caption(f"{lv} · {m}/{t}")
 
-    recogniser_status()
+    with st.sidebar:  # a fragment cannot address st.sidebar itself
+        recogniser_status()
     st.sidebar.write("")
     if st.sidebar.button("Log out", width="stretch", icon=":material/logout:"):
         logout()
@@ -606,7 +657,7 @@ def student_view(user):
 
     # Until the model is up, saying so beats a page that looks broken.
     if pronunciation.load_state() != pronunciation.READY:
-        recogniser_status(sidebar=False)
+        recogniser_status()
 
     rec_key = f"rec_{concept['concept_id']}"
     for stale in [k for k in list(st.session_state.keys())

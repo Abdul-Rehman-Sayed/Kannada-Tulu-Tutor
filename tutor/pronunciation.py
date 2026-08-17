@@ -380,6 +380,32 @@ MIN_CONFIDENT_LOGPROB = -0.45   # below this the recogniser was guessing
 MAX_NO_SPEECH_PROB = 0.6        # above this it heard no speech at all
 
 
+def gate_disabled():
+    """
+    True when TUTOR_MIC_GATE=off — the microphone gate is bypassed entirely.
+
+    The gate's thresholds are absolute levels, and absolute level is a fact about
+    MIC GAIN, not about whether a child spoke. On hardware that captures far below
+    the level this corpus was tuned on (measured in the field: a Bluetooth headset
+    delivering an absolute peak of 0.011, ~40 dB below a normal laptop mic, while
+    the speaker was shouting), a correctly-spoken word can fail BOTH tests — too
+    low for LOUD_ENOUGH, and with too little silence in the clip for the SNR test
+    to have a floor to measure against. The child is then told "the room was louder
+    than your voice" no matter how loudly they speak.
+
+    Rather than guess a new threshold per device, this switch removes the gate and
+    lets the recogniser — a far better speech detector than any level rule — decide.
+    Read from the environment on every call so it can be flipped without a code
+    edit. Default is ON: turning it off costs the protection the gate exists for
+    (Whisper answers silence with a confident "ಮುಕ್ತಾಯ"), which is why
+    is_silence_filler() catches that specific hallucination as a free retry.
+
+        set TUTOR_MIC_GATE=off        (Windows, cmd)
+        $env:TUTOR_MIC_GATE="off"     (PowerShell)
+    """
+    return os.environ.get("TUTOR_MIC_GATE", "").strip().lower() in ("off", "0", "false", "no")
+
+
 def _decode(audio_bytes):
     """
     Any browser container -> mono float32 @ 16 kHz.
@@ -473,7 +499,7 @@ def prepare_audio(audio_bytes):
     # rise above the room — level alone says nothing (see the note above).
     loud = stats["peak"] >= LOUD_ENOUGH
     audible = stats["snr"] >= MIN_SNR and stats["frames"] >= 1
-    if not (loud or audible):
+    if not (loud or audible) and not gate_disabled():
         return False, TOO_QUIET, stats, None
 
     # Trim to the spoken word, keeping a little air either side.
@@ -563,6 +589,30 @@ def is_low_confidence(confidence):
     return False
 
 
+# What this model says when it is handed no speech.
+#
+# Whisper does NOT return an empty string on silence — it emits a filler, and this
+# fine-tune's is ಮುಕ್ತಾಯ ("the end"). Measured: digital silence decodes to ಮುಕ್ತಾಯ at
+# avg_logprob -0.27, faint room tone likewise. That is a disaster for the two
+# guards above, because -0.27 reads as CONFIDENT (it clears MIN_CONFIDENT_LOGPROB
+# -0.45) and its no_speech_prob of 0.26 sits well under MAX_NO_SPEECH_PROB 0.6. So
+# neither catches it, and a child whose microphone captured nothing is told they
+# said the wrong word — confirmed from a real session: a 5.6s recording with only
+# 0.3s above the noise floor came back as ಮುಕ್ತಾಯ and scored 0.36, "wrong".
+#
+# None of the 167 concepts contains these forms (checked), so matching them costs
+# no real answer. A filler decode means we heard nothing: a free retry, never a mark.
+_SILENCE_FILLERS = ("ಮುಕ್ತಾಯ", "ಸಮಾಪ್ತಿ")
+
+
+def is_silence_filler(text):
+    """True when the recogniser returned its no-speech filler instead of a word."""
+    if not text:
+        return False
+    got = _normalize(text)
+    return bool(got) and got in {_normalize(t) for t in _SILENCE_FILLERS}
+
+
 def classify_attempt(correct, snr, confidence, prior_confident_misses):
     """
     Decide what a scored recording MEANS. Pure and side-effect-free so the whole
@@ -586,6 +636,15 @@ def classify_attempt(correct, snr, confidence, prior_confident_misses):
     """
     if correct:
         return OUTCOME_CORRECT
+    # Deliberately `snr` ALONE, not "snr or it was loud". The gate's LOUD_ENOUGH
+    # escape hatch lets a clip through on level, and loud ROOM NOISE clears it
+    # easily (measured: an empty noisy room peaks at 0.14 with no voice in it, and
+    # the recogniser answers it at avg_logprob -0.30, i.e. "confident"). This test
+    # is the net that catches exactly that. Adding a loudness get-out here was
+    # tried and reverted: it routed a no-voice clip to OUTCOME_WRONG — a logged
+    # wrong mark against a child who never spoke. See score_recording for the
+    # separate question of what to TELL the child, which is where the loud-clip
+    # bug actually lived.
     if snr < MIN_SNR:
         return OUTCOME_RETRY          # too quiet to have captured the word
     if is_low_confidence(confidence):
