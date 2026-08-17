@@ -206,13 +206,15 @@ def get_next_concept(student_id):
     return dict(G.nodes[candidates[0]])
 
 
-def update_mastery(student_id, concept_id, correct_bool, raw_score=None):
+def update_mastery(student_id, concept_id, correct_bool, raw_score=None, heard=None):
     """Record an attempt and return the updated mastery score.
 
     `raw_score` (optional, 0..1) is the pronunciation similarity for this
     attempt; it is logged in the session history for the teacher view.
+    `heard` (optional) is what the recogniser transcribed, logged so the teacher
+    can see the child's actual error rather than only its score.
     """
-    return db.update_mastery(student_id, concept_id, correct_bool, raw_score)
+    return db.update_mastery(student_id, concept_id, correct_bool, raw_score, heard)
 
 
 def get_student_progress(student_id):

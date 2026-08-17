@@ -42,11 +42,15 @@ from streamlit.testing.v1 import AppTest  # noqa: E402
 
 from tutor import auth  # noqa: E402
 
-# Field order on the account page: the Sign in tab renders first, then Create
-# account. Both tabs are in the element tree at once, so the indices are stable.
+# Learners and teachers have SEPARATE doors, opened by separate landing buttons.
+# Within a door the Sign in tab renders before Create account, and both are in the
+# element tree at once, so these indices are stable.
+#   landing buttons: 0 = Start learning, 1 = Teacher sign in
+#   door text_input: 0,1 = sign-in user/pass; 2,3,4 = name/user/pass; 5 = PIN
+#   door buttons   : 0 = Back, 1 = switch door, 2 = Sign in, 3 = Create account
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
-BTN_BACK, BTN_SIGNIN, BTN_CREATE = 0, 1, 2
+BTN_BACK, BTN_SWITCH, BTN_SIGNIN, BTN_CREATE = 0, 1, 2, 3
 
 FAILURES = []
 
@@ -58,27 +62,28 @@ def check(label, condition):
     return bool(condition)
 
 
-def _auth_page():
+def _auth_page(teacher=False):
+    """Landing -> the learner door, or the teacher door."""
     at = AppTest.from_file("app.py", default_timeout=60)
     at.run()
-    at.button[0].click().run()      # "Start learning" -> the account page
+    at.button[1 if teacher else 0].click().run()
     return at
 
 
 def _signup(name, user, pw, teacher=False, pin=""):
-    at = _auth_page()
+    at = _auth_page(teacher=teacher)
     at.text_input[NEW_NAME].set_value(name)
     at.text_input[NEW_USER].set_value(user)
     at.text_input[NEW_PASS].set_value(pw)
-    at.text_input[NEW_PIN].set_value(pin)
     if teacher:
-        at.checkbox[0].set_value(True)
+        # The PIN exists only on the teacher door — a learner is never shown it.
+        at.text_input[NEW_PIN].set_value(pin)
     at.button[BTN_CREATE].click().run()
     return at
 
 
-def _signin(user, pw):
-    at = _auth_page()
+def _signin(user, pw, teacher=False):
+    at = _auth_page(teacher=teacher)
     at.text_input[LOGIN_USER].set_value(user)
     at.text_input[LOGIN_PASS].set_value(pw)
     at.button[BTN_SIGNIN].click().run()
@@ -129,12 +134,21 @@ def run():
           "Mrs Rao" not in _text(student))
 
     print("\nSigning back in:")
-    check("a teacher signing in returns to the dashboard",
-          _shows_dashboard(_signin("mrs_rao_t", "chalkdust!")))
-    check("a student signing in does not",
+    # A returning teacher MUST have a sign-in of their own. Before the doors were
+    # split there was none: the only route to a teacher account was the Create
+    # account form, so this is the regression that split them.
+    check("a teacher signing in at the teacher door returns to the dashboard",
+          _shows_dashboard(_signin("mrs_rao_t", "chalkdust!", teacher=True)))
+    check("a student signing in at the learner door does not",
           not _shows_dashboard(_signin("ravi_t", "sunflower22")))
     check("a wrong password gets nothing",
-          not _shows_dashboard(_signin("mrs_rao_t", "not-the-password")))
+          not _shows_dashboard(_signin("mrs_rao_t", "not-the-password", teacher=True)))
+    # Using the wrong door is refused and explained, rather than silently landing
+    # someone in a view that does not match the account they typed.
+    check("a student cannot sign in at the teacher door",
+          not _shows_dashboard(_signin("ravi_t", "sunflower22", teacher=True)))
+    check("a teacher signing in at the learner door is refused, not downgraded",
+          not _shows_dashboard(_signin("mrs_rao_t", "chalkdust!")))
 
     print("\nTampering with the session — the real test:")
     # The old build kept a boolean in the session; anything that could set it

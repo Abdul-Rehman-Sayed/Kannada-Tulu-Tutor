@@ -20,6 +20,7 @@ of a microphone in someone else's font.
 Run:  streamlit run app.py
 """
 
+import datetime
 import hashlib
 import html
 import os
@@ -239,7 +240,7 @@ def score_recording(sid, concept, wav_bytes):
     else:
         misses.pop(cid, None)                  # cleared: they got it
 
-    graph_engine.update_mastery(sid, cid, correct, raw_score=score)
+    graph_engine.update_mastery(sid, cid, correct, raw_score=score, heard=heard)
     st.session_state.last_result = {
         "word": concept["kannada_word"],
         "expected": expected,
@@ -293,20 +294,25 @@ def landing():
         """
     )
 
+    # Two doors, named for who walks through them. There used to be one, and the
+    # only way to reach a teacher account was the CREATE ACCOUNT form — so a
+    # returning teacher had no visible way in, while every child was shown an
+    # "I am a teacher" checkbox and a PIN box that was never theirs to use.
     ui.spacer(18)
     c1, c2 = st.columns(2, gap="medium")
     with c1:
         if st.button("Start learning", type="primary", width="stretch",
                      icon=":material/arrow_forward:"):
-            st.session_state.view = "auth"
-            st.session_state.auth_tab = "signup"
-            st.rerun()
+            _goto_auth(auth.STUDENT, "signup")
     with c2:
-        if st.button("I already have an account", width="stretch",
-                     icon=":material/login:"):
-            st.session_state.view = "auth"
-            st.session_state.auth_tab = "login"
-            st.rerun()
+        if st.button("Teacher sign in", width="stretch",
+                     icon=":material/shield_person:"):
+            _goto_auth(auth.TEACHER, "login")
+
+    ui.spacer(8)
+    if st.button("I already have an account", width="stretch",
+                 icon=":material/login:"):
+        _goto_auth(auth.STUDENT, "login")
 
     ui.spacer(26)
     cols = st.columns(3, gap="medium")
@@ -345,23 +351,97 @@ def _finish_login(user):
     st.rerun()
 
 
+def _goto_auth(role, tab):
+    """Open one of the two sign-in doors."""
+    st.session_state.view = "auth"
+    st.session_state.auth_role = role
+    st.session_state.auth_tab = tab
+    st.rerun()
+
+
+def _login_as(username, password, expected_role):
+    """
+    Sign in through a specific door, and refuse an account of the other kind.
+
+    The refusal is a NAVIGATION aid, not the security boundary — the dashboard is
+    still gated on the role stored in the database and re-read every rerun (see
+    main()), so nothing here can promote anyone. Its job is to stop a learner
+    typing their details into the teacher door and getting an unexplained refusal
+    from register(), which is exactly the confusion the single mixed form caused.
+    """
+    user = auth.login(username, password)
+    if user["role"] != expected_role:
+        actual = "teacher" if user["role"] == auth.TEACHER else "learner"
+        raise auth.AuthError(
+            f"That is a {actual} account. Go back and use the "
+            f"{actual} entrance to sign in."
+        )
+    _finish_login(user)
+
+
 def auth_page():
+    """Route to the learner or the teacher door; ask which if we do not know."""
     _hide_sidebar()
     ui.narrow(560)
+    role = st.session_state.get("auth_role")
+    if role == auth.TEACHER:
+        _teacher_auth()
+    elif role == auth.STUDENT:
+        _student_auth()
+    else:
+        _auth_chooser()
 
+
+def _auth_chooser():
     ui.card(
         """
         <div class="hero" style="padding:34px 30px 26px">
           <h1 style="font-size:clamp(26px,4vw,38px)">Kannada &amp; Tulu Tutor</h1>
-          <p class="lede">Sign in to pick up where you left off.</p>
+          <p class="lede">Who is signing in?</p>
+        </div>
+        """
+    )
+    ui.spacer(16)
+    c1, c2 = st.columns(2, gap="medium")
+    with c1:
+        if st.button("I am a learner", type="primary", width="stretch",
+                     icon=":material/school:"):
+            _goto_auth(auth.STUDENT, "login")
+    with c2:
+        if st.button("I am a teacher", width="stretch",
+                     icon=":material/shield_person:"):
+            _goto_auth(auth.TEACHER, "login")
+    ui.spacer(8)
+    if st.button("Back", icon=":material/arrow_back:"):
+        st.session_state.view = "landing"
+        st.rerun()
+
+
+def _auth_header(title, lede):
+    ui.card(
+        f"""
+        <div class="hero" style="padding:34px 30px 26px">
+          <h1 style="font-size:clamp(26px,4vw,38px)">{title}</h1>
+          <p class="lede">{lede}</p>
         </div>
         """
     )
     ui.spacer(16)
 
-    if st.button("Back", icon=":material/arrow_back:"):
-        st.session_state.view = "landing"
-        st.rerun()
+
+def _student_auth():
+    """The learner door. No teacher controls appear here at all."""
+    _auth_header("Learner sign in", "Sign in to pick up where you left off.")
+
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("Back", width="stretch", icon=":material/arrow_back:"):
+            st.session_state.view = "landing"
+            st.rerun()
+    with b2:
+        if st.button("I am a teacher", width="stretch",
+                     icon=":material/shield_person:"):
+            _goto_auth(auth.TEACHER, "login")
 
     tab_in, tab_up = st.tabs(["Sign in", "Create an account"])
 
@@ -373,7 +453,7 @@ def auth_page():
                                        icon=":material/login:")
         if go:
             try:
-                _finish_login(auth.login(u, p))
+                _login_as(u, p, auth.STUDENT)
             except auth.AuthError as e:
                 st.error(str(e), icon=":material/lock:")
 
@@ -383,28 +463,77 @@ def auth_page():
             u2 = st.text_input("Username", placeholder="letters and numbers")
             p2 = st.text_input("Password", type="password",
                                help=f"At least {auth.MIN_PASSWORD} characters.")
-            is_teacher = st.checkbox("I am a teacher")
-            pin = st.text_input(
-                "Teacher PIN", type="password",
-                help="A teacher account can see every child's name and score, so "
-                     "creating one needs the PIN set by whoever deployed this.",
-            )
             make = st.form_submit_button("Create account", type="primary",
                                          width="stretch",
                                          icon=":material/person_add:")
         if make:
             try:
-                user = auth.register(
-                    u2, p2, display_name=name or u2,
-                    role=auth.TEACHER if is_teacher else auth.STUDENT,
-                    teacher_pin=pin,
-                )
-                _finish_login(user)
+                _finish_login(auth.register(
+                    u2, p2, display_name=name or u2, role=auth.STUDENT))
             except auth.AuthError as e:
                 st.error(str(e), icon=":material/error:")
 
+
+def _teacher_auth():
+    """The teacher door. The PIN is a REGISTRATION secret and only appears here."""
+    _auth_header("Teacher sign in",
+                 "Sign in to see your class, or create a teacher account.")
+
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("Back", width="stretch", icon=":material/arrow_back:"):
+            st.session_state.view = "landing"
+            st.rerun()
+    with b2:
+        if st.button("I am a learner", width="stretch", icon=":material/school:"):
+            _goto_auth(auth.STUDENT, "login")
+
+    tab_in, tab_up = st.tabs(["Sign in", "Create a teacher account"])
+
+    with tab_in:
+        with st.form("t_login_form"):
+            u = st.text_input("Username", key="tli_u")
+            p = st.text_input("Password", type="password", key="tli_p")
+            go = st.form_submit_button("Sign in", type="primary", width="stretch",
+                                       icon=":material/login:")
+        if go:
+            try:
+                _login_as(u, p, auth.TEACHER)
+            except auth.AuthError as e:
+                st.error(str(e), icon=":material/lock:")
+        st.caption("Signing in needs only your username and password. The teacher "
+                   "PIN is required once, when the account is first created.")
+
+    with tab_up:
+        with st.form("t_signup_form"):
+            name = st.text_input("Your name", placeholder="Shown on the dashboard")
+            u2 = st.text_input("Username", placeholder="letters and numbers")
+            p2 = st.text_input("Password", type="password",
+                               help=f"At least {auth.MIN_PASSWORD} characters.")
+            pin = st.text_input(
+                "Teacher PIN", type="password",
+                help="A teacher account can see every child's name and score, so "
+                     "creating one needs the PIN set by whoever deployed this.",
+            )
+            make = st.form_submit_button("Create teacher account", type="primary",
+                                         width="stretch",
+                                         icon=":material/person_add:")
+        if make:
+            try:
+                _finish_login(auth.register(
+                    u2, p2, display_name=name or u2,
+                    role=auth.TEACHER, teacher_pin=pin))
+            except auth.AuthError as e:
+                st.error(str(e), icon=":material/error:")
+
+        if not auth.teacher_exists():
+            st.info("No teacher account exists yet. The first one is created with "
+                    "the PIN set by whoever deployed this app.",
+                    icon=":material/info:")
+
         # A shipped default PIN on a public URL is the same as no PIN at all. Say
-        # so where the person who can fix it will actually see it.
+        # so where the person who can fix it will actually see it — and now that
+        # is the teacher door, not a page every child passes through.
         if config.IS_DEFAULT_PIN:
             st.warning(
                 "This deployment is still using the default teacher PIN. Set "
@@ -563,6 +692,10 @@ def _clear_learning_state():
 
 def logout():
     _clear_learning_state()
+    # Drop the chosen door too, so the next person at this browser is asked who
+    # they are instead of landing in the previous user's entrance.
+    st.session_state.pop("auth_role", None)
+    st.session_state.pop("auth_tab", None)
     st.session_state.view = "landing"
     st.rerun()
 
@@ -731,11 +864,32 @@ def _draw_concept_graph(mastery_map):
     return fig
 
 
+def _days_since(iso_ts):
+    """Whole days between an ISO timestamp and now, or None if never."""
+    if not iso_ts:
+        return None
+    try:
+        return max(0, (datetime.datetime.now() - datetime.datetime.fromisoformat(iso_ts)).days)
+    except ValueError:
+        return None
+
+
 def _class_overview(students):
     concept_total = graph_engine.load_graph().number_of_nodes()
+    activity = {a["student_id"]: a for a in db.get_student_activity()}
+
     rows, sum_mastered, sum_total = [], 0, 0
     for s in students:
-        mastered, total = graph_engine.mastery_summary(s["id"])
+        progress = graph_engine.get_student_progress(s["id"])
+        mastered = sum(1 for p in progress if p["mastered"])
+        total = len(progress)
+        # The two counts that decide whether this child needs a human today.
+        # Previously these lived only inside Student detail, so answering "who
+        # needs me?" meant opening every child in the class one at a time.
+        needs = sum(1 for p in progress if p["attempts"] >= 2 and not p["mastered"])
+        parked = sum(1 for p in progress if p["parked"])
+        act = activity.get(s["id"], {})
+        idle = _days_since(act.get("last_active"))
         sum_mastered += mastered
         sum_total += total
         rows.append({
@@ -744,27 +898,161 @@ def _class_overview(students):
             "Concepts": total,
             # 0..100 so ProgressColumn's "%.0f%%" label reads as a percentage.
             "Progress": (mastered / total * 100) if total else 0.0,
+            "Needs help": needs,
+            "Moved on": parked,
+            "Attempts": act.get("attempts", 0),
+            "Idle (days)": idle,
+            "Last active": (act.get("last_active") or "never").replace("T", " "),
         })
-    total_attempts = len(db.get_attempts())
-    avg_pct = int(round(sum_mastered / sum_total * 100)) if sum_total else 0
 
-    m1, m2, m3, m4 = st.columns(4)
+    all_attempts = db.get_attempts()
+    total_attempts = len(all_attempts)
+    avg_pct = int(round(sum_mastered / sum_total * 100)) if sum_total else 0
+    # "Inactive" is a roster question, not a scoring one: a child who has not
+    # practised in a week is invisible in every mastery number on this page.
+    inactive = sum(1 for r in rows if r["Idle (days)"] is None or r["Idle (days)"] >= 7)
+
+    m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("Students", len(students))
     m2.metric("Concepts", concept_total)
     m3.metric("Attempts", total_attempts)
     m4.metric("Avg mastery", f"{avg_pct}%")
+    m5.metric("Inactive 7d+", inactive)
 
     ui.spacer()
     st.subheader("All students")
+    st.caption(
+        "‘Needs help’ — tried twice or more and still not mastered. ‘Moved on’ — "
+        f"tried {graph_engine.PARK_AFTER_ATTEMPTS}+ times without success, so the "
+        "tutor advanced the child rather than leaving them stuck."
+    )
     st.dataframe(
-        pd.DataFrame(rows),
+        pd.DataFrame(rows).sort_values(
+            ["Moved on", "Needs help"], ascending=False, kind="stable"),
         hide_index=True,
         width="stretch",
         column_config={
             "Progress": st.column_config.ProgressColumn(
                 "Progress", min_value=0, max_value=100, format="%.0f%%"
-            )
+            ),
+            "Idle (days)": st.column_config.NumberColumn("Idle (days)", format="%d"),
         },
+    )
+
+    _hardest_concepts()
+    _class_trend(all_attempts)
+    _class_export(rows)
+
+
+def _hardest_concepts():
+    """
+    Which concepts the CLASS finds hard — the one question a per-student view
+    cannot answer. A word one child misses is a child to sit with; a word most of
+    the class misses is a lesson to reteach, or a word the recogniser handles
+    badly. Only an aggregate separates those.
+    """
+    stats = db.get_concept_stats()
+    if not stats:
+        return
+
+    rows = []
+    for s in stats:
+        info = graph_engine.concept_info(s["concept_id"])
+        if not info:  # a concept dropped from the CSV; skip the stale history
+            continue
+        tries = s["tries"] or 0
+        rows.append({
+            "Concept": s["concept_id"],
+            "Kannada": info["kannada_word"],
+            "Roman": info["transliteration"],
+            "Meaning": info["english_meaning"],
+            "Category": info["category"],
+            "Students": s["students"],
+            "Tries": tries,
+            "Correct %": (s["correct"] or 0) / tries * 100 if tries else 0.0,
+            "Avg match": round(s["mean_score"] or 0.0, 3),
+        })
+    if not rows:
+        return
+
+    ui.spacer()
+    st.subheader("Hardest concepts (whole class)")
+    st.caption(
+        "Lowest success rate first, counting only concepts at least one child has "
+        "attempted. A low rate across several students points at the lesson or the "
+        "recogniser — not at one child."
+    )
+    df = pd.DataFrame(rows).sort_values(["Correct %", "Tries"], ascending=[True, False])
+    only_multi = st.checkbox(
+        "Only concepts tried by 2+ students", value=False,
+        help="Filters out words a single child happened to hit, so what is left "
+             "is a class-wide pattern.",
+    )
+    if only_multi:
+        df = df[df["Students"] >= 2]
+    st.dataframe(
+        df, hide_index=True, width="stretch",
+        column_config={
+            "Correct %": st.column_config.ProgressColumn(
+                "Correct %", min_value=0, max_value=100, format="%.0f%%"),
+            "Avg match": st.column_config.NumberColumn("Avg match", format="%.2f"),
+        },
+    )
+
+
+def _class_trend(all_attempts):
+    """
+    Activity and accuracy over time. Every attempt is timestamped, but the
+    dashboard showed only snapshots — so a class getting steadily better and one
+    that stalled a fortnight ago looked identical.
+    """
+    if not all_attempts:
+        return
+    df = pd.DataFrame(all_attempts)
+    df["day"] = pd.to_datetime(df["timestamp"], errors="coerce").dt.date
+    df = df.dropna(subset=["day"])
+    if df.empty:
+        return
+
+    daily = df.groupby("day").agg(
+        Attempts=("id", "count"), Correct=("correct", "sum")).reset_index()
+    daily["Accuracy %"] = daily["Correct"] / daily["Attempts"] * 100
+    # Concepts mastered is cumulative and per (student, concept): the first time a
+    # pair is answered correctly is the moment it was learned.
+    first = (df[df["correct"] == 1]
+             .sort_values("timestamp")
+             .drop_duplicates(subset=["student_id", "concept_id"]))
+    if not first.empty:
+        learned = first.groupby("day").size().reset_index(name="Learned")
+        daily = daily.merge(learned, on="day", how="left")
+        daily["Learned"] = daily["Learned"].fillna(0).cumsum()
+    daily = daily.set_index("day")
+
+    ui.spacer()
+    st.subheader("Class activity over time")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.caption("Attempts per day")
+        st.bar_chart(daily[["Attempts"]])
+    with c2:
+        st.caption("Accuracy per day (%)")
+        st.line_chart(daily[["Accuracy %"]])
+    if "Learned" in daily:
+        st.caption("Concepts learned, running total across the class")
+        st.area_chart(daily[["Learned"]])
+
+
+def _class_export(rows):
+    """One CSV for the whole class — export was per-student only, so a teacher
+    keeping records had to download each child separately."""
+    ui.spacer()
+    st.download_button(
+        "Export the whole class (CSV)",
+        data=pd.DataFrame(rows).to_csv(index=False).encode("utf-8-sig"),
+        file_name="class_progress.csv",
+        mime="text/csv",
+        width="stretch",
+        icon=":material/download:",
     )
 
 
@@ -779,10 +1067,57 @@ def _student_detail(students):
     struggling = [p for p in progress if p["attempts"] >= 2 and not p["mastered"]]
     parked = [p for p in progress if p["parked"]]
 
-    d1, d2, d3 = st.columns(3)
+    # Improvement trend: mean match over the first few attempts vs the most
+    # recent. Mastery is a smoothed average and hides direction — a child who has
+    # climbed from 0.3 to 0.8 and one sliding from 0.8 to 0.3 can show the same
+    # score. `attempts` is newest-first, so the tail is the earliest work.
+    log = db.get_attempts(sid)
+    trend_delta, trend_note = None, None
+    if len(log) >= 4:
+        window = max(3, min(5, len(log) // 2))
+        recent = sum(a["score"] for a in log[:window]) / window
+        earliest = sum(a["score"] for a in log[-window:]) / window
+        trend_delta = recent - earliest
+        trend_note = f"last {window} vs first {window}"
+
+    d1, d2, d3, d4 = st.columns(4)
     d1.metric("Mastered", f"{mastered} / {len(progress)}")
     d2.metric("Attempted", attempted)
     d3.metric("Struggling", len(struggling))
+    if trend_delta is None:
+        d4.metric("Improving", "—", help="Needs at least 4 attempts to judge.")
+    else:
+        d4.metric("Improving", f"{trend_delta:+.2f}", delta=f"{trend_delta:+.2f}",
+                  help=f"Change in average pronunciation match ({trend_note}). "
+                       "Positive means they are getting closer to the target.")
+
+    # Per-tier and per-category mastery: a flat "42 of 167" says nothing about
+    # WHERE a child is stuck. Vowels 12/14 next to consonants 3/34 does.
+    ui.spacer()
+    st.subheader("Where they are strong and weak")
+    by_level, by_cat = {}, {}
+    for p in progress:
+        for bucket, key in ((by_level, p.get("level") or "Basic"), (by_cat, p["category"])):
+            m, t = bucket.get(key, (0, 0))
+            bucket[key] = (m + (1 if p["mastered"] else 0), t + 1)
+
+    lv_order = [lv for lv in graph_engine.LEVELS if lv in by_level]
+    lv_order += [lv for lv in by_level if lv not in lv_order]
+    cols = st.columns(max(1, len(lv_order)))
+    for col, lv in zip(cols, lv_order):
+        m, t = by_level[lv]
+        col.metric(lv, f"{m} / {t}", f"{(m / t * 100) if t else 0:.0f}%")
+
+    st.dataframe(
+        pd.DataFrame([
+            {"Category": c, "Mastered": m, "Concepts": t,
+             "Progress": (m / t * 100) if t else 0.0}
+            for c, (m, t) in sorted(by_cat.items(), key=lambda kv: kv[1][0] / max(kv[1][1], 1))
+        ]),
+        hide_index=True, width="stretch",
+        column_config={"Progress": st.column_config.ProgressColumn(
+            "Progress", min_value=0, max_value=100, format="%.0f%%")},
+    )
 
     # The single most useful thing a teacher can see: who is stuck on what.
     if struggling:
@@ -854,17 +1189,50 @@ def _student_detail(students):
     st.pyplot(fig)
     _pyplot().close(fig)
 
+    # What the child actually said, when it was wrong. A score tells a teacher
+    # THAT a word was missed; the transcription tells them HOW — and a form that
+    # recurs for the same concept is a real, repeatable mispronunciation worth a
+    # minute of teaching, not a one-off slip.
+    mishears = db.get_mishearings(sid)
+    if mishears:
+        ui.spacer()
+        st.subheader("What they actually said")
+        st.caption(
+            "Non-matching attempts, most repeated first. The same wrong form coming "
+            "back for one concept is the thing to correct directly."
+        )
+        rows = []
+        for m in mishears:
+            info = graph_engine.concept_info(m["concept_id"])
+            if not info:
+                continue
+            expected, _alts = pronunciation.accepted_forms(info)
+            rows.append({
+                "Concept": m["concept_id"],
+                "Asked for": expected,
+                "Child said": m["heard"],
+                "Times": m["times"],
+                "Avg match": round(m["mean_score"] or 0.0, 3),
+            })
+        if rows:
+            st.dataframe(
+                pd.DataFrame(rows), hide_index=True, width="stretch",
+                column_config={"Avg match": st.column_config.NumberColumn(
+                    "Avg match", format="%.2f")},
+            )
+
     ui.spacer()
     st.subheader("Session history")
-    attempts_log = db.get_attempts(sid)
-    if attempts_log:
-        hist = pd.DataFrame(attempts_log)[["timestamp", "concept_id", "score", "correct"]]
+    if log:
+        hist = pd.DataFrame(log)[["timestamp", "concept_id", "heard", "score", "correct"]]
         hist["correct"] = hist["correct"].map({1: "Correct", 0: "Wrong"})
+        hist["heard"] = hist["heard"].fillna("—")   # rows predating the column
         st.dataframe(
             hist, hide_index=True, width="stretch",
             column_config={
                 "timestamp": "When",
                 "concept_id": "Concept",
+                "heard": "Heard",
                 "score": st.column_config.NumberColumn("Match", format="%.2f"),
                 "correct": "Result",
             },

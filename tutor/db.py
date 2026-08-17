@@ -76,9 +76,18 @@ def init_db():
                 score       REAL NOT NULL,
                 correct     INTEGER NOT NULL,
                 timestamp   TEXT NOT NULL,
+                heard       TEXT,
                 FOREIGN KEY (student_id) REFERENCES students(id)
             )"""
         )
+        # Migration: databases created before `heard` existed. The recogniser's
+        # output used to be shown to the child and then thrown away, so a teacher
+        # could see THAT a word was missed but never HOW — "expected ಅಮ್ಮ, said
+        # ಪಮ್ಮ five times" is a teachable fact; "score 0.36" is not. ALTER TABLE
+        # rather than a rebuild so an existing class's history survives.
+        have = {r["name"] for r in conn.execute("PRAGMA table_info(attempts)")}
+        if "heard" not in have:
+            conn.execute("ALTER TABLE attempts ADD COLUMN heard TEXT")
     global _initialized
     _initialized = True
 
@@ -131,7 +140,7 @@ def get_mastery_map(student_id):
         return {r["concept_id"]: r["mastery_score"] for r in rows}
 
 
-def update_mastery(student_id, concept_id, correct_bool, raw_score=None):
+def update_mastery(student_id, concept_id, correct_bool, raw_score=None, heard=None):
     """
     Update the student's mastery of a concept given a correct/incorrect attempt.
     Returns the new mastery score. Also appends a row to the session history.
@@ -140,6 +149,10 @@ def update_mastery(student_id, concept_id, correct_bool, raw_score=None):
     when given it is what gets logged in the history table, so teachers see how
     close each attempt was — not the smoothed mastery average. Falls back to
     1/0 for callers that only know correct/incorrect.
+
+    `heard` is what the recogniser actually transcribed. Stored so the teacher
+    view can show a child's real error ("said ಪಮ್ಮ for ಅಮ್ಮ") instead of only a
+    score. Optional, so callers that do not run the recogniser still work.
     """
     _ensure_init()
     target = 1.0 if correct_bool else 0.0
@@ -168,9 +181,9 @@ def update_mastery(student_id, concept_id, correct_bool, raw_score=None):
                 (student_id, concept_id, new_score, attempts, now),
             )
         conn.execute(
-            "INSERT INTO attempts (student_id, concept_id, score, correct, timestamp) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (student_id, concept_id, logged, correct, now),
+            "INSERT INTO attempts (student_id, concept_id, score, correct, timestamp, heard) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (student_id, concept_id, logged, correct, now, (heard or "").strip() or None),
         )
     return new_score
 
@@ -203,6 +216,75 @@ def get_attempts(student_id=None):
                 "WHERE a.student_id=? ORDER BY a.timestamp DESC, a.id DESC",
                 (student_id,),
             ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_concept_stats():
+    """
+    Per-concept difficulty ACROSS THE CLASS: tries, how many students touched it,
+    how many attempts were correct, and the mean pronunciation match.
+
+    This is the question the per-student views cannot answer. A concept one child
+    fails is a child who needs help; a concept the whole class fails is a lesson
+    that needs reteaching — or a word the recogniser handles badly. Only an
+    aggregate over students can tell those apart.
+    """
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT concept_id, COUNT(*) AS tries, "
+            "       COUNT(DISTINCT student_id) AS students, "
+            "       SUM(correct) AS correct, AVG(score) AS mean_score "
+            "FROM attempts GROUP BY concept_id"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_student_activity():
+    """
+    Per student: attempts, correct count, and when they were last active.
+
+    LEFT JOIN so a student who has never recorded anything still appears — those
+    are precisely the ones a teacher is looking for, and an INNER JOIN would hide
+    them completely.
+    """
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT s.id AS student_id, s.name AS name, "
+            "       COUNT(a.id) AS attempts, "
+            "       COALESCE(SUM(a.correct), 0) AS correct, "
+            "       MAX(a.timestamp) AS last_active "
+            "FROM students s LEFT JOIN attempts a ON a.student_id = s.id "
+            "GROUP BY s.id, s.name ORDER BY s.name"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_mishearings(student_id=None, only_wrong=True):
+    """
+    What the recogniser actually heard, grouped by (concept, heard) with a count.
+
+    `only_wrong` keeps just the attempts that did not match, which is where the
+    teaching signal is: a form that keeps coming back for the same concept is a
+    real, repeatable mispronunciation rather than a one-off slip. Rows recorded
+    before the `heard` column existed are skipped rather than shown as blanks.
+    """
+    _ensure_init()
+    where = ["heard IS NOT NULL", "TRIM(heard) <> ''"]
+    params = []
+    if only_wrong:
+        where.append("correct = 0")
+    if student_id is not None:
+        where.append("student_id = ?")
+        params.append(student_id)
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT concept_id, heard, COUNT(*) AS times, AVG(score) AS mean_score "
+            f"FROM attempts WHERE {' AND '.join(where)} "
+            "GROUP BY concept_id, heard ORDER BY times DESC, concept_id",
+            params,
+        ).fetchall()
         return [dict(r) for r in rows]
 
 

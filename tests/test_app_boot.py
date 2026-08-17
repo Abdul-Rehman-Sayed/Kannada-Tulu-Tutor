@@ -32,10 +32,15 @@ os.environ["TUTOR_TEACHER_PIN"] = "boot-test-pin"
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-# Field order on the sign-in page: the Sign in tab renders first, then Create
-# account. Both tabs exist in the DOM at once, so the indices are stable.
+# Learners and teachers now have SEPARATE doors, reached from separate landing
+# buttons. Within a door the Sign in tab renders before Create account, and both
+# exist in the DOM at once, so these indices are stable.
+#   landing buttons: 0 = Start learning, 1 = Teacher sign in, 2 = I already have…
+#   door text_input: 0,1 = sign-in user/pass; 2,3,4 = name/user/pass; 5 = PIN
+#   door buttons   : 0 = Back, 1 = switch door, 2 = Sign in, 3 = Create account
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
+BTN_SIGN_IN, BTN_CREATE = 2, 3
 
 
 def _fresh():
@@ -44,9 +49,9 @@ def _fresh():
     return at
 
 
-def _goto_signup(at):
-    """Landing -> 'Start learning' -> the account page."""
-    at.button[0].click().run()
+def _goto_signup(at, teacher=False):
+    """Landing -> the learner or the teacher door."""
+    at.button[1 if teacher else 0].click().run()
     return at
 
 
@@ -54,11 +59,18 @@ def _signup(at, name, user, pw, teacher=False, pin=""):
     at.text_input[NEW_NAME].set_value(name)
     at.text_input[NEW_USER].set_value(user)
     at.text_input[NEW_PASS].set_value(pw)
-    at.text_input[NEW_PIN].set_value(pin)
     if teacher:
-        at.checkbox[0].set_value(True)
-    # buttons: 0=Back, 1=Sign in, 2=Create account
-    at.button[2].click().run()
+        # The PIN field exists ONLY on the teacher door — that is the separation.
+        at.text_input[NEW_PIN].set_value(pin)
+    at.button[BTN_CREATE].click().run()
+    return at
+
+
+def _login(at, user, pw, teacher=False):
+    """Sign in through one of the two doors."""
+    at.text_input[LOGIN_USER].set_value(user)
+    at.text_input[LOGIN_PASS].set_value(pw)
+    at.button[BTN_SIGN_IN].click().run()
     return at
 
 
@@ -69,15 +81,33 @@ def landing_tests():
     blob = " ".join(m.value for m in at.markdown)
     assert "hero" in blob, "landing hero did not render"
     labels = [b.label for b in at.button]
-    assert "Start learning" in labels and "I already have an account" in labels, labels
+    for want in ("Start learning", "Teacher sign in", "I already have an account"):
+        assert want in labels, f"missing landing entry point {want!r}: {labels}"
     print(f"  OK  renders with real entry points: {labels}")
 
     # Nothing on the landing page may be a decorative fake: every call to action
     # has to be a Streamlit button that actually routes somewhere.
     at = _goto_signup(_fresh())
     assert not at.exception, at.exception
-    assert any(t.label == "Teacher PIN" for t in at.text_input), "sign-up form missing"
+    assert any(t.label == "Your name" for t in at.text_input), "learner form missing"
     print("  OK  'Start learning' routes to a real account form")
+
+    # SEPARATION: the teacher PIN is a registration secret and must not be shown
+    # on the learner door — a child has no use for it, and putting it there was
+    # what made the teacher's only way in the CREATE ACCOUNT form.
+    assert not any(t.label == "Teacher PIN" for t in at.text_input), \
+        "the teacher PIN is being shown on the learner door"
+    assert not any("teacher" in (c.label or "").lower() for c in at.checkbox), \
+        "an 'I am a teacher' control is still on the learner door"
+    print("  OK  learner door shows no teacher PIN and no teacher checkbox")
+
+    at = _goto_signup(_fresh(), teacher=True)
+    assert not at.exception, at.exception
+    assert any(t.label == "Teacher PIN" for t in at.text_input), \
+        "the teacher door has no PIN field"
+    labels = [b.label for b in at.button]
+    assert "Sign in" in labels, f"teacher door has no way to SIGN IN: {labels}"
+    print(f"  OK  teacher door has both a sign-in and a PIN-gated sign-up: {labels}")
     return True
 
 
@@ -115,8 +145,8 @@ def teacher_boundary_tests():
     """The dashboard holds every child's name and score. It is the thing to guard."""
     print("\nTeacher boundary:")
 
-    at = _signup(_goto_signup(_fresh()), "Impostor", "impostor", "password1",
-                 teacher=True, pin="wrong-pin")
+    at = _signup(_goto_signup(_fresh(), teacher=True), "Impostor", "impostor",
+                 "password1", teacher=True, pin="wrong-pin")
     assert not at.exception, at.exception
     errs = " ".join(e.value for e in at.error)
     assert "PIN" in errs, f"a wrong teacher PIN was not refused: {errs!r}"
@@ -124,8 +154,8 @@ def teacher_boundary_tests():
     assert "Teacher dashboard" not in blob, "the dashboard rendered without a valid PIN"
     print("  OK  a teacher account cannot be created with the wrong PIN")
 
-    at = _signup(_goto_signup(_fresh()), "Mrs Rao", "mrs_rao", "chalkdust!",
-                 teacher=True, pin="boot-test-pin")
+    at = _signup(_goto_signup(_fresh(), teacher=True), "Mrs Rao", "mrs_rao",
+                 "chalkdust!", teacher=True, pin="boot-test-pin")
     assert not at.exception, f"raised after teacher sign-up: {at.exception}"
     heads = " ".join(str(h.value) for h in at.title) + " ".join(
         str(s.value) for s in at.subheader)
