@@ -60,31 +60,24 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "data", "vocabulary.csv")
 
 COLS = [
-    "concept_id", "kannada_word", "tulu_word", "transliteration", "ipa",
-    "english_meaning", "image_file", "category", "prereq_id", "difficulty",
-    "level", "spoken_form", "anchor_word", "phrase_gloss", "image_query",
+    "concept_id", "language", "kannada_word", "tulu_word", "transliteration",
+    "ipa", "english_meaning", "image_file", "category", "prereq_id",
+    "difficulty", "level", "spoken_form", "anchor_word", "phrase_gloss",
+    "image_query",
 ]
 
-# The syllabus has three explicit tiers, Basic -> Intermediate -> Advanced. A
-# concept's tier follows from what KIND of thing it is: the letters are the
-# foundation, words are built out of letters, phrases are built out of words. The
-# tier is written into the CSV as its own column so the progression is explicit
-# data a teacher can see, not something implied by a difficulty number. The
-# difficulty values assigned in main() keep the SERVING order strictly tier by
-# tier — every letter before any word, every word before any phrase — so a child
-# finishes the alphabet, then reads words, then reads phrases.
-LEVEL_BASIC = "Basic"          # the alphabet: vowels + consonants
-LEVEL_INTERMEDIATE = "Intermediate"  # whole words
-LEVEL_ADVANCED = "Advanced"    # short phrases — reading words together
+LANG_KANNADA = "kn"
+LANG_TULU = "tu"
 
-# 1. Vowels — swaragalu. (letter, anchor word, anchor meaning, image query)
+LEVEL_BASIC = "Basic"
+LEVEL_INTERMEDIATE = "Intermediate"
+LEVEL_ADVANCED = "Advanced"
+LEVEL_SENTENCES = "Sentences"
+
 VOWELS = [
     ("ಅ", "ಅಮ್ಮ",   "mother",     "indian mother baby"),
     ("ಆ", "ಆನೆ",    "elephant",   "Indian elephant"),
     ("ಇ", "ಇಲಿ",    "mouse",      "house mouse"),
-    # ಈಜು ("swimming") was the natural anchor, but the recogniser hears it as
-    # ಇಲ್ಲ (0.29) — unpassable. ಈರುಳ್ಳಿ is recognised perfectly. Anchors are
-    # chosen to be *hearable*, not just correct; validate_asr.py proves it.
     ("ಈ", "ಈರುಳ್ಳಿ", "onion",     "onion"),
     ("ಉ", "ಉಪ್ಪು",  "salt",       "salt"),
     ("ಊ", "ಊಟ",     "meal",       "Indian meal thali"),
@@ -97,12 +90,7 @@ VOWELS = [
     ("ಔ", "ಔಷಧಿ",   "medicine",   "medicine tablets"),
 ]
 
-# 2. Consonants — vyanjanagalu (ಙ, ಞ excluded; see module docstring).
-#    `core=True` letters are the high-frequency ones taught first; the rest come
-#    after the child has read some real words.
-#    Where a letter cannot begin a word (ಣ, ಥ, ಷ, ಳ) the anchor word CONTAINS it.
 CONSONANTS = [
-    # letter, anchor, anchor meaning, image query, core?
     ("ಕ", "ಕಮಲ",     "lotus",       "lotus flower",        True),
     ("ಖ", "ಖರ್ಜೂರ",  "dates",       "date fruit",          False),
     ("ಗ", "ಗಿಡ",     "plant",       "young plant",         True),
@@ -117,8 +105,6 @@ CONSONANTS = [
     ("ಢ", "ಢಮರು",    "damaru drum", "damaru drum",         False),
     ("ಣ", "ಬಾಣ",     "arrow",       "arrow",               False),
     ("ತ", "ತಲೆ",     "head",        "child face portrait",          True),
-    # ಕಥೆ ("story") is the natural anchor but the recogniser drops the ಥ and
-    # hears just ಕೆ (0.57). ಗ್ರಂಥ is recognised perfectly.
     ("ಥ", "ಗ್ರಂಥ",   "scripture",   "old manuscript book", False),
     ("ದ", "ದೀಪ",     "lamp",        "oil lamp diya",       True),
     ("ಧ", "ಧ್ವಜ",    "flag",        "flag of India",       False),
@@ -139,11 +125,7 @@ CONSONANTS = [
     ("ಳ", "ಮಳೆ",     "rain",        "rain",                False),
 ]
 
-# 3. Vocabulary. (kannada, tulu, english, category, image query, core?)
-#    tulu = "" where no reliable form is known — never a guess.
-#    Tulu forms follow tulubuzz.in / tuludictionary.in and common Tulu usage.
 WORDS = [
-    # --- family -----------------------------------------------------------
     ("ಅಮ್ಮ",     "ಅಪ್ಪೆ",   "mother",          "family", "indian mother baby",     True),
     ("ಅಪ್ಪ",     "ಅಮ್ಮೆ",   "father",          "family", "father child playing",     True),
     ("ಅಣ್ಣ",     "ಪಳಯೆ",   "elder brother",   "family", "indian school boys",             True),
@@ -155,7 +137,6 @@ WORDS = [
     ("ಅಜ್ಜಿ",    "ಅಜ್ಜಿ",   "grandmother",     "family", "elderly indian woman portrait", False),
     ("ಸ್ನೇಹಿತ",  "ದೋಸ್ತಿ",  "friend",          "family", "children playing together",              False),
 
-    # --- animals ----------------------------------------------------------
     ("ಹಸು",      "ಪೆತ್ತ",   "cow",             "animals", "cow",                 True),
     ("ನಾಯಿ",     "ನಾಯಿ",    "dog",             "animals", "dog",                 True),
     ("ಬೆಕ್ಕು",   "ಪುಚ್ಚೆ",  "cat",             "animals", "cat",                 True),
@@ -169,7 +150,6 @@ WORDS = [
     ("ಕೋಳಿ",     "ಕೋರಿ",    "hen",             "animals", "hen",                 False),
     ("ಹುಲಿ",     "ಪಿಲಿ",    "tiger",           "animals", "tiger",               False),
 
-    # --- nature -----------------------------------------------------------
     ("ನೀರು",     "ನೀರ್",    "water",           "nature", "glass of water",       True),
     ("ಗಾಳಿ",     "ಗಾಳಿ",    "wind",            "nature", "windmill wind",        False),
     ("ಬೆಂಕಿ",    "ತೂ",      "fire",            "nature", "fire",                 False),
@@ -183,7 +163,6 @@ WORDS = [
     ("ಬೆಟ್ಟ",    "ಬೆಟ್ಟು",  "hill",            "nature", "hill",                 False),
     ("ಕಡಲು",     "ಕಡಲ್",    "sea",             "nature", "sea",                  False),
 
-    # --- food -------------------------------------------------------------
     ("ಅನ್ನ",     "ಅನ್ನ",    "cooked rice",     "food", "cooked rice",            True),
     ("ಹಾಲು",     "ಪೇರ್",    "milk",            "food", "glass of milk",          True),
     ("ಉಪ್ಪು",    "ಉಪ್ಪು",   "salt",            "food", "salt",                   False),
@@ -193,7 +172,6 @@ WORDS = [
     ("ಸಕ್ಕರೆ",   "",        "sugar",           "food", "sugar",                  False),
     ("ರೊಟ್ಟಿ",   "",        "flatbread",       "food", "roti flatbread",         False),
 
-    # --- body -------------------------------------------------------------
     ("ತಲೆ",      "ತರೆ",     "head",            "body", "child face portrait",             True),
     ("ಕಣ್ಣು",    "ಕಣ್ಣ್",   "eye",             "body", "human eye closeup",              True),
     ("ಕಿವಿ",     "ಕೆಬಿ",    "ear",             "body", "human ear closeup",              True),
@@ -203,7 +181,6 @@ WORDS = [
     ("ಕಾಲು",     "ಕಾರ್",    "leg",             "body", "human legs walking",              False),
     ("ಹಲ್ಲು",    "ಪಲ್ಲ್",   "tooth",           "body", "tooth",                  False),
 
-    # --- colours ----------------------------------------------------------
     ("ಕೆಂಪು",    "ಕೆಂಪು",   "red",             "colours", "red colour",          True),
     ("ಹಸಿರು",    "ಪಚ್ಚೆ",   "green",           "colours", "green colour",        True),
     ("ಹಳದಿ",     "ಮಂಜಲ್",   "yellow",          "colours", "yellow colour",       True),
@@ -211,7 +188,6 @@ WORDS = [
     ("ಕಪ್ಪು",    "ಕಪ್ಪು",   "black",           "colours", "black colour",        False),
     ("ಬಿಳಿ",     "ಬೊಲ್ದು",  "white",           "colours", "white colour",        False),
 
-    # --- numbers ----------------------------------------------------------
     ("ಒಂದು",     "ಒಂಜಿ",    "one",             "numbers", "number one",          True),
     ("ಎರಡು",     "ರಡ್ಡ್",   "two",             "numbers", "number two",          True),
     ("ಮೂರು",     "ಮೂಜಿ",    "three",           "numbers", "number three",        True),
@@ -223,7 +199,6 @@ WORDS = [
     ("ಒಂಬತ್ತು",  "ಒರ್ಂಬ",   "nine",            "numbers", "number nine",         False),
     ("ಹತ್ತು",    "ಪತ್ತ್",   "ten",             "numbers", "number ten",          False),
 
-    # --- home & school ----------------------------------------------------
     ("ಮನೆ",      "ಇಲ್ಲ್",   "house",           "home", "village house",          True),
     ("ಬಾಗಿಲು",   "ಬಾಕಿಲ್",  "door",            "home", "wooden door",            False),
     ("ಕುರ್ಚಿ",   "ಕುರ್ಚಿ",  "chair",           "home", "chair",                  False),
@@ -235,33 +210,22 @@ WORDS = [
     ("ಬಸ್ಸು",    "",        "bus",             "travel", "bus",                  False),
     ("ವಿಮಾನ",    "",        "aeroplane",       "travel", "airplane",             False),
 
-    # ===================================================================== #
-    # Expansion (added 2026-07-19). Common, concrete, child-safe vocabulary
-    # only — nothing frightening, and every entry is checked by validate_asr
-    # so a child saying it correctly is actually recognised. Tulu is left ""
-    # rather than guessed: a wrong Tulu word would teach a child something that
-    # does not exist, which is worse than a blank (see the module docstring).
-    # ===================================================================== #
 
-    # --- fruits -----------------------------------------------------------
     ("ಮಾವು",      "",        "mango",           "fruits", "mango fruit",         True),
     ("ಸೇಬು",      "",        "apple",           "fruits", "red apple",           True),
     ("ಕಿತ್ತಳೆ",   "",        "orange",          "fruits", "orange fruit",        True),
     ("ದ್ರಾಕ್ಷಿ",  "",        "grapes",          "fruits", "bunch of grapes",     False),
     ("ಕಲ್ಲಂಗಡಿ",  "",        "watermelon",      "fruits", "watermelon",          False),
 
-    # --- vegetables -------------------------------------------------------
     ("ಆಲೂಗಡ್ಡೆ",  "",        "potato",          "vegetables", "potato",          True),
     ("ಬದನೆಕಾಯಿ",  "",        "brinjal",         "vegetables", "brinjal eggplant", False),
     ("ಬೆಂಡೆಕಾಯಿ", "",        "okra",            "vegetables", "okra ladyfinger", False),
 
-    # --- food (more) ------------------------------------------------------
     ("ದೋಸೆ",      "",        "dosa",            "food", "dosa south indian",     True),
     ("ಇಡ್ಲಿ",     "",        "idli",            "food", "idli steamed cake",     True),
     ("ಜೇನು",      "",        "honey",           "food", "honey jar",             False),
     ("ಬೆಣ್ಣೆ",    "",        "butter",          "food", "butter block",          False),
 
-    # --- animals (more, all friendly) -------------------------------------
     ("ಮಂಗ",       "",        "monkey",          "animals", "monkey",             True),
     ("ಗಿಳಿ",      "",        "parrot",          "animals", "green parrot",       True),
     ("ಕಾಗೆ",      "",        "crow",            "animals", "crow bird",          False),
@@ -269,64 +233,32 @@ WORDS = [
     ("ಮೊಲ",       "",        "rabbit",          "animals", "rabbit",             False),
     ("ಅಳಿಲು",     "",        "squirrel",        "animals", "squirrel",           False),
 
-    # --- body (more) ------------------------------------------------------
     ("ಮುಖ",       "",        "face",            "body", "child smiling face",    True),
     ("ಕೂದಲು",     "",        "hair",            "body", "hair",                  True),
     ("ಬೆರಳು",     "",        "finger",          "body", "finger pointing",       False),
 
-    # --- nature (more) ----------------------------------------------------
     ("ಮೋಡ",       "",        "cloud",           "nature", "white cloud sky",     True),
     ("ನದಿ",       "",        "river",           "nature", "river",               True),
     ("ಆಕಾಶ",      "",        "sky",             "nature", "blue sky",            True),
     ("ಕಲ್ಲು",     "",        "stone",           "nature", "stone rock",          False),
 
-    # --- home & objects ---------------------------------------------------
-    # ಮೇಜು ("table") was the natural pick but the recogniser hears it as ನೀಜು
-    # (0.50) — unpassable, so it is replaced by ಹಾಸಿಗೆ, which is recognised.
     ("ಹಾಸಿಗೆ",    "",        "bed",             "home", "bed",                   True),
     ("ಕಿಟಕಿ",     "",        "window",          "home", "window",                False),
     ("ಗಡಿಯಾರ",    "",        "clock",           "home", "wall clock",            False),
     ("ಚೆಂಡು",     "",        "ball",            "home", "colourful ball",        True),
 
-    # --- clothes ----------------------------------------------------------
     ("ಅಂಗಿ",      "",        "shirt",           "clothes", "shirt",              True),
     ("ಸೀರೆ",      "",        "saree",           "clothes", "indian saree",       False),
 
-    # --- travel (more) ----------------------------------------------------
     ("ಕಾರು",      "",        "car",             "travel", "car",                 True),
 ]
 
-# 4. Words too short for the recogniser to resolve on their own.
-#
-# The same problem as a bare letter, and the same fix. ತಲೆ (tale, "head") is only
-# three phonemes, and the recogniser maps it onto a far more frequent word —
-# it hears ಅಲ್ಲಿ ("there"). Likewise ಎಲೆ -> ಎಲ್ಲಿ ("where") and ಕೈ -> ತಾಯಿ
-# ("mother"). Measured: all three fail in isolation no matter how they are
-# spoken, so a child pronouncing them perfectly would always be marked wrong.
-#
-# Spoken inside a two-word phrase they are all recognised (1.00). The card still
-# TEACHES the single word — this only changes what the child is asked to say, and
-# saying a body part as "my head" is natural language anyway.
 SPOKEN_PHRASE = {
     "ಎಲೆ": ("ಮರದ ಎಲೆ", "the leaf of a tree"),
     "ತಲೆ": ("ನನ್ನ ತಲೆ", "my head"),
     "ಕೈ":  ("ನನ್ನ ಕೈ", "my hand"),
 }
 
-# 5. Phrases — the Advanced tier of the syllabus.
-#
-# Once a child can read whole words, the next step is reading them TOGETHER. These
-# are short, natural two-word phrases made entirely from words the curriculum has
-# already taught, so nothing here is new vocabulary — the skill being practised is
-# joining known words into meaning. They are spoken as the whole phrase, which the
-# recogniser handles comfortably (a multi-word utterance is far easier to hear than
-# a lone short word), and validate_asr checks every one.
-#
-# Each phrase sits in the graph behind ONE of its content words (`prereq`, given as
-# the Kannada word), so it only appears after that word has been learned. The few
-# function words they introduce (ನನ್ನ "my", ದೊಡ್ಡ "big", ಚಿಕ್ಕ "small") are read
-# in context, the way a first reader meets them.
-#     (kannada_phrase, english, prereq_word_kannada)
 PHRASES = [
     ("ನನ್ನ ಅಮ್ಮ",       "my mother",     "ಅಮ್ಮ"),
     ("ನನ್ನ ಮನೆ",        "my house",      "ಮನೆ"),
@@ -339,14 +271,71 @@ PHRASES = [
     ("ಬಿಳಿ ಹಾಲು",       "white milk",    "ಹಾಲು"),
     ("ನೀಲಿ ಆಕಾಶ",       "the blue sky",  "ಆಕಾಶ"),
     ("ದೊಡ್ಡ ಆನೆ",       "a big elephant", "ಆನೆ"),
-    # ಚಿಕ್ಕ ("small") was misheard as ಚಿತ್ರ (0.63); ಪುಟ್ಟ is recognised cleanly.
     ("ಪುಟ್ಟ ಮಗು",       "a little child", "ಮಗು"),
     ("ಸಿಹಿ ಹಣ್ಣು",      "a sweet fruit", "ಹಣ್ಣು"),
     ("ಒಳ್ಳೆಯ ಸ್ನೇಹಿತ",  "a good friend", "ಸ್ನೇಹಿತ"),
 ]
 
-# Kannada vowel signs (matras) and the virama, used to strip a word down to the
-# base letter it *starts* with, so a word can be attached to that letter's card.
+SENTENCES = [
+    ("ಇದು ನನ್ನ ಮನೆ",                "This is my house",            "ಮನೆ"),
+    ("ಇದು ನನ್ನ ಪುಸ್ತಕ",             "This is my book",             "ಪುಸ್ತಕ"),
+    ("ಇದು ನನ್ನ ಸ್ನೇಹಿತ",            "This is my friend",           "ಸ್ನೇಹಿತ"),
+    ("ನನ್ನ ಶಾಲೆ ದೊಡ್ಡದು",           "My school is big",            "ಶಾಲೆ"),
+    ("ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ",      "I go to school",              "ಶಾಲೆ"),
+    ("ನಾನು ಪುಸ್ತಕ ಓದುತ್ತೇನೆ",       "I read a book",               "ಪುಸ್ತಕ"),
+    ("ನಾನು ಹಾಲು ಕುಡಿಯುತ್ತೇನೆ",      "I drink milk",                "ಹಾಲು"),
+    ("ನಾನು ನೀರು ಕುಡಿಯುತ್ತೇನೆ",      "I drink water",               "ನೀರು"),
+    ("ನಾನು ಅನ್ನ ತಿನ್ನುತ್ತೇನೆ",       "I eat rice",                  "ಅನ್ನ"),
+    ("ನಾನು ಚೆಂಡು ಆಡುತ್ತೇನೆ",        "I play with the ball",        "ಚೆಂಡು"),
+    ("ನಾವು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇವೆ",      "We go to school",             "ಶಾಲೆ"),
+    ("ಅಮ್ಮ ಮನೆಯಲ್ಲಿ ಇದ್ದಾರೆ",       "Mother is at home",           "ಅಮ್ಮ"),
+    ("ಅಪ್ಪ ಕೆಲಸಕ್ಕೆ ಹೋಗುತ್ತಾರೆ",     "Father goes to work",         "ಅಪ್ಪ"),
+    ("ಅಜ್ಜಿ ಕಥೆ ಹೇಳುತ್ತಾರೆ",         "Grandmother tells a story",   "ಅಜ್ಜಿ"),
+    ("ನನ್ನ ಅಣ್ಣ ಶಾಲೆಗೆ ಹೋಗುತ್ತಾನೆ",  "My elder brother goes to school", "ಅಣ್ಣ"),
+    ("ಮಗು ಆಟ ಆಡುತ್ತದೆ",             "The child plays",             "ಮಗು"),
+    ("ಹಸು ಹಾಲು ಕೊಡುತ್ತದೆ",          "The cow gives milk",          "ಹಸು"),
+    ("ನಾಯಿ ಮನೆಯಲ್ಲಿ ಇದೆ",           "The dog is in the house",     "ನಾಯಿ"),
+    ("ಬೆಕ್ಕು ಹಾಲು ಕುಡಿಯುತ್ತದೆ",     "The cat drinks milk",         "ಬೆಕ್ಕು"),
+    ("ಮೀನು ನೀರಿನಲ್ಲಿ ಇದೆ",          "The fish is in the water",    "ಮೀನು"),
+    ("ಹಕ್ಕಿ ಆಕಾಶದಲ್ಲಿ ಹಾರುತ್ತದೆ",   "The bird flies in the sky",   "ಹಕ್ಕಿ"),
+    ("ಆನೆ ತುಂಬಾ ದೊಡ್ಡದು",           "The elephant is very big",    "ಆನೆ"),
+    ("ಮಂಗ ಮರ ಹತ್ತುತ್ತದೆ",           "The monkey climbs the tree",  "ಮಂಗ"),
+    ("ನವಿಲು ಚೆನ್ನಾಗಿ ಕುಣಿಯುತ್ತದೆ",  "The peacock dances beautifully", "ನವಿಲು"),
+    ("ಸೂರ್ಯ ಆಕಾಶದಲ್ಲಿ ಇದ್ದಾನೆ",     "The sun is in the sky",       "ಸೂರ್ಯ"),
+    ("ಚಂದ್ರ ರಾತ್ರಿ ಕಾಣುತ್ತಾನೆ",     "The moon is seen at night",   "ಚಂದ್ರ"),
+    ("ಇವತ್ತು ಮಳೆ ಬರುತ್ತಿದೆ",        "It is raining today",         "ಮಳೆ"),
+    ("ಮರದಲ್ಲಿ ಹಣ್ಣು ಇದೆ",           "There is fruit on the tree",  "ಮರ"),
+    ("ಈ ಹೂವು ಕೆಂಪಾಗಿದೆ",            "This flower is red",          "ಹೂವು"),
+    ("ನನಗೆ ಎರಡು ಕಣ್ಣು ಇವೆ",         "I have two eyes",             "ಕಣ್ಣು"),
+]
+
+TULU_CATEGORY_ORDER = [
+    "family", "animals", "body", "food", "nature",
+    "numbers", "colours", "home", "school", "travel",
+]
+
+TULU_SPOKEN_PHRASE = {
+    "ಅಪ್ಪೆ":  ("ಅಪ್ಪೆ ಬತ್ತೆರ್", "mother came"),
+    "ಪಳ್ದಿ":  ("ಎನ್ನ ಪಳ್ದಿ", "my elder sister"),
+    "ಪೆತ್ತ":  ("ಎನ್ನ ಪೆತ್ತ", "my cow"),
+    "ಪಕ್ಕಿ":  ("ಎನ್ನ ಪಕ್ಕಿ", "my bird"),
+    "ಕಣ್ಣ್":  ("ಎನ್ನ ಕಣ್ಣ್", "my eye"),
+    "ಕೈ":     ("ಎನ್ನ ಕೈ", "my hand"),
+    "ತೂ":     ("ತೂ ಉಂಡು", "there is fire"),
+    "ರಡ್ಡ್":  ("ಒಂಜಿ ರಡ್ಡ್ ಮೂಜಿ", "one, two, three"),
+}
+
+TULU_UNHEARABLE = {"ಎಲೆ", "ಪೂ", "ಏಳ್", "ಐನ್"}
+
+TULU_PHRASES = [
+    ("ಎನ್ನ ಇಲ್ಲ್",   "my house",     "ಇಲ್ಲ್", "ಉಂದು ಎನ್ನ ಇಲ್ಲ್"),
+    ("ಎನ್ನ ಶಾಲೆ",    "my school",    "ಶಾಲೆ",  ""),
+    ("ಒಂಜಿ ಪೆತ್ತ",   "one cow",      "ಪೆತ್ತ", ""),
+    ("ರಡ್ಡ್ ಕಣ್ಣ್",  "two eyes",     "ಕಣ್ಣ್", "ರಡ್ಡ್ ಕಣ್ಣ್ ಉಂಡು"),
+    ("ಮೂಜಿ ಮೀನ್",    "three fish",   "ಮೀನ್",  ""),
+    ("ಬೊಲ್ದು ಪೇರ್",  "white milk",   "ಪೇರ್",  ""),
+]
+
 _SIGNS = set("ಾಿೀುೂೃೄೆೇೈೊೋೌ್ಂಃ")
 
 
@@ -363,17 +352,33 @@ def base_letter(word):
     return ""
 
 
+def display_word(row):
+    """
+    The word the CHILD sees and says for a concept — Tulu on the Tulu track,
+    Kannada on the Kannada track.
+
+    Every row carries both scripts, because the Kannada-word/Tulu-equivalent
+    pairing is the dataset this project contributes and the teacher dashboard
+    reads it. Only ONE of them is ever shown to a learner, and this is the single
+    place that decides which, so the CSV's derived columns (transliteration) and
+    the app agree by construction instead of by coincidence.
+    """
+    if row.get("language") == LANG_TULU:
+        return (row.get("tulu_word") or row.get("kannada_word") or "").strip()
+    return (row.get("kannada_word") or "").strip()
+
+
 def main():
     rows = []
-    letter_concept = {}  # Kannada letter -> concept_id, for wiring word prereqs
+    letter_concept = {}
 
-    # ---- vowels: a single chain, so they are learned in varnamale order ----
     prev = ""
     for i, (letter, anchor, anchor_en, query) in enumerate(VOWELS, start=1):
         cid = f"V{i:02d}"
         letter_concept[letter] = cid
         rows.append({
             "concept_id": cid,
+            "language": LANG_KANNADA,
             "kannada_word": letter,
             "tulu_word": "",
             "english_meaning": f"vowel {iso(letter)} — as in {anchor} ({anchor_en})",
@@ -391,16 +396,12 @@ def main():
 
     last_vowel = prev
 
-    # ---- consonants: all unlock once the vowels are done, so the ORDER they
-    #      are taught in is decided by difficulty (core, high-frequency letters
-    #      first). Both bands sit ABOVE the vowels (1) and BELOW the words (4+),
-    #      so the whole alphabet — the Basic tier — is finished before the first
-    #      word is served. Core = 2, the rest = 3.
     for i, (letter, anchor, anchor_en, query, core) in enumerate(CONSONANTS, start=1):
         cid = f"C{i:02d}"
         letter_concept[letter] = cid
         rows.append({
             "concept_id": cid,
+            "language": LANG_KANNADA,
             "kannada_word": letter,
             "tulu_word": "",
             "english_meaning": f"consonant {iso(letter)} — as in {anchor} ({anchor_en})",
@@ -415,14 +416,12 @@ def main():
             "image_query": query,
         })
 
-    # ---- words: the Intermediate tier. Prerequisite is the LETTER the word
-    #      starts with, so vocabulary unlocks as the alphabet is mastered.
-    #      Difficulty 4 (core) / 5 sits above every letter (<=3), so all words
-    #      are served after the whole alphabet — Basic finishes, then Intermediate.
-    word_concept = {}  # Kannada word -> concept_id, for wiring phrase prereqs
+    word_concept = {}
+    kn_image = {}
     for i, (kn, tulu, en, cat, query, core) in enumerate(WORDS, start=1):
         cid = f"W{i:03d}"
         word_concept[kn] = cid
+        kn_image[kn] = cid
         first = base_letter(kn)
         prereq = letter_concept.get(first, "")
         if not prereq:
@@ -430,11 +429,10 @@ def main():
                 f"{cid} {kn!r} starts with {first!r}, which is not a letter in the "
                 "curriculum — add the letter or change the word."
             )
-        # A word is normally spoken as itself. The few that are too short for the
-        # recogniser to resolve are said inside a short phrase instead.
         spoken, phrase_gloss = SPOKEN_PHRASE.get(kn, (kn, ""))
         rows.append({
             "concept_id": cid,
+            "language": LANG_KANNADA,
             "kannada_word": kn,
             "tulu_word": tulu,
             "english_meaning": en,
@@ -444,17 +442,11 @@ def main():
             "difficulty": 4 if core else 5,
             "level": LEVEL_INTERMEDIATE,
             "spoken_form": spoken,
-            # anchor_word doubles as the hint shown under "Say this", and as the
-            # alternate accepted form; for a phrase there is no alternate, so it
-            # carries the English gloss of the phrase for the UI.
             "anchor_word": "",
             "phrase_gloss": phrase_gloss,
             "image_query": query,
         })
 
-    # ---- phrases: the Advanced tier. Each sits behind one of its content words
-    #      (difficulty 6, above every word), so phrases are served last — after
-    #      the child can already read the words they are built from.
     for i, (phrase, en, prereq_word) in enumerate(PHRASES, start=1):
         cid = f"P{i:03d}"
         prereq = word_concept.get(prereq_word, "")
@@ -465,47 +457,140 @@ def main():
             )
         rows.append({
             "concept_id": cid,
+            "language": LANG_KANNADA,
             "kannada_word": phrase,
             "tulu_word": "",
             "english_meaning": en,
-            "image_file": f"{cid}.jpg",
+            "image_file": f"{prereq}.jpg",
             "category": "phrases",
             "prereq_id": prereq,
             "difficulty": 6,
             "level": LEVEL_ADVANCED,
             "spoken_form": phrase,
             "anchor_word": "",
-            # The gloss carries the English so the card can show what the phrase
-            # means without a separate image of an abstract idea.
             "phrase_gloss": en,
             "image_query": "",
         })
 
-    # ---- derived columns: never hand-typed --------------------------------
+    for i, (sentence, en, prereq_word) in enumerate(SENTENCES, start=1):
+        cid = f"S{i:03d}"
+        prereq = word_concept.get(prereq_word, "")
+        if not prereq:
+            raise SystemExit(
+                f"{cid} {sentence!r} needs prereq word {prereq_word!r}, which is "
+                "not in the curriculum — add the word or change the sentence."
+            )
+        rows.append({
+            "concept_id": cid,
+            "language": LANG_KANNADA,
+            "kannada_word": sentence,
+            "tulu_word": "",
+            "english_meaning": en,
+            "image_file": f"{prereq}.jpg",
+            "category": "sentences",
+            "prereq_id": prereq,
+            "difficulty": 7,
+            "level": LEVEL_SENTENCES,
+            "spoken_form": sentence,
+            "anchor_word": "",
+            "phrase_gloss": en,
+            "image_query": "",
+        })
+
+
+    tulu_by_cat = {}
+    for kn, tulu, en, cat, query, core in WORDS:
+        tulu = tulu.strip()
+        if tulu and tulu not in TULU_UNHEARABLE:
+            tulu_by_cat.setdefault(cat, []).append((tulu, kn, en, query, core))
+
+    cats = [c for c in TULU_CATEGORY_ORDER if c in tulu_by_cat]
+    cats += [c for c in sorted(tulu_by_cat) if c not in cats]
+
+    tulu_concept = {}
+    tulu_image = {}
+    n = 0
+    for cat_rank, cat in enumerate(cats):
+        prev = ""
+        for tulu, kn, en, query, core in tulu_by_cat[cat]:
+            n += 1
+            cid = f"TW{n:03d}"
+            tulu_concept.setdefault(tulu, cid)
+            tulu_image[cid] = f"{kn_image.get(kn, cid)}.jpg"
+            spoken, gloss = TULU_SPOKEN_PHRASE.get(tulu, (tulu, ""))
+            rows.append({
+                "concept_id": cid,
+                "language": LANG_TULU,
+                "kannada_word": kn,
+                "tulu_word": tulu,
+                "english_meaning": en,
+                "image_file": f"{kn_image.get(kn, cid)}.jpg",
+                "category": cat,
+                "prereq_id": prev,
+                "difficulty": 4 + cat_rank * 2 + (0 if core else 1),
+                "level": LEVEL_INTERMEDIATE,
+                "spoken_form": spoken,
+                "anchor_word": "",
+                "phrase_gloss": gloss,
+                "image_query": query,
+            })
+            prev = cid
+
+    max_word_difficulty = 4 + max(len(cats) - 1, 0) * 2 + 1
+    for i, (phrase, en, prereq_word, spoken) in enumerate(TULU_PHRASES, start=1):
+        cid = f"TP{i:03d}"
+        prereq = tulu_concept.get(prereq_word, "")
+        if not prereq:
+            raise SystemExit(
+                f"{cid} {phrase!r} needs Tulu word {prereq_word!r}, which is not in "
+                "the Tulu track — add it to WORDS with a tulu form, or change the "
+                "phrase."
+            )
+        rows.append({
+            "concept_id": cid,
+            "language": LANG_TULU,
+            "kannada_word": "",
+            "tulu_word": phrase,
+            "english_meaning": en,
+            "image_file": tulu_image.get(prereq, f"{cid}.jpg"),
+            "category": "phrases",
+            "prereq_id": prereq,
+            "difficulty": max_word_difficulty + 1,
+            "level": LEVEL_ADVANCED,
+            "spoken_form": spoken or phrase,
+            "anchor_word": "",
+            "phrase_gloss": en,
+            "image_query": "",
+        })
+
     for r in rows:
-        source = r["spoken_form"]        # romanize what is actually SAID
-        r["transliteration"] = iso(r["kannada_word"])
-        r["ipa"] = iso(source)
+        r["transliteration"] = iso(display_word(r))
+        r["ipa"] = iso(r["spoken_form"])
 
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    # utf-8-sig: Excel needs the BOM to detect UTF-8, so a teacher can open and
-    # edit the Kannada columns without mojibake. Every reader here handles it.
     with open(OUT, "w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLS)
         w.writeheader()
         w.writerows(rows)
 
-    letters = sum(1 for r in rows if r["category"] in ("vowels", "consonants"))
-    phrases = sum(1 for r in rows if r["category"] == "phrases")
-    words = len(rows) - letters - phrases
-    tulu = sum(1 for r in rows if r["tulu_word"])
+    kn_rows = [r for r in rows if r["language"] == LANG_KANNADA]
+    tu_rows = [r for r in rows if r["language"] == LANG_TULU]
+    letters = sum(1 for r in kn_rows if r["category"] in ("vowels", "consonants"))
+    kn_phrases = sum(1 for r in kn_rows if r["category"] == "phrases")
+    sentences = sum(1 for r in kn_rows if r["category"] == "sentences")
+    kn_words = len(kn_rows) - letters - kn_phrases - sentences
+    paired = sum(1 for r in rows if r["kannada_word"] and r["tulu_word"])
     by_level = {lv: sum(1 for r in rows if r["level"] == lv)
-                for lv in (LEVEL_BASIC, LEVEL_INTERMEDIATE, LEVEL_ADVANCED)}
+                for lv in (LEVEL_BASIC, LEVEL_INTERMEDIATE, LEVEL_ADVANCED,
+                           LEVEL_SENTENCES)}
     print(f"Wrote {len(rows)} concepts to {OUT}")
-    print(f"  {len(VOWELS)} vowels + {len(CONSONANTS)} consonants = {letters} letters")
-    print(f"  {words} vocabulary words ({tulu} with a Tulu form)")
-    print(f"  {phrases} phrases")
-    print(f"  tiers: " + ", ".join(f"{lv} {n}" for lv, n in by_level.items()))
+    print(f"  Kannada track — {len(kn_rows)} concepts")
+    print(f"    {len(VOWELS)} vowels + {len(CONSONANTS)} consonants = {letters} letters")
+    print(f"    {kn_words} words, {kn_phrases} phrases, {sentences} sentences")
+    print(f"  Tulu track — {len(tu_rows)} concepts")
+    print(f"    {len(tu_rows) - len(TULU_PHRASES)} words, {len(TULU_PHRASES)} phrases")
+    print(f"  {paired} rows pair a Kannada word with its Tulu equivalent")
+    print("  tiers: " + ", ".join(f"{lv} {n}" for lv, n in by_level.items()))
     print(f"  categories: {sorted({r['category'] for r in rows})}")
 
 

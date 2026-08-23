@@ -49,7 +49,7 @@ def main():
     except ImportError:
         sys.exit("ctranslate2 is required: pip install ctranslate2")
     try:
-        import transformers  # noqa: F401  (imported for the clearer error below)
+        import transformers  # noqa: F401
     except ImportError:
         sys.exit("conversion needs transformers + torch: pip install transformers torch")
 

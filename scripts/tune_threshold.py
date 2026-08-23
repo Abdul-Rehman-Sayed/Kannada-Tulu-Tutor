@@ -45,9 +45,6 @@ from tutor import pronunciation
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(BASE, "data", "asr_transcripts.json")
 
-# Each concept's audio is scored against this many OTHER concepts, to build the
-# wrong-answer population. Every concept is a potential confusion for every other
-# one, so a decent sample is cheap (scoring is pure string work once transcribed).
 NEGATIVES_PER_CONCEPT = 12
 
 
@@ -80,7 +77,7 @@ def main():
     concepts = [dict(G.nodes[n]) for n in sorted(G.nodes)]
     heard = transcripts(concepts, args.retranscribe)
 
-    rng = random.Random(20260713)  # fixed seed: the report must be reproducible
+    rng = random.Random(20260713)
 
     positives, negatives = [], []
     for c in concepts:
@@ -91,8 +88,6 @@ def main():
 
         others = [o for o in concepts if o["concept_id"] != c["concept_id"]]
         for other in rng.sample(others, min(NEGATIVES_PER_CONCEPT, len(others))):
-            # The child said concept `c`, but the card in front of them is
-            # `other` — a wrong answer, which must be rejected.
             exp_o, alt_o = pronunciation.accepted_forms(other)
             s, _ = pronunciation.score_pronunciation(exp_o, got, alt_o)
             negatives.append((c["concept_id"], other["concept_id"], s))
@@ -109,14 +104,6 @@ def main():
         sweep.append((t, tpr, fpr, tpr - fpr))
         print(f"{t:>7.2f} {tpr*100:>15.0f}% {fpr*100:>14.1f}% {tpr-fpr:>7.3f}")
 
-    # Maximising J alone is not quite the right objective here. The two errors
-    # are not symmetric: a false REJECT tells a child who spoke correctly that
-    # they were wrong (discouraging, and the bug this project started with),
-    # while a false ACCEPT certifies a mispronunciation as correct — it actively
-    # teaches the wrong thing, and no one ever finds out. So among the
-    # thresholds whose J is within TOLERANCE of the best (i.e. statistically
-    # indistinguishable on a sample this size), take the one with the lowest
-    # false-accept rate.
     TOLERANCE = 0.02
     best_j = max(s[3] for s in sweep)
     viable = [s for s in sweep if s[3] >= best_j - TOLERANCE]
@@ -128,8 +115,6 @@ def main():
     print(f"\nCurrently in pronunciation.py: PRONUNCIATION_THRESHOLD = "
           f"{pronunciation.PRONUNCIATION_THRESHOLD}")
 
-    # The concepts still rejected at the chosen threshold are dataset bugs:
-    # a child saying these perfectly would be marked wrong.
     stuck = sorted([(cid, s) for cid, s in positives if s < t], key=lambda x: x[1])
     if stuck:
         print(f"\n{len(stuck)} concept(s) still unrecognised at {t:.2f}:")

@@ -25,10 +25,9 @@ from tutor import media
 def test_audio():
     print("1) Audio (gTTS, lang=kn)")
     try:
-        path = media.get_audio("W001", "ಅಮ್ಮ")  # amma
+        path = media.get_audio("W001", "ಅಮ್ಮ")
         size = os.path.getsize(path)
         print(f"   generated: {path}  ({size} bytes)")
-        # Second call must hit the cache (no regeneration / no network).
         again = media.get_audio("W001", "ಅಮ್ಮ")
         print(f"   cached hit: {again}  (same file: {again == path})")
         print("   -> play this mp3 to confirm it says 'amma' in Kannada.")
@@ -41,7 +40,6 @@ def test_images():
     print("2) Images")
     os.makedirs(media.IMAGE_DIR, exist_ok=True)
 
-    # Simulate a *provided* real asset so we can prove real-image resolution.
     real_name = "real_sample.png"
     real_path = os.path.join(media.IMAGE_DIR, real_name)
     Image.new("RGB", (120, 120), (80, 160, 90)).save(real_path)
@@ -51,9 +49,8 @@ def test_images():
         assert resolved == real_path, "should resolve the real file, not a placeholder"
         assert "placeholders" not in resolved
     finally:
-        os.remove(real_path)  # test artifact — don't leave it in data/images
+        os.remove(real_path)
 
-    # Missing image -> placeholder, must not crash and must be a valid PNG.
     ph = media.get_image("definitely_missing.png", label="ಅಮ್ಮ")
     print(f"   missing img -> {ph}")
     assert os.path.exists(ph), "placeholder was not created"

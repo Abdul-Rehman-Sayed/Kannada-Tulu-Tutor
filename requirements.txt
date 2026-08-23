@@ -1,25 +1,10 @@
-# Runtime dependencies for the Kannada/Tulu literacy tutor.
-#
-# Every one of these is free and permissively licensed (MIT / BSD / Apache-2.0 /
-# PSF). Nothing here is paid, nothing needs an API key, and nothing is copyleft.
-# See LICENCES.md for the full audit.
-#
-# NOT IN THIS LIST, DELIBERATELY:
-#   Levenshtein  — GPL-2.0-or-later. Importing it would place this entire
-#                  application under the GPL. rapidfuzz (MIT) computes the exact
-#                  same metric (verified identical on 200,000 pairs), so it is
-#                  used instead. Do not add python-Levenshtein back.
-#
-# Versions are pinned so a deployment cannot silently pick up a breaking release.
-
-streamlit==1.49.1              # Apache-2.0
-faster-whisper==1.2.1          # MIT   — speech recognition runtime
-ctranslate2==4.8.1             # MIT   — inference engine faster-whisper runs on
-rapidfuzz==3.14.5              # MIT   — pronunciation similarity (see above)
-indic-transliteration==2.3.82  # MIT   — romanises Kannada/Devanagari for scoring
-networkx==3.5                  # BSD   — the prerequisite graph
-pandas==2.3.3                  # BSD   — teacher dashboard tables
-numpy==1.26.4                  # BSD   — microphone level checks
-pillow==11.3.0                 # MIT-CMU — image cards and placeholders
-matplotlib==3.10.7             # PSF   — teacher mastery map
-gTTS==2.5.4                    # MIT   — spoken audio (see LICENCES.md)
+streamlit==1.49.1
+faster-whisper==1.2.1
+ctranslate2==4.8.1
+rapidfuzz==3.14.5
+indic-transliteration==2.3.82
+networkx==3.5
+pandas==2.3.3
+numpy==1.26.4
+pillow==11.3.0
+gTTS==2.5.4

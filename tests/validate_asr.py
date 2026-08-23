@@ -31,7 +31,7 @@ import sys
 import time
 
 try:
-    sys.stdout.reconfigure(encoding="utf-8")  # Kannada must survive a Windows console
+    sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
     pass
 
@@ -64,8 +64,6 @@ def main():
     for i, c in enumerate(concepts, 1):
         cid, spoken = c["concept_id"], c["spoken_form"]
         try:
-            # Same TTS + cache path the app's Listen button uses, so this also
-            # fills data/audio/ for an offline deploy.
             audio = media.get_audio(cid, spoken)
         except Exception as e:
             errors.append((cid, spoken, f"TTS failed: {e}"))
@@ -73,7 +71,6 @@ def main():
             continue
 
         heard = pronunciation.transcribe(audio)
-        # Score exactly the way the app scores a child — same accepted forms.
         expected, alternates = pronunciation.accepted_forms(c)
         score, correct = pronunciation.score_pronunciation(expected, heard, alternates)
 

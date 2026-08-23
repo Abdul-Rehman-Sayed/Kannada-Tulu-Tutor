@@ -8,6 +8,8 @@ Runs entirely offline (no whisper, no network) unless you hand it an audio file:
     python test_pronunciation.py my_recording.wav ಅಮ್ಮ   # + real transcription
 """
 
+import csv
+import io
 import os
 import sys
 import wave
@@ -37,8 +39,6 @@ def scorer_tests():
     ok = True
 
     print("Cross-script matching (whisper writes Kannada in Devanagari):")
-    # THE original bug. Whisper transcribes spoken Kannada into Devanagari; a raw
-    # string compare scores a phonetically perfect answer 0.0 and fails the child.
     score, correct = pronunciation.score_pronunciation("ಅಮ್ಮ", "अम्मँ")
     ok &= _check("ಅಮ್ಮ vs Devanagari अम्मँ is accepted", correct, True)
 
@@ -56,15 +56,11 @@ def scorer_tests():
     ok &= _check("ಅಮ್ಮಾ (extra vowel sign) accepted", correct, True)
 
     print("\nLetter cards accept the anchor word alone:")
-    # A letter is spoken as "letter + anchor" (ಆ ಆನೆ), but the recogniser often
-    # swallows the isolated leading letter and returns only ಆನೆ — or even ನೆ.
-    # That is the recogniser's failing, not the child's, so it must still pass.
     letter = {"spoken_form": "ಆ ಆನೆ", "anchor_word": "ಆನೆ", "kannada_word": "ಆ"}
     expected, alternates = pronunciation.accepted_forms(letter)
     for heard, label in [("ಆ ಆನೆ", "full form"), ("ಆನೆ", "anchor only"), ("ನೆ", "clipped anchor")]:
         _, correct = pronunciation.score_pronunciation(expected, heard, alternates)
         ok &= _check(f"{label}: {heard!r} accepted for ಆ", correct, True)
-    # ...but a DIFFERENT letter's answer is still wrong.
     _, correct = pronunciation.score_pronunciation(expected, "ಹಸು", alternates)
     ok &= _check("saying ಹಸು on the ಆ card is rejected", correct, False)
 
@@ -120,18 +116,10 @@ def mic_tests():
     ok &= _check("a 20s clip is rejected as too long", long_, False)
     ok &= _check("  ...and the reason is TOO_LONG", reason, pronunciation.TOO_LONG)
 
-    # Audio we cannot decode is rejected, not guessed at. The gate now decodes
-    # with the very same PyAV the recogniser uses, so "we cannot read this" means
-    # the recogniser cannot read it either — passing it on would buy nothing but
-    # three seconds of CPU and a hallucinated word. (The old gate used the `wave`
-    # module, which reads only integer-PCM WAV, and let everything else through
-    # unchecked — including the 32-bit-float WAV and WebM that real browsers send.
-    # On those browsers the microphone check silently did nothing at all.)
     junk, reason, _ = pronunciation.audio_quality(b"not a wav file at all")
     ok &= _check("undecodable audio is rejected", junk, False)
     ok &= _check("  ...and the reason is UNREADABLE", reason, pronunciation.UNREADABLE)
 
-    # A quiet but real answer must NOT be thrown away: children speak softly.
     quiet_ok, _, stats = pronunciation.audio_quality(_wav(0.8, 0.06))
     ok &= _check(f"a softly-spoken answer is still scored (peak={stats['peak']})", quiet_ok, True)
 
@@ -150,7 +138,6 @@ def _clip(seconds, amplitude, noise, rate=16000):
     rng = np.random.default_rng(7)
     n = int(seconds * rate)
     t = np.arange(n) / rate
-    # a crude voiced burst: a couple of harmonics under an envelope
     env = np.sin(np.pi * np.arange(n) / n) ** 2
     voice = amplitude * env * (np.sin(2 * np.pi * 150 * t) + 0.5 * np.sin(2 * np.pi * 430 * t)) / 1.5
     lead = rng.normal(0, noise, int(1.0 * rate))
@@ -184,7 +171,6 @@ def soft_voice_tests():
     print("\nSoft-voice regression (the 'couldn't hear anything' bug):")
     ok = True
 
-    # A child half the old threshold's loudness, in a quiet room. Must be scored.
     faint, reason, stats = pronunciation.audio_quality(_clip(0.9, 0.010, 0.00005))
     ok &= _check(
         f"a faint voice in a quiet room is ACCEPTED "
@@ -193,19 +179,15 @@ def soft_voice_tests():
         faint, True,
     )
 
-    # Same faintness, but the room is louder than the child. Nothing to score.
     drowned, reason, stats = pronunciation.audio_quality(_clip(0.9, 0.004, 0.004))
     ok &= _check(f"a voice drowned by room noise is rejected (snr={stats['snr']})",
                  drowned, False)
     ok &= _check("  ...and the reason is TOO_QUIET", reason, pronunciation.TOO_QUIET)
 
-    # Room tone only — the mic is on, nobody spoke. Whisper answers silence with
-    # "ಮುಕ್ತಾಯ"; it must never get the chance.
     empty, reason, stats = pronunciation.audio_quality(_clip(0.9, 0.0, 0.002))
     ok &= _check(f"an empty room (no voice at all) is rejected (snr={stats['snr']})",
                  empty, False)
 
-    # Preprocessing must hand the recogniser a normalized, trimmed clip.
     good, _, stats, samples = pronunciation.prepare_audio(_clip(0.9, 0.010, 0.00005))
     if good and samples is not None:
         peak = float(np.abs(samples).max())
@@ -263,7 +245,7 @@ def grace_tests():
     """
     print("\nGrace rule (the 'said it right, marked wrong' bug):")
     ok = True
-    confident = {"avg_logprob": -0.17, "no_speech_prob": 0.0}   # a sure decode
+    confident = {"avg_logprob": -0.17, "no_speech_prob": 0.0}
     healthy_snr = pronunciation.MIN_SNR + 10
 
     ok &= _check("a match is CORRECT however weak the signal",
@@ -277,9 +259,6 @@ def grace_tests():
                      False, healthy_snr, {"avg_logprob": -0.9, "no_speech_prob": 0.0}, 0),
                  pronunciation.OUTCOME_RETRY)
 
-    # The crux: a confident non-match on a healthy signal. The FIRST few are soft
-    # (the recogniser probably mis-heard a correct word); only once it persists
-    # past the grace window is it a real wrong answer.
     for prior in range(pronunciation.GRACE_MISSES):
         ok &= _check(f"confident non-match #{prior + 1} (within grace) is SOFT, never wrong",
                      pronunciation.classify_attempt(False, healthy_snr, confident, prior),
@@ -289,11 +268,54 @@ def grace_tests():
                      False, healthy_snr, confident, pronunciation.GRACE_MISSES),
                  pronunciation.OUTCOME_WRONG)
 
-    # Parking must still be reachable: a child who keeps confidently missing keeps
-    # producing WRONG marks, so the attempt count still climbs to PARK_AFTER_ATTEMPTS.
     ok &= _check("a persistently wrong child still produces WRONG marks (parking survives)",
                  pronunciation.classify_attempt(False, healthy_snr, confident, 99),
                  pronunciation.OUTCOME_WRONG)
+    return ok
+
+
+def decode_budget_tests():
+    """
+    The decode cap must cover the longest thing the curriculum asks a child to say.
+
+    THE BUG THIS CATCHES. max_new_tokens was 24, set when the longest item in the
+    curriculum was a single 8-token word. Nothing failed loudly when longer items
+    were added — the recogniser simply stopped decoding part-way and returned a
+    PREFIX. "ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ" came back as "ನಾನು ಶಾಲ", scored 0.52, and a
+    child who read the sentence perfectly was marked wrong. Every two-word phrase
+    was being clipped by it as well.
+
+    It is checked here, in the fast suite, against the CSV and a calibrated
+    upper-bound estimate — not against the real tokenizer — because the tokenizer
+    ships inside the model directory, and the whole point is that this must fail
+    on a laptop with no model, before anyone runs the slow ASR pass.
+    """
+    print("\nDecode budget (the cap must fit the longest spoken form):")
+    ok = True
+
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "data", "vocabulary.csv")
+    with io.open(path, encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+
+    worst, worst_row = 0, None
+    for row in rows:
+        spoken = (row.get("spoken_form") or row.get("kannada_word") or "").strip()
+        need = pronunciation.estimate_tokens(spoken)
+        if need > worst:
+            worst, worst_row = need, row
+
+    label = f"{worst_row['concept_id']} {worst_row['spoken_form']!r}" if worst_row else "?"
+    ok &= _check(
+        f"the longest spoken form ({label}) fits in max_new_tokens",
+        worst <= pronunciation.MAX_NEW_TOKENS,
+        True,
+    )
+    print(f"    longest needs ~{worst} tokens, cap is "
+          f"{pronunciation.MAX_NEW_TOKENS}")
+
+    ok &= _check("the cap still bounds a runaway decode",
+                 pronunciation.MAX_NEW_TOKENS < 200, True)
     return ok
 
 
@@ -303,6 +325,7 @@ def main():
     passed &= soft_voice_tests()
     passed &= confidence_tests()
     passed &= grace_tests()
+    passed &= decode_budget_tests()
 
     if len(sys.argv) > 1:
         audio_path = sys.argv[1]

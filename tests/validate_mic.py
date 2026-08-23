@@ -42,16 +42,10 @@ RATE = 16000
 AUDIO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "audio")
 VOCAB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "vocabulary.csv")
 
-# (label, voice_amplitude, room_noise_floor, must_be_accepted)
-#
-# The voice levels are the point. 0.30 is a child speaking up. 0.010 is a shy one
-# at arm's length from a laptop — SEVENTY times quieter, and 2x below the level
-# the old gate demanded. Both are real; both must be scored. The last two rows
-# have no voice in them at all and must never reach the recogniser.
 CONDITIONS = [
     ("normal voice, quiet room",  0.300, 0.00020, True),
     ("soft voice, quiet room",    0.030, 0.00010, True),
-    ("FAINT voice, quiet room",   0.010, 0.00005, True),   # <- the reported bug
+    ("FAINT voice, quiet room",   0.010, 0.00005, True),
     ("no voice, noisy room",      0.000, 0.00200, False),
     ("mic muted (digital zero)",  0.000, 0.00000, False),
 ]
@@ -77,7 +71,7 @@ def simulate_mic(word, amplitude, noise, rng):
     body = voice + (rng.normal(0, noise, len(voice)) if noise else 0.0)
     x = np.concatenate([lead, body, tail]).astype(np.float32)
 
-    pcm = (np.clip(x, -1, 1) * 32767).astype(np.int16)   # what the browser sends
+    pcm = (np.clip(x, -1, 1) * 32767).astype(np.int16)
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
         w.setnchannels(1)

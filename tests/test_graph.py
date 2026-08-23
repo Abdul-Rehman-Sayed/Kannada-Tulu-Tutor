@@ -13,14 +13,11 @@ import os
 import sys
 import tempfile
 
-# Kannada script won't render on a cp1252 Windows console; force UTF-8 output.
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
     pass
 
-# Isolate this checkpoint from real learner data: point the DB at a temp file.
-# Must happen BEFORE importing db (db reads TUTOR_DB_PATH at import time).
 _fd, _TMP_DB = tempfile.mkstemp(prefix="tutor_test_graph_", suffix=".db")
 os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _TMP_DB
@@ -34,21 +31,20 @@ def main():
 
     name = "test_dummy"
     sid = db.create_or_get_student(name)
-    db.reset_student(sid)  # clean slate so re-runs are deterministic
+    db.reset_student(sid)
     print(f"Dummy student '{name}' -> id={sid}\n")
 
     print("Graph loaded:")
-    G = graph_engine.load_graph()
-    print(f"  {G.number_of_nodes()} concepts, {G.number_of_edges()} prerequisite edges")
+    G = graph_engine.load_graph(graph_engine.KANNADA)
+    print(f"  {G.number_of_nodes()} Kannada concepts, "
+          f"{G.number_of_edges()} prerequisite edges")
     roots = [n for n in G.nodes if G.in_degree(n) == 0]
     print(f"  root concepts (no prereqs): {roots}\n")
 
     print("Walking the curriculum (marking each concept CORRECT):\n")
     seen = []
-    # Walk far enough to cross a tier boundary: 13 vowels, then the core
-    # consonants. If the ordering is broken this is where it shows.
     for step in range(1, 17):
-        c = graph_engine.get_next_concept(sid)
+        c = graph_engine.get_next_concept(sid, graph_engine.KANNADA)
         if c is None:
             print("  (nothing left to learn — all reachable concepts mastered)")
             break
@@ -59,21 +55,17 @@ def main():
         )
         graph_engine.update_mastery(sid, c["concept_id"], correct_bool=True)
 
-    mastered, total = graph_engine.mastery_summary(sid)
+    mastered, total = graph_engine.mastery_summary(sid, graph_engine.KANNADA)
     print(f"\nMastered {mastered} / {total} concepts.")
 
     failures = []
 
-    # 1. The 13 vowels are a chain, so they must be served in varnamale order.
     vowels = [f"V{i:02d}" for i in range(1, 14)]
     if seen[:13] != vowels:
         failures.append(f"first 13 should be the vowels in order, got {seen[:13]}")
 
-    # 2. Only after the vowels do consonants unlock — and the CORE ones (the
-    #    high-frequency letters, difficulty 2) must come before the rare ones
-    #    (difficulty 4). If difficulty were ignored, a child would meet ಝ before ಕ.
     after = seen[13:16]
-    G2 = graph_engine.load_graph()
+    G2 = graph_engine.load_graph(graph_engine.KANNADA)
     for cid in after:
         node = G2.nodes[cid]
         if node["category"] != "consonants":
@@ -81,38 +73,28 @@ def main():
         elif node["difficulty"] != 2:
             failures.append(f"{cid} is difficulty {node['difficulty']}, expected a core (2) letter first")
 
-    # 3. Every letter must be speakable: an isolated letter cannot be recognised,
-    #    so spoken_form has to carry an anchor word. A letter whose spoken_form is
-    #    just itself is the exact bug that made the first card unpassable.
     for cid in G2.nodes:
         node = G2.nodes[cid]
         if node["category"] in ("vowels", "consonants"):
             if node["spoken_form"].strip() == node["kannada_word"].strip():
                 failures.append(f"{cid} ({node['kannada_word']}) has no anchor word — unpassable")
 
-    # 4. A word must never be served before the letter it starts with.
     for cid in G2.nodes:
         if G2.nodes[cid]["category"] not in ("vowels", "consonants"):
             if G2.in_degree(cid) == 0:
-                failures.append(f"word {cid} has no prerequisite letter")
+                failures.append(f"Kannada word {cid} has no prerequisite letter")
 
-    # 5. THE TRAP TEST. A child who can never master one concept must not be
-    #    served it forever. Before the parking rule existed, get_next_concept()
-    #    returned the lowest ready-and-unmastered concept — so a concept the
-    #    recogniser could not hear was returned again, and again, and the rest of
-    #    the curriculum was permanently unreachable.
     print("\nTrap test: a learner who keeps failing one concept must still progress.")
     trapped_id = db.create_or_get_student("test_always_wrong")
     db.reset_student(trapped_id)
 
     served, distinct = [], set()
     for _ in range(40):
-        c = graph_engine.get_next_concept(trapped_id)
+        c = graph_engine.get_next_concept(trapped_id, graph_engine.KANNADA)
         if c is None:
             break
         served.append(c["concept_id"])
         distinct.add(c["concept_id"])
-        # This learner NEVER gets anything right.
         graph_engine.update_mastery(trapped_id, c["concept_id"], correct_bool=False,
                                     raw_score=0.1)
 
@@ -124,12 +106,57 @@ def main():
             f"reach the rest of the curriculum (parking is broken)"
         )
     else:
-        mastered_n, _ = graph_engine.mastery_summary(trapped_id)
+        mastered_n, _ = graph_engine.mastery_summary(
+            trapped_id, graph_engine.KANNADA)
         if mastered_n != 0:
             failures.append(f"a learner who never answered correctly shows {mastered_n} mastered")
-        parked = [p for p in graph_engine.get_student_progress(trapped_id) if p["parked"]]
+        parked = [p for p in graph_engine.get_student_progress(
+            trapped_id, graph_engine.KANNADA) if p["parked"]]
         print(f"  parked (moved on, NOT counted as mastered): {len(parked)}")
         print(f"  mastered: {mastered_n}  <- must be 0")
+
+    print("\nSeparation test: the two curricula must not touch.")
+    full = graph_engine.load_graph()
+    for lang in graph_engine.available_languages():
+        sub = graph_engine.load_graph(lang)
+        wrong = [n for n, d in sub.nodes(data=True) if d["language"] != lang]
+        if wrong:
+            failures.append(f"{lang} graph contains {len(wrong)} concept(s) of "
+                            f"another language: {wrong[:5]}")
+    crossing = [(a, b) for a, b in full.edges
+                if full.nodes[a]["language"] != full.nodes[b]["language"]]
+    if crossing:
+        failures.append(f"{len(crossing)} prerequisite edge(s) cross languages: "
+                        f"{crossing[:3]}")
+
+    tulu_id = db.create_or_get_student("test_tulu_learner")
+    db.reset_student(tulu_id)
+    tulu_served = []
+    for _ in range(5):
+        c = graph_engine.get_next_concept(tulu_id, graph_engine.TULU)
+        if c is None:
+            break
+        tulu_served.append(c)
+        graph_engine.update_mastery(tulu_id, c["concept_id"], correct_bool=True)
+    print(f"  a Tulu learner was served: "
+          f"{[c['display_word'] for c in tulu_served]}")
+    if not tulu_served:
+        failures.append("a Tulu learner was served nothing at all")
+    for c in tulu_served:
+        if c["language"] != graph_engine.TULU:
+            failures.append(f"a Tulu learner was served {c['concept_id']}, which "
+                            f"is {c['language']}")
+        if c["display_word"] != c["tulu_word"]:
+            failures.append(f"{c['concept_id']} shows {c['display_word']!r} to a "
+                            f"Tulu learner, not its Tulu form {c['tulu_word']!r}")
+    kn_done, _ = graph_engine.mastery_summary(tulu_id, graph_engine.KANNADA)
+    tu_done, tu_total = graph_engine.mastery_summary(tulu_id, graph_engine.TULU)
+    print(f"  their progress: Tulu {tu_done}/{tu_total}, Kannada {kn_done}")
+    if kn_done != 0:
+        failures.append(f"Tulu progress leaked into the Kannada count ({kn_done})")
+    if tu_done != len(tulu_served):
+        failures.append(f"Tulu learner shows {tu_done} learned, expected "
+                        f"{len(tulu_served)}")
 
     if failures:
         print("\nFAIL:")
@@ -137,8 +164,9 @@ def main():
             print("  -", f)
         sys.exit(1)
     print("\nPASS: vowels in order, core consonants next, every letter has an "
-          "anchor, every word sits behind its letter, and a struggling learner "
-          "is moved on instead of being trapped.")
+          "anchor, every Kannada word sits behind its letter, a "
+          "struggling learner is moved on instead of being trapped, and "
+          "the Kannada and Tulu curricula stay entirely separate.")
 
 
 if __name__ == "__main__":

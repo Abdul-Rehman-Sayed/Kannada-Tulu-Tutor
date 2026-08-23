@@ -3,9 +3,10 @@ test_app_boot.py — headless end-to-end test for the Streamlit app.
 
 Uses Streamlit's AppTest to actually run app.py in a simulated runtime (no
 browser, no mic, no audio playback) and drive the real journey: landing page ->
-create an account -> the first flashcard. Then it checks the thing that actually
-guards children's records — that a student session cannot reach the teacher
-dashboard, and a teacher account cannot be created without the PIN.
+create an account -> choose a curriculum -> the first flashcard. Then it checks
+the thing that actually guards children's records — that a student session cannot
+reach the teacher dashboard, and a teacher account cannot be created without the
+PIN.
 
 The live microphone loop still needs a human; everything up to it is here.
 
@@ -22,8 +23,6 @@ try:
 except Exception:
     pass
 
-# Isolate from real learner data + skip the whisper warm-up thread. Must be set
-# BEFORE the app (and its db import) runs inside AppTest.
 _fd, _TMP_DB = tempfile.mkstemp(prefix="tutor_test_boot_", suffix=".db")
 os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _TMP_DB
@@ -32,12 +31,8 @@ os.environ["TUTOR_TEACHER_PIN"] = "boot-test-pin"
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
-# Learners and teachers now have SEPARATE doors, reached from separate landing
-# buttons. Within a door the Sign in tab renders before Create account, and both
-# exist in the DOM at once, so these indices are stable.
-#   landing buttons: 0 = Start learning, 1 = Teacher sign in, 2 = I already have…
-#   door text_input: 0,1 = sign-in user/pass; 2,3,4 = name/user/pass; 5 = PIN
-#   door buttons   : 0 = Back, 1 = switch door, 2 = Sign in, 3 = Create account
+CARD = 'class="card word-card"' 
+
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
 BTN_SIGN_IN, BTN_CREATE = 2, 3
@@ -60,9 +55,22 @@ def _signup(at, name, user, pw, teacher=False, pin=""):
     at.text_input[NEW_USER].set_value(user)
     at.text_input[NEW_PASS].set_value(pw)
     if teacher:
-        # The PIN field exists ONLY on the teacher door — that is the separation.
         at.text_input[NEW_PIN].set_value(pin)
     at.button[BTN_CREATE].click().run()
+    return at
+
+
+def _choose_language(at, name="Kannada"):
+    """The chooser that now stands between a new account and its first lesson.
+
+    A learner is asked once which curriculum they are here for, because there is
+    no honest default: serving Kannada to a child who came for Tulu is exactly
+    the behaviour the language split removed.
+    """
+    labels = [b.label for b in at.button]
+    want = f"Learn {name}"
+    assert want in labels, f"language chooser has no {want!r} button: {labels}"
+    at.button[labels.index(want)].click().run()
     return at
 
 
@@ -79,22 +87,17 @@ def landing_tests():
     at = _fresh()
     assert not at.exception, f"app raised on first load: {at.exception}"
     blob = " ".join(m.value for m in at.markdown)
-    assert "hero" in blob, "landing hero did not render"
+    assert 'class="masthead"' in blob, "landing masthead did not render"
     labels = [b.label for b in at.button]
-    for want in ("Start learning", "Teacher sign in", "I already have an account"):
+    for want in ("Start learning", "Teacher sign in"):
         assert want in labels, f"missing landing entry point {want!r}: {labels}"
     print(f"  OK  renders with real entry points: {labels}")
 
-    # Nothing on the landing page may be a decorative fake: every call to action
-    # has to be a Streamlit button that actually routes somewhere.
     at = _goto_signup(_fresh())
     assert not at.exception, at.exception
     assert any(t.label == "Your name" for t in at.text_input), "learner form missing"
     print("  OK  'Start learning' routes to a real account form")
 
-    # SEPARATION: the teacher PIN is a registration secret and must not be shown
-    # on the learner door — a child has no use for it, and putting it there was
-    # what made the teacher's only way in the CREATE ACCOUNT form.
     assert not any(t.label == "Teacher PIN" for t in at.text_input), \
         "the teacher PIN is being shown on the learner door"
     assert not any("teacher" in (c.label or "").lower() for c in at.checkbox), \
@@ -117,14 +120,22 @@ def student_journey_tests():
     assert not at.exception, f"raised after sign-up: {at.exception}"
 
     blob = " ".join(m.value for m in at.markdown)
-    assert "kannada-word" in blob, "word card did not render after sign-up"
-    assert "ಅ" in blob, "expected first concept ಅ (V01) to be shown"
-    print("  OK  account created -> first flashcard rendered (ಅ / V01)")
+    assert "What would you like to learn" in blob, \
+        "a new learner was not asked which language they came to learn"
+    labels = [b.label for b in at.button]
+    for want in ("Learn Kannada", "Learn Tulu"):
+        assert want in labels, f"language chooser is missing {want!r}: {labels}"
+    print(f"  OK  account created -> asked which curriculum: {labels}")
 
-    # REGRESSION: ಅ on its own cannot be recognised, so a letter card MUST tell
-    # the child to say the letter + its anchor word. If this box disappears, the
-    # child is being asked for a sound the recogniser will always mark wrong.
-    assert "say-box" in blob, "letter card is missing the 'Say this' prompt"
+    at = _choose_language(at, "Kannada")
+    assert not at.exception, f"raised after choosing a language: {at.exception}"
+
+    blob = " ".join(m.value for m in at.markdown)
+    assert CARD in blob, "word card did not render after choosing Kannada"
+    assert "ಅ" in blob, "expected first concept ಅ (V01) to be shown"
+    print("  OK  chose Kannada -> first flashcard rendered (ಅ / V01)")
+
+    assert "Say this" in blob, "letter card is missing the 'Say this' prompt"
     assert "ಅ ಅಮ್ಮ" in blob, "letter card must ask for the letter + anchor word"
     print("  OK  card asks for 'ಅ ಅಮ್ಮ' (letter + anchor), not a bare ಅ")
 
@@ -134,7 +145,6 @@ def student_journey_tests():
     assert len(recorders) >= 1, "microphone recorder (st.audio_input) missing"
     print(f"  OK  real controls present: Listen + {len(recorders)} mic recorder")
 
-    # A student must not be shown any way into the class list.
     assert not any("Teacher" in l for l in labels), f"teacher control on student view: {labels}"
     assert "Teacher dashboard" not in blob
     print("  OK  no teacher control anywhere on the student view")
@@ -162,9 +172,8 @@ def teacher_boundary_tests():
     assert "Teacher dashboard" in heads, f"teacher was not shown the dashboard: {heads!r}"
     print("  OK  the correct PIN creates a teacher and opens the dashboard")
 
-    # The role is re-read from the DB every rerun. Forging the session copy must
-    # not promote a student: this is the check that the gate is not a session flag.
-    at = _signup(_goto_signup(_fresh()), "Sneaky", "sneaky", "password1")
+    at = _choose_language(
+        _signup(_goto_signup(_fresh()), "Sneaky", "sneaky", "password1"))
     at.session_state["user"]["role"] = "teacher"
     at.run()
     assert not at.exception, at.exception
@@ -172,7 +181,7 @@ def teacher_boundary_tests():
     assert "Teacher dashboard" not in heads, \
         "a student promoted themselves by editing the session — the role is being trusted"
     blob = " ".join(m.value for m in at.markdown)
-    assert "kannada-word" in blob, "the forged student should still be on their flashcard"
+    assert CARD in blob, "the forged student should still be on their flashcard"
     print("  OK  forging role='teacher' in the session does NOT open the dashboard")
     return True
 

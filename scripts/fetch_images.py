@@ -44,24 +44,14 @@ CREDITS = os.path.join(IMAGE_DIR, "CREDITS.csv")
 
 API = "https://commons.wikimedia.org/w/api.php"
 
-# Wikimedia's User-Agent policy requires a tool name, a version, and a way to
-# CONTACT the operator. A UA without a contact gets served HTTP 429 "your request
-# does not comply with our robot policy" — which is exactly what happened on the
-# first run here. Set TUTOR_CONTACT to your own email or project URL before a
-# large fetch; the default is deliberately honest about being unset.
 _CONTACT = os.environ.get("TUTOR_CONTACT", "https://github.com/ - set TUTOR_CONTACT")
 UA = f"KannadaTuluLiteracyTutor/1.0 ({_CONTACT}) python-urllib"
 
-# Commons is free and donation-funded. Being slow is the price of using it, and
-# hammering it is how you get the whole project's IP blocked.
-REQUEST_PAUSE = 1.1          # seconds between concepts
+REQUEST_PAUSE = 1.1
 MAX_RETRIES = 4
 
 CARD_W, CARD_H = 640, 480
 
-# Licences we accept. Commons also hosts a few "fair use" files via templates;
-# anything whose licence we do not recognise as free is skipped rather than
-# shipped, because the app is redistributed.
 _FREE_HINTS = ("cc", "public domain", "pd", "gfdl", "attribution")
 
 
@@ -76,8 +66,6 @@ def _open(url, timeout=30):
         except urllib.error.HTTPError as e:
             last = e
             if e.code == 429:
-                # The server tells us how long to wait — believe it rather than
-                # guessing, otherwise we just get throttled again.
                 wait = float(e.headers.get("Retry-After") or delay)
                 print(f"        rate-limited; waiting {wait:.0f}s")
                 time.sleep(min(wait, 60))
@@ -109,70 +97,48 @@ def _is_free(licence):
 
 WIKI_API = "https://en.wikipedia.org/w/api.php"
 
-# Per-concept image overrides, as ("wiki", article) or ("commons", query).
-#
-# Neither source is reliable on its own, and they fail in *different* ways, so
-# the source is named per concept rather than left to a fallback chain:
-#
-#   Commons free-text search matches file TEXT, not subject. It returned a blue
-#   whale for "mother", a campervan for "father", a great egret for "mouse".
-#
-#   Wikipedia lead images are curated, but they depict the ARTICLE, which is not
-#   always the everyday sense a six-year-old needs: "Head" leads with a meerkat,
-#   "Bird" with a taxonomy collage, "Milk" with a piece of milk-glass tableware,
-#   "Sea" with a map, "Child" with a toy console.
-#
-# Every entry below is a correction for something a contact-sheet review actually
-# caught. Re-run `python fetch_images.py --contact-sheet` after any change and
-# LOOK at the result: an unreviewed image set is how you ship a photo of a
-# deathbed painting on the card that teaches a child the word "mother".
 OVERRIDE = {
-    # --- letters -------------------------------------------------------------
     "V01": ("wiki", "Mother"),
     "V03": ("wiki", "House mouse"),
     "V05": ("wiki", "Salt"),
     "V07": ("wiki", "Rishi"),
-    "V12": ("commons", "child reading book"),      # wiki "Reading" -> a Greek vase
-    "C07": ("wiki", "Chital"),                     # spotted deer
-    "C11": ("commons", "metal tin box"),           # wiki -> a sheet of tin labels
-    "C13": ("commons", "archery arrow"),           # wiki "Arrow" -> a clover field
-    "C14": ("commons", "boy face portrait smiling"),  # wiki "Head" -> a meerkat
+    "V12": ("commons", "child reading book"),
+    "C07": ("wiki", "Chital"),
+    "C11": ("commons", "metal tin box"),
+    "C13": ("commons", "archery arrow"),
+    "C14": ("commons", "boy face portrait smiling"),
     "C15": ("wiki", "Children's literature"),
-    "C20": ("wiki", "Fruit"),                      # commons -> a still-life painting
+    "C20": ("wiki", "Fruit"),
     "C24": ("wiki", "Machine"),
     "C30": ("wiki", "Sun"),
-    "C32": ("commons", "rain drops falling"),      # wiki "Rain" -> wet tarmac
-    # --- words ---------------------------------------------------------------
+    "C32": ("commons", "rain drops falling"),
     "W001": ("wiki", "Mother"),
     "W002": ("wiki", "Father"),
     "W003": ("wiki", "Sibling"),
     "W004": ("wiki", "Sibling"),
     "W005": ("wiki", "Boy"),
     "W006": ("wiki", "Girl"),
-    "W007": ("commons", "smiling child portrait"), # wiki "Child" -> a toy console
-    "W009": ("commons", "grandmother portrait"),   # wiki -> an unsettling painting
+    "W007": ("commons", "smiling child portrait"),
+    "W009": ("commons", "grandmother portrait"),
     "W010": ("wiki", "Friendship"),
     "W016": ("wiki", "Pig"),
     "W018": ("wiki", "House mouse"),
-    "W020": ("wiki", "House sparrow"),             # wiki "Bird" -> a taxonomy collage
+    "W020": ("wiki", "House sparrow"),
     "W026": ("commons", "rain drops falling"),
     "W027": ("wiki", "Sun"),
     "W031": ("wiki", "Flower"),
-    "W034": ("wiki", "Ocean"),                     # wiki "Sea" -> a map
+    "W034": ("wiki", "Ocean"),
     "W035": ("commons", "cooked rice bowl"),
-    # Commons "glass of milk" returns milk-GLASS — the opaque white tableware.
-    # The Wikipedia article leads with an actual glass of milk.
     "W036": ("wiki", "Milk"),
     "W038": ("wiki", "Fruit"),
-    "W042": ("wiki", "Roti"),                      # commons -> a bakery interior
-    # "Human head" leads with an anatomical drawing; children need a face.
+    "W042": ("wiki", "Roti"),
     "W043": ("commons", "boy face portrait smiling"),
     "W044": ("wiki", "Human eye"),
     "W045": ("wiki", "Ear"),
     "W046": ("wiki", "Human nose"),
     "W047": ("wiki", "Lip"),
     "W048": ("wiki", "Hand"),
-    "W049": ("commons", "human legs walking jeans"),  # wiki -> a 3D anatomy render
+    "W049": ("commons", "human legs walking jeans"),
     "W050": ("wiki", "Human tooth"),
     "W068": ("commons", "wooden door house"),
 }
@@ -231,14 +197,13 @@ def search_image(query):
         "action": "query",
         "generator": "search",
         "gsrsearch": f"filetype:bitmap {query}",
-        "gsrnamespace": 6,          # File: namespace only
-        "gsrlimit": 8,              # a few, so we can skip non-free / odd ones
+        "gsrnamespace": 6,
+        "gsrlimit": 8,
         "prop": "imageinfo",
         "iiprop": "url|extmetadata",
-        "iiurlwidth": 800,          # server-side thumbnail: no giant downloads
+        "iiurlwidth": 800,
     })
     pages = (data.get("query") or {}).get("pages") or {}
-    # `generator=search` loses ranking in the dict, so restore it via index.
     ordered = sorted(pages.values(), key=lambda p: p.get("index", 999))
 
     for page in ordered:
@@ -249,7 +214,6 @@ def search_image(query):
         url = info.get("thumburl") or info.get("url")
         if not url or not _is_free(licence):
             continue
-        # Strip the HTML Commons puts in the Artist field.
         author = _strip_html(author)
         return url, licence, author, page.get("title", "")
     return None, None, None, None
@@ -271,13 +235,9 @@ def download_card(url, dest):
     """Fetch `url` and write it as a CARD_W x CARD_H JPEG (centre-cropped)."""
     raw = _open(url, timeout=60)
     img = Image.open(io.BytesIO(raw))
-    img = ImageOps.exif_transpose(img)          # honour camera rotation
+    img = ImageOps.exif_transpose(img)
     img = img.convert("RGB")
-    # Crop to the card's aspect ratio rather than squashing it — a stretched cow
-    # is worse than a cropped one.
     img = ImageOps.fit(img, (CARD_W, CARD_H), method=Image.LANCZOS, centering=(0.5, 0.4))
-    # Write via a temp file so an interrupted run can't leave a truncated JPEG
-    # that the app would then fail to open.
     tmp = dest + ".part"
     img.save(tmp, "JPEG", quality=86, optimize=True)
     os.replace(tmp, dest)
@@ -288,19 +248,11 @@ def load_rows():
         return list(csv.DictReader(f))
 
 
-# Locally drawn cards
-#
-# Colours and numbers are NOT fetched. A photograph is simply the wrong medium
-# for them: "a photo of the colour red" is whatever the search engine feels like
-# that day, and "a photo of the number five" teaches nothing. A flat swatch and a
-# set of countable dots are unambiguous, better pedagogy, need no network, and
-# carry no licence. They are drawn here instead.
 _SWATCHES = {
     "red": (208, 63, 52), "green": (46, 139, 87), "yellow": (240, 190, 40),
     "blue": (52, 110, 200), "black": (38, 40, 48), "white": (250, 250, 252),
 }
 
-# Kannada digits ೦-೯, so the numeral on the card is the one the child will read.
 _KN_DIGITS = "೦೧೨೩೪೫೬೭೮೯"
 _NUMBERS = {
     "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
@@ -317,9 +269,6 @@ def draw_colour_card(meaning, dest):
     img = Image.new("RGB", (CARD_W, CARD_H), (250, 250, 252))
     d = ImageDraw.Draw(img)
     m = 48
-    # The outline must contrast with the SWATCH, not with the page: a white
-    # swatch on a near-white card is otherwise an invisible blank rectangle,
-    # which is what the first render of "ಬಿಳಿ / white" actually looked like.
     luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
     outline = (120, 126, 140) if luma > 200 else (255, 255, 255)
     d.rounded_rectangle([m, m, CARD_W - m, CARD_H - m], radius=28, fill=rgb,
@@ -334,7 +283,6 @@ def draw_number_card(meaning, dest):
     img = Image.new("RGB", (CARD_W, CARD_H), (250, 250, 252))
     d = ImageDraw.Draw(img)
 
-    # Dots laid out in rows of five — the way counting is taught.
     cols = 5
     rows_n = (n + cols - 1) // cols
     r, gap = 34, 26
@@ -443,7 +391,6 @@ def main():
         rows = [r for r in rows if r["concept_id"] in wanted]
 
     credits, failed = [], []
-    # Keep any credits we already recorded for images we're not re-fetching.
     if os.path.exists(CREDITS):
         with open(CREDITS, encoding="utf-8-sig") as f:
             credits = [r for r in csv.DictReader(f)]
@@ -457,7 +404,6 @@ def main():
             print(f"[{i:3}/{len(rows)}] {cid:5} have    {r['image_file']}")
             continue
 
-        # Colours and numbers are drawn, not searched (see draw_local).
         try:
             if draw_local(r, dest):
                 credits = [c for c in credits if c.get("concept_id") != cid]
@@ -479,9 +425,6 @@ def main():
             elif source == "wiki":
                 url, licence, author, page = search_wikipedia_image(target, title=target)
             else:
-                # No override: Wikipedia's curated lead image first, since a raw
-                # Commons file search is much likelier to return something that
-                # merely mentions the word. Commons only as a fallback.
                 url, licence, author, page = search_wikipedia_image(query)
                 if not url:
                     url, licence, author, page = search_image(query)
@@ -500,7 +443,7 @@ def main():
         except Exception as e:
             print(f"[{i:3}/{len(rows)}] {cid:5} ERROR   {query!r}: {e}")
             failed.append((cid, str(e)))
-        time.sleep(REQUEST_PAUSE)   # a free, donation-funded API: don't hammer it
+        time.sleep(REQUEST_PAUSE)
 
     if credits:
         with open(CREDITS, "w", encoding="utf-8-sig", newline="") as f:

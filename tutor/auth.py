@@ -38,10 +38,6 @@ from contextlib import closing
 from . import config
 from . import db
 
-# scrypt work factors. n is the memory/CPU cost; 2**14 with r=8 needs ~16 MB and
-# ~50-100 ms per hash on a classroom laptop — unnoticeable on a login, brutal
-# across a stolen database. Stored per-hash so these can be raised later without
-# locking out anyone who registered under the old cost.
 SCRYPT_N = 16384
 SCRYPT_R = 8
 SCRYPT_P = 1
@@ -56,9 +52,6 @@ LOCKOUT_SECONDS = 60
 
 _USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{3,32}$")
 
-# username -> [failure_count, first_failure_time]. In-process: this is a single
-# Streamlit server, and a lockout that survives a restart would lock a classroom
-# out of its own tutor with no way back in.
 _failures = {}
 
 
@@ -91,7 +84,7 @@ def _hash(password, salt):
     digest = hashlib.scrypt(
         password.encode("utf-8"), salt=salt,
         n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P, dklen=KEY_LEN,
-        maxmem=64 * 1024 * 1024,   # scrypt raises if it cannot get its memory
+        maxmem=64 * 1024 * 1024,
     )
     return digest, f"scrypt${SCRYPT_N}${SCRYPT_R}${SCRYPT_P}"
 
@@ -156,9 +149,6 @@ def register(username, password, display_name=None, role=STUDENT, teacher_pin=No
     salt = secrets.token_bytes(16)
     digest, kdf = _hash(password, salt)
 
-    # A learner needs a row in `students` for mastery to hang off. A teacher does
-    # not — they are not a learner, and giving them one would put them in the
-    # class list as a child with 0% progress.
     student_id = db.create_or_get_student(display_name) if role == STUDENT else None
 
     with closing(db.get_connection()) as conn, conn:
@@ -172,8 +162,6 @@ def register(username, password, display_name=None, role=STUDENT, teacher_pin=No
             raise AuthError("That username is already taken.") from None
         new_id = cur.lastrowid
 
-    # Read the row back only after the transaction above has COMMITTED — get_user
-    # opens its own connection and would not see an insert still in flight.
     return get_user(new_id)
 
 
@@ -213,8 +201,6 @@ def login(username, password):
             "SELECT * FROM users WHERE username = ? COLLATE NOCASE", (username,)
         ).fetchone()
 
-    # Hash even when the user does not exist, so the response time does not
-    # reveal which usernames are real.
     if row is None:
         _hash(password or "x", b"\x00" * 16)
         _record_failure(key)

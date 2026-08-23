@@ -2,8 +2,14 @@
 app.py — Interactive Kannada/Tulu literacy tutor (Streamlit).
 
 Landing  : what the tool is, for a teacher deciding whether to use it.
-Student  : a flashcard loop — see a letter or word with a picture, hear it, say
-           it, get scored, advance — sequenced by the prerequisite graph
+Language : which curriculum the child is here to learn — Kannada or Tulu. The two
+           are separate syllabuses that share nothing but this app: a Tulu learner
+           is never served a Kannada card, and a Kannada learner is never shown a
+           Tulu translation they did not ask for. The choice is stored on the
+           student row, so it survives to the next device and shows up on the
+           teacher's dashboard.
+Student  : a flashcard loop — see a letter, word or sentence with a picture, hear
+           it, say it, get scored, advance — sequenced by the prerequisite graph
            (graph_engine), speech scoring (pronunciation) and media (media).
 Teacher  : a dashboard of the class, reachable only by an account whose ROLE says
            teacher. The role is read from the database on every rerun, never from
@@ -15,7 +21,8 @@ A note on the interface: there are no emoji in it. Icons are Material Symbols,
 drawn as vectors at the right size and weight; emoji render differently on every
 device, sit at the wrong baseline, and read as decoration rather than as controls.
 A child using this in a classroom needs an obvious "speak" button, not a picture
-of a microphone in someone else's font.
+of a microphone in someone else's font. What the whole thing should look like is
+argued out in ui.py.
 
 Run:  streamlit run app.py
 """
@@ -26,26 +33,22 @@ import html
 import os
 import threading
 
-import networkx as nx
 import pandas as pd
 import streamlit as st
 
 from tutor import (
-    auth, config, db, graph_engine, media,
+    auth, cogmap, config, db, graph_engine, insight, media,
     pronunciation, ui,
 )
 
-# Keys wiped on logout. Anything recording-related is prefixed "rec_".
-# `confident_misses` is the per-concept benefit-of-the-doubt counter behind the
-# grace rule in score_recording (see pronunciation.GRACE_MISSES).
 _SESSION_KEYS = ("user", "concept", "last_result", "listen_audio", "scored_sig",
-                 "confident_misses")
+                 "confident_misses", "language")
 
 st.set_page_config(
     page_title="Kannada & Tulu Literacy Tutor",
     page_icon=":material/graphic_eq:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 
@@ -62,13 +65,11 @@ def _hide_sidebar():
     )
 
 
-# Model warm-up: load whisper once in the background at start, so the first Speak
-# doesn't stall for the whole model load.
 def _warm_model():
     try:
         pronunciation.get_model()
     except Exception:
-        pass  # load_state() reports FAILED; the UI surfaces it
+        pass
 
 
 @st.cache_resource
@@ -77,7 +78,6 @@ def start_model_warmup():
     return True
 
 
-# The load is SETTLED once it can no longer change on its own: ready, or failed.
 _SETTLED = (pronunciation.READY, pronunciation.FAILED)
 
 
@@ -99,8 +99,6 @@ def _status_caption():
         if pronunciation.is_kannada_model():
             st.caption(":material/check_circle: Speech scoring ready")
         else:
-            # Stock whisper's Kannada is too weak to grade a child fairly — say
-            # so rather than silently marking correct answers wrong.
             st.warning(
                 "The Kannada speech model could not be loaded, so scoring is "
                 "unreliable. Listening still works.",
@@ -144,14 +142,10 @@ def recogniser_status():
             try:
                 pronunciation.get_model()
             except Exception:
-                pass  # load_state() is now FAILED; the caption below says so
+                pass
     _status_caption()
 
 
-# Scoring a recording. What the child is asked to say is `spoken_form`, NOT the
-# displayed word. For a letter card those differ: the card shows ಅ, but the child
-# says "ಅ ಅಮ್ಮ", because an isolated letter is too short for the recogniser to
-# resolve (it comes back as ಮಾರ್ಕ್). See build_dataset.py for the measurements.
 def score_recording(sid, concept, wav_bytes):
     """
     Score a browser recording. Sets st.session_state.last_result to one of:
@@ -163,9 +157,6 @@ def score_recording(sid, concept, wav_bytes):
     matters: a muted mic produces confident nonsense from Whisper, and the old
     build turned that into "you said it wrong".
     """
-    # Decode, check, trim and normalize in one pass. A soft voice is amplified,
-    # not refused — see the measurements in pronunciation.py. `samples` goes
-    # straight to the recogniser as an array; there is no temp file to write.
     ok, reason, stats, samples = pronunciation.prepare_audio(wav_bytes)
     if not ok:
         st.session_state.last_result = {"retry": reason, "stats": stats}
@@ -174,31 +165,21 @@ def score_recording(sid, concept, wav_bytes):
     msg = ("Listening to what you said…"
            if pronunciation.is_model_ready()
            else "Waking the speech recogniser (first time only)…")
+    asr_lang = graph_engine.language_info(concept.get("language"))["asr"]
     try:
         with st.spinner(msg):
-            heard, confidence = pronunciation.transcribe_scored(samples)
+            heard, confidence = pronunciation.transcribe_scored(samples, language=asr_lang)
     except Exception as e:
         st.session_state.last_result = {"error": str(e)}
         return
 
     if not heard.strip() or pronunciation.is_silence_filler(heard):
-        # The recogniser produced nothing — either literally empty, or its
-        # no-speech filler ("ಮುಕ್ತಾಯ"), which is what a microphone that captured
-        # no voice comes back as. A capture problem, not a wrong answer — no
-        # attempt is logged and the child stays on this card.
         st.session_state.last_result = {"retry": pronunciation.NO_SPEECH, "stats": stats}
         return
 
     expected, alternates = pronunciation.accepted_forms(concept)
     score, correct = pronunciation.score_pronunciation(expected, heard, alternates)
 
-    # What does this attempt MEAN? classify_attempt() holds the whole "never blame
-    # the child" policy: a HIT counts on any signal; a non-match is only ever a
-    # real, logged wrong answer when the clip was audible, the recogniser was sure
-    # of it, AND it has kept happening. A weak signal, an unconfident decode, or a
-    # first confident non-match are all free retries — because on real-world audio
-    # the recogniser will confidently mis-transcribe a correctly-spoken word, and
-    # one such miss must never mark a child wrong. See pronunciation.GRACE_MISSES.
     cid = concept["concept_id"]
     misses = st.session_state.setdefault("confident_misses", {})
     outcome = pronunciation.classify_attempt(
@@ -206,15 +187,6 @@ def score_recording(sid, concept, wav_bytes):
     )
 
     if outcome == pronunciation.OUTCOME_RETRY:
-        # TOO_QUIET tells the child "the room was louder than your voice — move
-        # closer". That is a claim about LEVEL, so it may only be made when the
-        # clip was actually quiet. A close mic or a noise-cancelling headset (AGC
-        # + suppression) lifts the room tone toward the voice, so a plainly loud
-        # word measures snr 1.7-3.0 — under MIN_SNR — at an absolute peak of
-        # 0.8-0.95. Keying the message on snr alone therefore told children who
-        # were loud and clear to speak up: the "it says it can't hear me even
-        # though I'm shouting" bug. The retry itself is unchanged and still free;
-        # only what we claim about it is now checked against the level.
         reason = (pronunciation.TOO_QUIET
                   if (stats.get("snr", 99) < pronunciation.MIN_SNR
                       and stats.get("peak", 0.0) < pronunciation.LOUD_ENOUGH)
@@ -223,26 +195,22 @@ def score_recording(sid, concept, wav_bytes):
         return
 
     if outcome == pronunciation.OUTCOME_SOFT:
-        # A confident non-match, but inside the grace window: shown to the child
-        # as an ordinary near-miss ("listen and say it once more"), yet NOT logged
-        # and NOT counted — so a mis-heard-but-correct answer costs nothing.
         misses[cid] = misses.get(cid, 0) + 1
         st.session_state.last_result = {
-            "word": concept["kannada_word"], "expected": expected,
+            "word": graph_engine.display_word(concept), "expected": expected,
             "translit": concept["transliteration"], "score": score,
             "correct": False, "heard": heard,
         }
         return
 
-    # OUTCOME_CORRECT or OUTCOME_WRONG: a real attempt, logged and mastery-updating.
     if outcome == pronunciation.OUTCOME_WRONG:
-        misses[cid] = misses.get(cid, 0) + 1   # keeps the parking count moving
+        misses[cid] = misses.get(cid, 0) + 1
     else:
-        misses.pop(cid, None)                  # cleared: they got it
+        misses.pop(cid, None)
 
     graph_engine.update_mastery(sid, cid, correct, raw_score=score, heard=heard)
     st.session_state.last_result = {
-        "word": concept["kannada_word"],
+        "word": graph_engine.display_word(concept),
         "expected": expected,
         "translit": concept["transliteration"],
         "score": score,
@@ -250,56 +218,58 @@ def score_recording(sid, concept, wav_bytes):
         "heard": heard,
     }
     if correct:
-        # Only a correct answer moves on; a wrong one stays so the child can
-        # hear the word again and retry it immediately.
         st.session_state.concept = None
         st.session_state.pop("listen_audio", None)
 
 
-_FEATURES = [
-    ("record_voice_over",
-     "It listens, and it is fair about it",
+_POINTS = [
+    ("It listens, and it is fair about it",
      "Speech is scored by sound, not by spelling — and a softly-spoken answer is "
      "amplified, never rejected. A recording it cannot hear is a free retry, "
      "never a wrong mark."),
-    ("account_tree",
-     "It teaches in the right order",
-     "121 letters and words in a prerequisite graph. Nothing appears before what "
-     "it is built from, and a child stuck on one concept is moved on rather than "
-     "left grinding."),
-    ("insights",
-     "Teachers see who is stuck",
-     "Per-child mastery, attempt history and a curriculum map — so the answer to "
-     "'who needs me today' takes one glance, not a term."),
+    ("It teaches in the right order",
+     "Every letter, word, phrase and sentence sits behind what it is built from. "
+     "Nothing appears too early, and a child stuck on one thing is moved on "
+     "rather than left grinding."),
+    ("Two separate curricula",
+     "Kannada and Tulu are taught as two syllabuses, not one mixed together. A "
+     "child picks the language they came to learn and sees only that."),
+    ("Teachers see who is stuck, in words",
+     "An alphabet chart with each child's letters coloured in, and plain "
+     "sentences: who has not practised, what they keep missing, what to do about "
+     "it today."),
 ]
 
 
 def landing():
     _hide_sidebar()
-    ui.narrow(1040)
+    ui.narrow(920)
 
     total = graph_engine.load_graph().number_of_nodes()
+    langs = graph_engine.available_languages()
     ui.card(
-        f"""
-        <div class="hero">
-          <span class="eyebrow">Read &middot; Listen &middot; Speak</span>
-          <h1>Learn to read Kannada<br/>by saying it out loud</h1>
-          <div class="script kn">ಅ&nbsp;&nbsp;ಆ&nbsp;&nbsp;ಇ&nbsp;&nbsp;ಈ&nbsp;&nbsp;ಉ</div>
+        """
+        <div class="masthead">
+          <div class="rule"></div>
+          <h1>Learn to read Kannada and Tulu<br/>by saying it out loud</h1>
           <p class="lede">
-            A speaking tutor for Kannada and Tulu. See the letter, hear it, say it —
-            and get told honestly whether you got it, by a recogniser that has been
-            measured against {total} concepts rather than trusted.
+            A speaking tutor for children who are learning to read. See the
+            letter, hear it, say it — and be told honestly whether you got it.
           </p>
+          <div class="script kn">ಅ&nbsp;&nbsp;ಆ&nbsp;&nbsp;ಇ&nbsp;&nbsp;ಈ&nbsp;&nbsp;ಉ</div>
         </div>
         """
     )
+    st.markdown(
+        f'<div class="facts"><b>{total}</b> concepts across '
+        f'<b>{len(langs)}</b> separate curricula &nbsp;·&nbsp; speech is '
+        f"recognised <b>on this machine</b> &nbsp;·&nbsp; no recording of a "
+        f"child's voice is ever sent anywhere</div>",
+        unsafe_allow_html=True,
+    )
 
-    # Two doors, named for who walks through them. There used to be one, and the
-    # only way to reach a teacher account was the CREATE ACCOUNT form — so a
-    # returning teacher had no visible way in, while every child was shown an
-    # "I am a teacher" checkbox and a PIN box that was never theirs to use.
-    ui.spacer(18)
-    c1, c2 = st.columns(2, gap="medium")
+    ui.spacer(20)
+    c1, c2 = st.columns(2, gap="small")
     with c1:
         if st.button("Start learning", type="primary", width="stretch",
                      icon=":material/arrow_forward:"):
@@ -309,44 +279,104 @@ def landing():
                      icon=":material/shield_person:"):
             _goto_auth(auth.TEACHER, "login")
 
-    ui.spacer(8)
-    if st.button("I already have an account", width="stretch",
-                 icon=":material/login:"):
-        _goto_auth(auth.STUDENT, "login")
-
     ui.spacer(26)
-    cols = st.columns(3, gap="medium")
-    for col, (icon, title, body) in zip(cols, _FEATURES):
-        with col:
-            ui.card(
-                f'<div class="feature">'
-                f'<div class="ico">'
-                f'<span class="material-symbols-rounded">{icon}</span></div>'
-                f"<h3>{title}</h3><p>{body}</p></div>"
-            )
-
-    ui.spacer(26)
-    concepts = graph_engine.load_graph().number_of_nodes()
-    stats = [(str(concepts), "concepts"), ("2", "languages"),
-             ("100%", "ASR-validated"), ("0", "cloud calls")]
-    scols = st.columns(4, gap="small")
-    for col, (n, label) in zip(scols, stats):
-        with col:
-            ui.card(f'<div class="stat"><div class="n">{n}</div>'
-                     f'<div class="l">{label}</div></div>')
-
-    ui.spacer(20)
-    st.markdown(
-        '<p class="tiny">Speech is recognised on this machine. No recording of a '
-        "child's voice is ever sent anywhere.</p>",
-        unsafe_allow_html=True,
+    points = "".join(
+        f'<div class="point"><div class="num">{n}</div>'
+        f"<div><h3>{title}</h3><p>{body}</p></div></div>"
+        for n, (title, body) in enumerate(_POINTS, start=1)
     )
+    ui.card(f'<div class="points">{points}</div>')
+
+
+def _language_card(code):
+    info = graph_engine.language_info(code)
+    total = graph_engine.load_graph(code).number_of_nodes()
+    tiers = ", ".join(
+        graph_engine.LEVEL_MEANING.get(lv, lv).lower()
+        for lv in graph_engine.LEVELS
+        if any(d["level"] == lv
+               for _, d in graph_engine.load_graph(code).nodes(data=True))
+    )
+    ui.card(
+        f'<div class="panel"><div class="word kn" style="font-size:clamp(30px,6vw,44px);'
+        f'margin:0 0 6px;text-align:left">{ui.esc(info["native"])}</div>'
+        f'<h3 style="margin:0 0 8px">{ui.esc(info["name"])}</h3>'
+        f'<p class="section-note" style="margin:0 0 6px">{ui.esc(info["blurb"])}</p>'
+        f'<p class="tiny">{total} concepts &nbsp;·&nbsp; {tiers}</p></div>',
+        extra="lang-card",
+    )
+
+
+def language_page(user):
+    """Ask which curriculum this learner is here for."""
+    _hide_sidebar()
+    ui.narrow(760)
+    ui.card(
+        f'<div class="masthead"><div class="rule"></div>'
+        f"<h1>What would you like to learn?</h1>"
+        f'<p class="lede">Pick one. You can change it at any time from the menu, '
+        f"and your progress in each language is kept separately.</p></div>"
+    )
+    ui.spacer(20)
+
+    codes = graph_engine.available_languages()
+    cols = st.columns(len(codes), gap="small")
+    for col, code in zip(cols, codes):
+        with col:
+            _language_card(code)
+            info = graph_engine.language_info(code)
+            if st.button(f"Learn {info['name']}", key=f"pick_{code}",
+                         type="primary", width="stretch",
+                         icon=":material/arrow_forward:"):
+                _set_language(user, code)
+
+    ui.spacer(16)
+    if st.button("Log out", icon=":material/logout:"):
+        logout()
+
+
+def _set_language(user, code):
+    """Record the chosen curriculum and drop anything from the previous one."""
+    code = graph_engine.normalize_language(code)
+    db.set_student_language(user["student_id"], code)
+    st.session_state.language = code
+    st.session_state.concept = None
+    st.session_state.last_result = None
+    st.session_state.pop("listen_audio", None)
+    st.session_state.pop("confident_misses", None)
+    for key in [k for k in list(st.session_state.keys()) if k.startswith("rec_")]:
+        st.session_state.pop(key, None)
+    st.session_state.view = "app"
+    st.rerun()
+
+
+def current_language(user):
+    """
+    The curriculum this learner is on: the session's copy, else the one stored on
+    their student row, else nothing — and nothing means "ask them".
+
+    Normalized against the dataset on the way out, so a stored code for a track
+    that has since been removed from the CSV falls back to one that exists
+    instead of serving an empty curriculum.
+    """
+    code = st.session_state.get("language") or db.get_student_language(
+        user["student_id"])
+    if not code:
+        return None
+    code = graph_engine.normalize_language(code)
+    st.session_state.language = code
+    return code
 
 
 def _finish_login(user):
     st.session_state.user = user
     st.session_state.concept = None
     st.session_state.last_result = None
+    st.session_state.pop("language", None)
+    if user.get("student_id"):
+        stored = db.get_student_language(user["student_id"])
+        if stored:
+            st.session_state.language = graph_engine.normalize_language(stored)
     st.session_state.view = "app"
     st.rerun()
 
@@ -531,9 +561,6 @@ def _teacher_auth():
                     "the PIN set by whoever deployed this app.",
                     icon=":material/info:")
 
-        # A shipped default PIN on a public URL is the same as no PIN at all. Say
-        # so where the person who can fix it will actually see it — and now that
-        # is the teacher door, not a page every child passes through.
         if config.IS_DEFAULT_PIN:
             st.warning(
                 "This deployment is still using the default teacher PIN. Set "
@@ -572,31 +599,33 @@ _RETRY_TEXT = {
 
 
 def render_word_card(concept):
-    """Picture, the letter or word itself, its meaning, and the Tulu form."""
-    img_path = media.get_image(concept["image_file"], label=concept["kannada_word"])
+    """
+    The card: a picture, the word itself in the language being learned, what it
+    means, and — when they differ — what to actually say.
+
+    ONE language is on this card. It used to print the Kannada word with the Tulu
+    equivalent underneath it on every card, which meant a Kannada learner was
+    reading a language they had not asked for and a Tulu learner had no card of
+    their own at all. The dataset still pairs the two (that pairing is what this
+    project contributes, and the teacher's dashboard reads it) — but a learner
+    sees only the track they chose.
+    """
+    img_path = media.get_image(concept["image_file"],
+                               label=graph_engine.display_word(concept))
     left, mid, right = st.columns([1, 3, 1])
     with mid:
         st.image(img_path, width="stretch")
 
-    tier = concept.get("level") or "Basic"
+    word = graph_engine.display_word(concept)
+    tier = graph_engine.LEVEL_MEANING.get(concept.get("level"), concept.get("level")
+                                          or "Basic")
     is_letter = concept["category"] in ("vowels", "consonants")
 
-    # Tulu is shown only when we actually have it. Tulu is under-documented and
-    # has no standard orthography; inventing a form would teach a child a word
-    # that does not exist, so a blank column simply renders nothing.
-    tulu = concept.get("tulu_word", "").strip()
-    tulu_html = (
-        f'<div class="tulu"><b>Tulu</b> &nbsp;<span class="kn">{_esc(tulu)}</span></div>'
-        if tulu else ""
-    )
+    long_form = len(word) > 12 or " " in word.strip()
 
-    # Whenever the thing to SAY is not the thing printed on the card, say so
-    # explicitly rather than leaving the child to guess. That happens for every
-    # letter ("ಅ" is shown, "ಅ ಅಮ್ಮ" is spoken) and for the few words too short
-    # for the recogniser to resolve alone ("ತಲೆ" is shown, "ನನ್ನ ತಲೆ" is spoken).
     spoken = concept["spoken_form"]
     say_html = ""
-    if spoken.strip() != concept["kannada_word"].strip():
+    if spoken.strip() != word.strip():
         if is_letter:
             hint = ("the letter, then a word that starts with it &mdash; "
                     f'<span class="kn">{_esc(concept.get("anchor_word", ""))}</span>')
@@ -605,19 +634,17 @@ def render_word_card(concept):
             hint = (f"say the whole phrase &mdash; &ldquo;{_esc(gloss)}&rdquo;"
                     if gloss else "say the whole phrase")
         say_html = (
-            f'<div class="say-box"><p class="lbl">Say this</p>'
-            f'<div class="val kn">{_esc(spoken)}</div>'
+            f'<div class="say"><p class="lbl">Say this</p>'
+            f'<div class="val">{_esc(spoken)}</div>'
             f'<div class="hint">{hint}</div></div>'
         )
 
     ui.card(
-        f'<div class="kannada-word kn">{_esc(concept["kannada_word"])}</div>'
+        f'<div class="word{" long" if long_form else ""}">{_esc(word)}</div>'
         f'<div class="translit">{_esc(concept["transliteration"])}</div>'
         f'<div class="meaning">{_esc(concept["english_meaning"])}</div>'
-        f"{tulu_html}"
-        f'<div class="badges">'
-        f'<span class="badge badge-cat">{_esc(concept["category"])}</span>'
-        f'<span class="badge badge-diff">{_esc(tier)}</span></div>'
+        f'<div class="tags"><span>{_esc(concept["category"])}</span>'
+        f"<span>{_esc(tier)}</span></div>"
         f"{say_html}",
         extra="word-card",
     )
@@ -647,16 +674,11 @@ def render_feedback():
         )
         return
 
-    # `heard` is the recogniser's output — user-influenced text going into an
-    # unsafe_allow_html block, so it is escaped. Same for the CSV fields.
     word = _esc(res["word"])
     heard = _esc(res.get("heard") or "—")
     pct = int(round(res["score"] * 100))
 
     if res["correct"]:
-        if not res.get("_celebrated"):
-            st.balloons()
-            res["_celebrated"] = True
         st.markdown(
             f'<div class="fb fb-ok"><div class="hd">Correct &mdash; '
             f'<span class="kn">{word}</span></div>'
@@ -666,9 +688,6 @@ def render_feedback():
             unsafe_allow_html=True,
         )
     else:
-        # A child is not shown a failing percentage — "45% match" reads as a
-        # grade and discourages. Just the encouragement and, quietly, what we
-        # heard so a teacher can see why it did not match.
         st.markdown(
             f'<div class="fb fb-no"><div class="hd">Not quite &mdash; listen and '
             f'say <span class="kn">{word}</span> once more</div>'
@@ -677,10 +696,10 @@ def render_feedback():
         )
 
 
-def current_concept(student_id):
+def current_concept(student_id, language):
     """The concept on screen, fetched lazily and cached for the session."""
     if st.session_state.get("concept") is None:
-        st.session_state.concept = graph_engine.get_next_concept(student_id)
+        st.session_state.concept = graph_engine.get_next_concept(student_id, language)
     return st.session_state.concept
 
 
@@ -692,69 +711,87 @@ def _clear_learning_state():
 
 def logout():
     _clear_learning_state()
-    # Drop the chosen door too, so the next person at this browser is asked who
-    # they are instead of landing in the previous user's entrance.
     st.session_state.pop("auth_role", None)
     st.session_state.pop("auth_tab", None)
+    st.session_state.pop("language", None)
     st.session_state.view = "landing"
     st.rerun()
 
 
-def app_sidebar(user, mastered=None, total=None, by_level=None):
+def app_sidebar(user, language=None, mastered=None, total=None, by_level=None):
     st.sidebar.markdown(
         '<div class="sb-brand">Kannada &amp; Tulu Tutor</div>'
         '<div class="sb-sub">Read · Listen · Speak</div>',
         unsafe_allow_html=True,
     )
-    st.sidebar.write("")
     role_label = "Teacher" if user["role"] == auth.TEACHER else "Learner"
+    lang_line = ""
+    if language:
+        info = graph_engine.language_info(language)
+        lang_line = (f'<div class="lang">Learning {_esc(info["name"])} '
+                     f'<span class="kn">{_esc(info["native"])}</span></div>')
     st.sidebar.markdown(
         f'<div class="learner"><div class="rl">{role_label}</div>'
-        f'<div class="nm">{_esc(user["display_name"])}</div></div>',
+        f'<div class="nm">{_esc(user["display_name"])}</div>{lang_line}</div>',
         unsafe_allow_html=True,
     )
 
     if total:
         st.sidebar.progress(mastered / total if total else 0.0)
         pct = int(round(mastered / total * 100)) if total else 0
-        st.sidebar.caption(f"{mastered} of {total} mastered  ·  {pct}%")
+        st.sidebar.caption(f"{mastered} of {total} learned  ·  {pct}%")
 
-    # The three tiers, shown as their own small lines so the leveled progression
-    # is visible — a child sees the alphabet fill up, then words, then phrases.
     if by_level:
         for lv, (m, t) in by_level.items():
             if t:
-                st.sidebar.caption(f"{lv} · {m}/{t}")
+                st.sidebar.caption(
+                    f"{graph_engine.LEVEL_MEANING.get(lv, lv)} · {m}/{t}")
 
-    with st.sidebar:  # a fragment cannot address st.sidebar itself
+    if language and len(graph_engine.available_languages()) > 1:
+        st.sidebar.write("")
+        if st.sidebar.button("Change language", width="stretch",
+                             icon=":material/translate:"):
+            st.session_state.view = "language"
+            st.rerun()
+
+    with st.sidebar:
         recogniser_status()
     st.sidebar.write("")
     if st.sidebar.button("Log out", width="stretch", icon=":material/logout:"):
         logout()
 
 
-def student_view(user):
+def student_view(user, language):
     sid = user["student_id"]
-    mastered, total = graph_engine.mastery_summary(sid)
-    app_sidebar(user, mastered, total, graph_engine.mastery_by_level(sid))
-    ui.narrow(760)
+    mastered, total = graph_engine.mastery_summary(sid, language)
+    app_sidebar(user, language, mastered, total,
+                graph_engine.mastery_by_level(sid, language))
+    ui.narrow(720)
 
     render_feedback()
 
-    concept = current_concept(sid)
+    concept = current_concept(sid, language)
     if concept is None:
+        name = graph_engine.language_name(language)
         ui.card(
-            f'<div class="hero" style="padding:38px 30px">'
-            f"<h1>Every concept mastered</h1>"
-            f'<p class="lede">You finished all {total} letters and words. '
-            f"Outstanding work.</p></div>"
+            f'<div class="masthead centred"><h1>Every {_esc(name)} concept '
+            f"learned</h1>"
+            f'<p class="lede" style="margin:0 auto">You finished all {total} of '
+            f"them. Outstanding work.</p></div>"
         )
         ui.spacer()
-        if st.button("Practise again from the start", width="stretch",
-                     icon=":material/restart_alt:"):
+        others = [c for c in graph_engine.available_languages() if c != language]
+        if others:
+            other = graph_engine.language_info(others[0])
+            if st.button(f"Start learning {other['name']}", type="primary",
+                         width="stretch", icon=":material/arrow_forward:"):
+                _set_language(user, other["code"])
+        if st.button(f"Practise {name} again from the start",
+                     width="stretch", icon=":material/restart_alt:"):
             db.reset_student(sid)
             _clear_learning_state()
-            st.session_state.user = user       # stay logged in
+            st.session_state.user = user
+            st.session_state.language = language
             st.session_state.view = "app"
             st.rerun()
         return
@@ -762,12 +799,11 @@ def student_view(user):
     render_word_card(concept)
     ui.spacer()
 
-    # --- Step 1: Listen -------------------------------------------------- #
-    # The audio path lives in session_state so the player survives the rerun a
-    # button click causes; a bare st.audio inside the click branch would vanish.
     if st.button("Listen to the word", width="stretch", icon=":material/volume_up:"):
         try:
-            audio_path = media.get_audio(concept["concept_id"], concept["spoken_form"])
+            audio_path = media.get_audio(
+                concept["concept_id"], concept["spoken_form"],
+                lang=graph_engine.language_info(language)["asr"])
             st.session_state.listen_audio = (concept["concept_id"], audio_path)
         except Exception as e:
             st.error(
@@ -780,15 +816,9 @@ def student_view(user):
     if la and la[0] == concept["concept_id"] and os.path.exists(la[1]):
         st.audio(la[1])
 
-    # --- Step 2: Speak ---------------------------------------------------- #
-    # st.audio_input records in the BROWSER: the child presses to start and stop,
-    # so we never grab silence before they are ready (a fixed-length server-side
-    # recorder did exactly that, and was the original "always 0%" bug).
-    # The recorder is keyed per concept, so advancing gives a fresh, empty one.
     ui.spacer(6)
     st.markdown("##### Now you say it")
 
-    # Until the model is up, saying so beats a page that looks broken.
     if pronunciation.load_state() != pronunciation.READY:
         recogniser_status()
 
@@ -802,7 +832,6 @@ def student_view(user):
     )
     if recording is not None:
         wav_bytes = recording.getvalue()
-        # Hash the bytes so the same clip is never scored twice across reruns.
         sig = hashlib.md5(wav_bytes).hexdigest()
         if wav_bytes and st.session_state.get("scored_sig") != sig:
             st.session_state.scored_sig = sig
@@ -814,54 +843,104 @@ def student_view(user):
     )
 
 
-def _pyplot():
-    """pyplot costs ~0.6s to import and only the mastery map needs it, so it
-    stays out of the student's cold start."""
-    import matplotlib
+def _findings(items):
+    """Render insight.py's sentences as a plain list."""
+    if not items:
+        return
+    rows = []
+    for item in items:
+        mark = "→" if item["do"] else "·"
+        cls = "finding finding-do" if item["do"] else "finding"
+        rows.append(f'<div class="{cls}"><span class="mk">{mark}</span>'
+                    f"<span>{item['text']}</span></div>")
+    ui.card(f'<div class="findings">{"".join(rows)}</div>')
 
-    matplotlib.use("Agg")  # headless-safe
-    import matplotlib.pyplot as plt
 
-    return plt
-
-
-def _draw_concept_graph(mastery_map):
+def _alphabet_chart(student_id, language):
     """
-    The curriculum DAG for one student: green = mastered, amber = attempted but
-    weak, grey = not started. Laid out left-to-right by prerequisite depth.
+    The varnamale, coloured in for one child.
+
+    Vowels then consonants, in the order they are taught, each letter printed
+    with its romanization underneath. A teacher can point at a red cell and know
+    both which letter it is and that this child needs help with it — which is
+    the entire thing the old network diagram could not do.
     """
-    G = graph_engine.load_graph()
+    chart = insight.alphabet_chart(student_id, language)
+    if not chart:
+        return
 
-    pos = {}
-    for depth, layer in enumerate(nx.topological_generations(G)):
-        layer = sorted(layer)
-        for i, node in enumerate(layer):
-            pos[node] = (depth, -(i - (len(layer) - 1) / 2))
+    st.subheader("Alphabet chart")
+    ui.note(
+        "The same chart as on the classroom wall. Each letter is coloured by how "
+        "this child is doing on it."
+    )
+    titles = {"vowels": "Vowels — ಸ್ವರಗಳು", "consonants": "Consonants — ವ್ಯಂಜನಗಳು"}
+    for cat, cells in chart.items():
+        st.markdown(
+            f'<p class="tiny" style="margin:14px 0 6px;text-transform:uppercase;'
+            f'letter-spacing:.1em;font-weight:600">{titles.get(cat, cat)}</p>',
+            unsafe_allow_html=True,
+        )
+        grid = "".join(
+            f'<div class="cell {c["state"]}" title="{_esc(c["title"])}">'
+            f'<div class="g">{_esc(c["glyph"])}</div>'
+            f'<div class="r">{_esc(c["roman"])}</div></div>'
+            for c in cells
+        )
+        st.markdown(f'<div class="chart">{grid}</div>', unsafe_allow_html=True)
+    ui.legend(insight.CHART_LEGEND)
 
-    colors = []
-    for n in G.nodes:
-        score = mastery_map.get(n, 0.0)
-        if score >= db.MASTERY_THRESHOLD:
-            colors.append("#2DD4BF")
-        elif score > 0:
-            colors.append("#FBBF24")
-        else:
-            colors.append("#D7DBE3")
 
-    plt = _pyplot()
-    # 121 concepts: label every node and it becomes an unreadable smear, so the
-    # map shows structure and colour, and the table above it carries the detail.
-    fig, ax = plt.subplots(figsize=(11, 7))
-    fig.patch.set_alpha(0.0)
-    ax.patch.set_alpha(0.0)
-    nx.draw_networkx_edges(G, pos, ax=ax, edge_color="#C9CFDE", arrows=False, width=0.7)
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color=colors, node_size=140,
-                           edgecolors="#FFFFFF", linewidths=0.8)
-    ax.set_title("Curriculum map — each dot is a concept, left to right by prerequisite",
-                 color="#171A2B", fontsize=11, fontweight="bold")
-    ax.axis("off")
-    fig.tight_layout()
-    return fig
+def _cognitive_map(student_id, language, display_name):
+    """
+    The prerequisite graph as an SVG, with this child's progress painted on.
+
+    Structural, not diagnostic — see cogmap.py for why it sits at the bottom of
+    the page rather than beside the alphabet chart. Drawn inline so it needs no
+    plotting library and no image round-trip: cogmap gives back coordinates and
+    this turns them into <line> and <circle>, with the concept name in a <title>
+    so hovering a dot says what it is.
+    """
+    try:
+        plan = cogmap.layout(student_id, language)
+    except Exception:
+        return
+    if not plan:
+        return
+
+    ui.spacer(16)
+    with st.expander(f"How the tutor plans {display_name}'s lessons "
+                     f"({len(plan['nodes'])} concepts)"):
+        ui.note(
+            "The cognitive knowledge graph: every concept in this track, each "
+            "one sitting below the concepts it needs first. The tutor walks it "
+            "downward to choose what to teach next. Colours are the same as the "
+            "alphabet chart — hover a dot to see which concept it is."
+        )
+        edges = "".join(
+            f'<line class="edge" x1="{e["x1"]}" y1="{e["y1"]}" '
+            f'x2="{e["x2"]}" y2="{e["y2"]}"/>'
+            for e in plan["edges"]
+        )
+        tiers = "".join(
+            f'<text class="tier" x="4" y="{r["y"] + 3}">{r["n"]}</text>'
+            for r in plan["rows"]
+        )
+        nodes = "".join(
+            f'<circle class="node" cx="{n["x"]}" cy="{n["y"]}" r="{n["r"]}" '
+            f'fill="{n["fill"]}" stroke="{n["stroke"]}">'
+            f'<title>{_esc(n["title"])}</title></circle>'
+            for n in plan["nodes"]
+        )
+        st.markdown(
+            f'<div class="cogmap"><svg width="{plan["width"]}" '
+            f'height="{plan["height"]}" viewBox="0 0 {plan["width"]} '
+            f'{plan["height"]}" role="img" aria-label="Prerequisite graph of '
+            f'{_esc(display_name)}\'s curriculum">'
+            f"{edges}{tiers}{nodes}</svg></div>",
+            unsafe_allow_html=True,
+        )
+        ui.legend(cogmap.LEGEND)
 
 
 def _days_since(iso_ts):
@@ -874,61 +953,82 @@ def _days_since(iso_ts):
         return None
 
 
-def _class_overview(students):
-    concept_total = graph_engine.load_graph().number_of_nodes()
-    activity = {a["student_id"]: a for a in db.get_student_activity()}
+def _student_language(student):
+    """The curriculum a child is on — the default until they have picked one."""
+    return graph_engine.normalize_language(
+        student.get("language") or graph_engine.DEFAULT_LANGUAGE)
 
-    rows, sum_mastered, sum_total = [], 0, 0
+
+def _class_rows(students):
+    """One row per child for the class table. Each child is measured against
+    THEIR OWN curriculum: counting a Tulu learner out of the Kannada total would
+    make them look permanently behind."""
+    activity = {a["student_id"]: a for a in db.get_student_activity()}
+    rows = []
     for s in students:
-        progress = graph_engine.get_student_progress(s["id"])
+        language = _student_language(s)
+        progress = graph_engine.get_student_progress(s["id"], language)
         mastered = sum(1 for p in progress if p["mastered"])
         total = len(progress)
-        # The two counts that decide whether this child needs a human today.
-        # Previously these lived only inside Student detail, so answering "who
-        # needs me?" meant opening every child in the class one at a time.
-        needs = sum(1 for p in progress if p["attempts"] >= 2 and not p["mastered"])
+        needs = sum(1 for p in progress
+                    if p["attempts"] >= insight.STRUGGLE_ATTEMPTS and not p["mastered"])
         parked = sum(1 for p in progress if p["parked"])
         act = activity.get(s["id"], {})
-        idle = _days_since(act.get("last_active"))
-        sum_mastered += mastered
-        sum_total += total
         rows.append({
             "Student": s["name"],
-            "Mastered": mastered,
+            "Learning": graph_engine.language_name(language),
+            "_language": language,
+            "_id": s["id"],
+            "Learned": mastered,
             "Concepts": total,
-            # 0..100 so ProgressColumn's "%.0f%%" label reads as a percentage.
             "Progress": (mastered / total * 100) if total else 0.0,
             "Needs help": needs,
             "Moved on": parked,
             "Attempts": act.get("attempts", 0),
-            "Idle (days)": idle,
+            "Idle (days)": _days_since(act.get("last_active")),
             "Last active": (act.get("last_active") or "never").replace("T", " "),
         })
+    return rows
 
+
+def _class_overview(students):
+    rows = _class_rows(students)
+
+    st.subheader("What needs you today")
+    ui.note(
+        "Read this first. Everything below is the same information as numbers, "
+        "for when you want to check it."
+    )
+    safe = [dict(r, Student=_esc(r["Student"])) for r in rows]
+    _findings(insight.class_findings(safe))
+
+    ui.spacer(20)
     all_attempts = db.get_attempts()
-    total_attempts = len(all_attempts)
-    avg_pct = int(round(sum_mastered / sum_total * 100)) if sum_total else 0
-    # "Inactive" is a roster question, not a scoring one: a child who has not
-    # practised in a week is invisible in every mastery number on this page.
-    inactive = sum(1 for r in rows if r["Idle (days)"] is None or r["Idle (days)"] >= 7)
+    sum_learned = sum(r["Learned"] for r in rows)
+    sum_total = sum(r["Concepts"] for r in rows)
+    avg_pct = int(round(sum_learned / sum_total * 100)) if sum_total else 0
+    inactive = sum(1 for r in rows if r["Idle (days)"] is None
+                   or r["Idle (days)"] >= insight.IDLE_DAYS)
 
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Students", len(students))
-    m2.metric("Concepts", concept_total)
-    m3.metric("Attempts", total_attempts)
-    m4.metric("Avg mastery", f"{avg_pct}%")
-    m5.metric("Inactive 7d+", inactive)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Children", len(students))
+    m2.metric("Things practised", len(all_attempts))
+    m3.metric("Average progress", f"{avg_pct}%")
+    m4.metric("Not seen in a week", inactive)
 
     ui.spacer()
-    st.subheader("All students")
-    st.caption(
-        "‘Needs help’ — tried twice or more and still not mastered. ‘Moved on’ — "
-        f"tried {graph_engine.PARK_AFTER_ATTEMPTS}+ times without success, so the "
-        "tutor advanced the child rather than leaving them stuck."
+    st.subheader("Every child")
+    ui.note(
+        "‘Needs help’ — tried something twice or more and still not got it. "
+        f"‘Moved on’ — tried {graph_engine.PARK_AFTER_ATTEMPTS}+ times without "
+        "success, so the tutor advanced the child rather than leaving them stuck. "
+        "Each child is counted out of the curriculum they are actually learning."
     )
+    table = pd.DataFrame(
+        [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]
+    ).sort_values(["Moved on", "Needs help"], ascending=False, kind="stable")
     st.dataframe(
-        pd.DataFrame(rows).sort_values(
-            ["Moved on", "Needs help"], ascending=False, kind="stable"),
+        table,
         hide_index=True,
         width="stretch",
         column_config={
@@ -941,7 +1041,7 @@ def _class_overview(students):
 
     _hardest_concepts()
     _class_trend(all_attempts)
-    _class_export(rows)
+    _class_export(table)
 
 
 def _hardest_concepts():
@@ -958,43 +1058,43 @@ def _hardest_concepts():
     rows = []
     for s in stats:
         info = graph_engine.concept_info(s["concept_id"])
-        if not info:  # a concept dropped from the CSV; skip the stale history
+        if not info:
             continue
         tries = s["tries"] or 0
         rows.append({
-            "Concept": s["concept_id"],
-            "Kannada": info["kannada_word"],
+            "Word": info.get("display_word") or info["kannada_word"],
             "Roman": info["transliteration"],
             "Meaning": info["english_meaning"],
-            "Category": info["category"],
-            "Students": s["students"],
+            "Language": graph_engine.language_name(info.get("language")),
+            "Topic": info["category"],
+            "Children": s["students"],
             "Tries": tries,
-            "Correct %": (s["correct"] or 0) / tries * 100 if tries else 0.0,
+            "Got it %": (s["correct"] or 0) / tries * 100 if tries else 0.0,
             "Avg match": round(s["mean_score"] or 0.0, 3),
         })
     if not rows:
         return
 
     ui.spacer()
-    st.subheader("Hardest concepts (whole class)")
-    st.caption(
-        "Lowest success rate first, counting only concepts at least one child has "
-        "attempted. A low rate across several students points at the lesson or the "
+    st.subheader("What the class finds hardest")
+    ui.note(
+        "Lowest success rate first, counting only things at least one child has "
+        "tried. A low rate across several children points at the lesson or at the "
         "recogniser — not at one child."
     )
-    df = pd.DataFrame(rows).sort_values(["Correct %", "Tries"], ascending=[True, False])
+    df = pd.DataFrame(rows).sort_values(["Got it %", "Tries"], ascending=[True, False])
     only_multi = st.checkbox(
-        "Only concepts tried by 2+ students", value=False,
+        "Only show things 2 or more children have tried", value=False,
         help="Filters out words a single child happened to hit, so what is left "
              "is a class-wide pattern.",
     )
     if only_multi:
-        df = df[df["Students"] >= 2]
+        df = df[df["Children"] >= 2]
     st.dataframe(
         df, hide_index=True, width="stretch",
         column_config={
-            "Correct %": st.column_config.ProgressColumn(
-                "Correct %", min_value=0, max_value=100, format="%.0f%%"),
+            "Got it %": st.column_config.ProgressColumn(
+                "Got it %", min_value=0, max_value=100, format="%.0f%%"),
             "Avg match": st.column_config.NumberColumn("Avg match", format="%.2f"),
         },
     )
@@ -1017,8 +1117,6 @@ def _class_trend(all_attempts):
     daily = df.groupby("day").agg(
         Attempts=("id", "count"), Correct=("correct", "sum")).reset_index()
     daily["Accuracy %"] = daily["Correct"] / daily["Attempts"] * 100
-    # Concepts mastered is cumulative and per (student, concept): the first time a
-    # pair is answered correctly is the moment it was learned.
     first = (df[df["correct"] == 1]
              .sort_values("timestamp")
              .drop_duplicates(subset=["student_id", "concept_id"]))
@@ -1029,26 +1127,26 @@ def _class_trend(all_attempts):
     daily = daily.set_index("day")
 
     ui.spacer()
-    st.subheader("Class activity over time")
+    st.subheader("The class over time")
     c1, c2 = st.columns(2)
     with c1:
-        st.caption("Attempts per day")
+        st.caption("How much they practised each day")
         st.bar_chart(daily[["Attempts"]])
     with c2:
-        st.caption("Accuracy per day (%)")
+        st.caption("How often they got it right (%)")
         st.line_chart(daily[["Accuracy %"]])
     if "Learned" in daily:
-        st.caption("Concepts learned, running total across the class")
+        st.caption("Things learned, running total across the class")
         st.area_chart(daily[["Learned"]])
 
 
-def _class_export(rows):
+def _class_export(table):
     """One CSV for the whole class — export was per-student only, so a teacher
     keeping records had to download each child separately."""
     ui.spacer()
     st.download_button(
-        "Export the whole class (CSV)",
-        data=pd.DataFrame(rows).to_csv(index=False).encode("utf-8-sig"),
+        "Download the whole class (CSV)",
+        data=table.to_csv(index=False).encode("utf-8-sig"),
         file_name="class_progress.csv",
         mime="text/csv",
         width="stretch",
@@ -1058,202 +1156,166 @@ def _class_export(rows):
 
 def _student_detail(students):
     name_to_id = {f'{s["name"]} (#{s["id"]})': s["id"] for s in students}
-    picked = st.selectbox("Inspect a student", list(name_to_id.keys()))
+    picked = st.selectbox("Choose a child", list(name_to_id.keys()))
     sid = name_to_id[picked]
+    student = next(s for s in students if s["id"] == sid)
+    display_name = student["name"]
 
-    progress = graph_engine.get_student_progress(sid)
-    mastered = sum(1 for p in progress if p["mastered"])
+    languages = graph_engine.available_languages()
+    default = _student_language(student)
+    language = default
+    if len(languages) > 1:
+        labels = {graph_engine.language_name(c): c for c in languages}
+        chosen = st.radio(
+            "Curriculum", list(labels.keys()),
+            index=list(labels.values()).index(default),
+            horizontal=True,
+            help="This child is signed up for "
+                 f"{graph_engine.language_name(default)}.",
+        )
+        language = labels[chosen]
+
+    progress = graph_engine.get_student_progress(sid, language)
+    learned = sum(1 for p in progress if p["mastered"])
     attempted = sum(1 for p in progress if p["attempts"] > 0)
-    struggling = [p for p in progress if p["attempts"] >= 2 and not p["mastered"]]
+    struggling = [p for p in progress
+                  if p["attempts"] >= insight.STRUGGLE_ATTEMPTS and not p["mastered"]]
     parked = [p for p in progress if p["parked"]]
 
-    # Improvement trend: mean match over the first few attempts vs the most
-    # recent. Mastery is a smoothed average and hides direction — a child who has
-    # climbed from 0.3 to 0.8 and one sliding from 0.8 to 0.3 can show the same
-    # score. `attempts` is newest-first, so the tail is the earliest work.
-    log = db.get_attempts(sid)
-    trend_delta, trend_note = None, None
-    if len(log) >= 4:
-        window = max(3, min(5, len(log) // 2))
-        recent = sum(a["score"] for a in log[:window]) / window
-        earliest = sum(a["score"] for a in log[-window:]) / window
-        trend_delta = recent - earliest
-        trend_note = f"last {window} vs first {window}"
+    ui.spacer(8)
+    st.subheader(f"What {display_name} needs")
+    _findings(insight.student_findings(sid, language, _esc(display_name)))
 
-    d1, d2, d3, d4 = st.columns(4)
-    d1.metric("Mastered", f"{mastered} / {len(progress)}")
-    d2.metric("Attempted", attempted)
-    d3.metric("Struggling", len(struggling))
-    if trend_delta is None:
-        d4.metric("Improving", "—", help="Needs at least 4 attempts to judge.")
-    else:
-        d4.metric("Improving", f"{trend_delta:+.2f}", delta=f"{trend_delta:+.2f}",
-                  help=f"Change in average pronunciation match ({trend_note}). "
-                       "Positive means they are getting closer to the target.")
+    ui.spacer(20)
+    d1, d2, d3 = st.columns(3)
+    d1.metric("Learned", f"{learned} / {len(progress)}")
+    d2.metric("Tried", attempted)
+    d3.metric("Stuck on", len(struggling))
 
-    # Per-tier and per-category mastery: a flat "42 of 167" says nothing about
-    # WHERE a child is stuck. Vowels 12/14 next to consonants 3/34 does.
-    ui.spacer()
-    st.subheader("Where they are strong and weak")
-    by_level, by_cat = {}, {}
-    for p in progress:
-        for bucket, key in ((by_level, p.get("level") or "Basic"), (by_cat, p["category"])):
-            m, t = bucket.get(key, (0, 0))
-            bucket[key] = (m + (1 if p["mastered"] else 0), t + 1)
+    ui.spacer(20)
+    _alphabet_chart(sid, language)
 
-    lv_order = [lv for lv in graph_engine.LEVELS if lv in by_level]
-    lv_order += [lv for lv in by_level if lv not in lv_order]
-    cols = st.columns(max(1, len(lv_order)))
-    for col, lv in zip(cols, lv_order):
-        m, t = by_level[lv]
-        col.metric(lv, f"{m} / {t}", f"{(m / t * 100) if t else 0:.0f}%")
+    topics = insight.topic_rows(sid, language)
+    if topics:
+        ui.spacer(24)
+        st.subheader("Words, by topic")
+        ui.note("Least finished first — the top row is where this child has the "
+                "most left to learn.")
+        ui.bars(topics)
 
-    st.dataframe(
-        pd.DataFrame([
-            {"Category": c, "Mastered": m, "Concepts": t,
-             "Progress": (m / t * 100) if t else 0.0}
-            for c, (m, t) in sorted(by_cat.items(), key=lambda kv: kv[1][0] / max(kv[1][1], 1))
-        ]),
-        hide_index=True, width="stretch",
-        column_config={"Progress": st.column_config.ProgressColumn(
-            "Progress", min_value=0, max_value=100, format="%.0f%%")},
-    )
-
-    # The single most useful thing a teacher can see: who is stuck on what.
     if struggling:
-        ui.spacer()
-        st.subheader("Needs help")
-        st.caption(
-            f"Tried at least twice and still below the mastery threshold. After "
-            f"{graph_engine.PARK_AFTER_ATTEMPTS} tries the tutor moves the child "
-            f"on rather than leaving them stuck — those are marked 'moved on', "
-            f"and are the ones to sit down with."
+        ui.spacer(24)
+        st.subheader("Stuck on these")
+        ui.note(
+            f"Tried at least {insight.STRUGGLE_ATTEMPTS} times and still not "
+            f"got it. After {graph_engine.PARK_AFTER_ATTEMPTS} tries the tutor "
+            f"moves the child on rather than leaving them stuck — those are "
+            f"marked ‘moved on’, and are the ones to sit down with."
         )
         st.dataframe(
             pd.DataFrame([{
-                "Concept": p["concept_id"],
-                "Kannada": p["kannada_word"],
+                "Word": p["word"],
                 "Roman": p["transliteration"],
                 "Meaning": p["english_meaning"],
                 "Tries": p["attempts"],
-                "Mastery": p["mastery_score"],
+                "How close": p["mastery_score"],
                 "Moved on": p["parked"],
             } for p in sorted(struggling, key=lambda p: (-p["parked"], -p["attempts"]))]),
             hide_index=True, width="stretch",
             column_config={
-                "Mastery": st.column_config.ProgressColumn(
-                    "Mastery", min_value=0.0, max_value=1.0, format="%.2f"),
+                "How close": st.column_config.ProgressColumn(
+                    "How close", min_value=0.0, max_value=1.0, format="%.2f"),
                 "Moved on": st.column_config.CheckboxColumn("Moved on"),
             },
         )
-        if parked:
-            st.info(
-                f"{len(parked)} concept(s) were tried "
-                f"{graph_engine.PARK_AFTER_ATTEMPTS}+ times without success. The "
-                f"child has been moved on so they are not stuck, but these are "
-                f"not counted as mastered.",
-                icon=":material/info:",
-            )
+
+    mishears = db.get_mishearings(sid)
+    rows = []
+    for m in mishears:
+        info = graph_engine.concept_info(m["concept_id"])
+        if not info or info.get("language", graph_engine.KANNADA) != language:
+            continue
+        expected, _alts = pronunciation.accepted_forms(info)
+        rows.append({
+            "Asked for": expected,
+            "Child said": m["heard"],
+            "Times": m["times"],
+            "Avg match": round(m["mean_score"] or 0.0, 3),
+        })
+    if rows:
+        ui.spacer(24)
+        st.subheader("What they actually said")
+        ui.note(
+            "Attempts that did not match, most repeated first. The same wrong "
+            "form coming back for one word is the thing to correct directly."
+        )
+        st.dataframe(
+            pd.DataFrame(rows), hide_index=True, width="stretch",
+            column_config={"Avg match": st.column_config.NumberColumn(
+                "Avg match", format="%.2f")},
+        )
 
     df = pd.DataFrame(progress)[[
-        "concept_id", "kannada_word", "transliteration", "english_meaning",
+        "concept_id", "word", "transliteration", "english_meaning",
         "category", "level", "mastery_score", "attempts", "mastered",
     ]]
-
-    ui.spacer()
-    st.subheader("Every concept")
-    st.dataframe(
-        df,
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "concept_id": "ID",
-            "kannada_word": "Kannada",
-            "transliteration": "Roman",
-            "english_meaning": "Meaning",
-            "category": "Category",
-            "level": "Tier",
-            "mastery_score": st.column_config.ProgressColumn(
-                "Mastery", min_value=0.0, max_value=1.0, format="%.2f"
-            ),
-            "attempts": "Tries",
-            "mastered": st.column_config.CheckboxColumn("Mastered"),
-        },
-    )
-
-    ui.spacer()
-    st.subheader("Curriculum map")
-    st.caption("Teal — mastered.  Amber — attempted but still weak.  Grey — not started.")
-    mastery_map = {p["concept_id"]: p["mastery_score"] for p in progress}
-    fig = _draw_concept_graph(mastery_map)
-    st.pyplot(fig)
-    _pyplot().close(fig)
-
-    # What the child actually said, when it was wrong. A score tells a teacher
-    # THAT a word was missed; the transcription tells them HOW — and a form that
-    # recurs for the same concept is a real, repeatable mispronunciation worth a
-    # minute of teaching, not a one-off slip.
-    mishears = db.get_mishearings(sid)
-    if mishears:
-        ui.spacer()
-        st.subheader("What they actually said")
-        st.caption(
-            "Non-matching attempts, most repeated first. The same wrong form coming "
-            "back for one concept is the thing to correct directly."
-        )
-        rows = []
-        for m in mishears:
-            info = graph_engine.concept_info(m["concept_id"])
-            if not info:
-                continue
-            expected, _alts = pronunciation.accepted_forms(info)
-            rows.append({
-                "Concept": m["concept_id"],
-                "Asked for": expected,
-                "Child said": m["heard"],
-                "Times": m["times"],
-                "Avg match": round(m["mean_score"] or 0.0, 3),
-            })
-        if rows:
-            st.dataframe(
-                pd.DataFrame(rows), hide_index=True, width="stretch",
-                column_config={"Avg match": st.column_config.NumberColumn(
-                    "Avg match", format="%.2f")},
-            )
-
-    ui.spacer()
-    st.subheader("Session history")
-    if log:
-        hist = pd.DataFrame(log)[["timestamp", "concept_id", "heard", "score", "correct"]]
-        hist["correct"] = hist["correct"].map({1: "Correct", 0: "Wrong"})
-        hist["heard"] = hist["heard"].fillna("—")   # rows predating the column
+    ui.spacer(24)
+    with st.expander(f"Every {graph_engine.language_name(language)} concept "
+                     f"({len(progress)})"):
         st.dataframe(
-            hist, hide_index=True, width="stretch",
+            df,
+            hide_index=True,
+            width="stretch",
             column_config={
-                "timestamp": "When",
-                "concept_id": "Concept",
-                "heard": "Heard",
-                "score": st.column_config.NumberColumn("Match", format="%.2f"),
-                "correct": "Result",
+                "concept_id": "ID",
+                "word": "Word",
+                "transliteration": "Roman",
+                "english_meaning": "Meaning",
+                "category": "Topic",
+                "level": "Tier",
+                "mastery_score": st.column_config.ProgressColumn(
+                    "How close", min_value=0.0, max_value=1.0, format="%.2f"
+                ),
+                "attempts": "Tries",
+                "mastered": st.column_config.CheckboxColumn("Learned"),
             },
         )
-    else:
-        st.caption("No attempts recorded yet for this student.")
 
-    # utf-8-sig BOM so Excel renders the Kannada column instead of mojibake.
+    log = db.get_attempts(sid)
+    ui.spacer(16)
+    with st.expander(f"Everything {display_name} has tried ({len(log)})"):
+        if log:
+            hist = pd.DataFrame(log)[
+                ["timestamp", "concept_id", "heard", "score", "correct"]]
+            hist["correct"] = hist["correct"].map({1: "Got it", 0: "Missed"})
+            hist["heard"] = hist["heard"].fillna("—")
+            st.dataframe(
+                hist, hide_index=True, width="stretch",
+                column_config={
+                    "timestamp": "When",
+                    "concept_id": "Concept",
+                    "heard": "Heard",
+                    "score": st.column_config.NumberColumn("Match", format="%.2f"),
+                    "correct": "Result",
+                },
+            )
+        else:
+            st.caption("Nothing recorded yet for this child.")
+
     csv = df.to_csv(index=False).encode("utf-8-sig")
-    # Student names are free text — keep only filename-safe characters.
-    raw_name = picked.split(" (")[0]
-    safe_name = "".join(c if (c.isalnum() or c in "-_") else "_" for c in raw_name) or "student"
+    safe_name = "".join(c if (c.isalnum() or c in "-_") else "_"
+                        for c in display_name) or "student"
     ui.spacer()
     st.download_button(
-        "Export this student's progress (CSV)",
+        f"Download {display_name}'s progress (CSV)",
         data=csv,
         file_name=f"{safe_name}_progress.csv",
         mime="text/csv",
         width="stretch",
         icon=":material/download:",
     )
+
+    _cognitive_map(sid, language, display_name)
 
 
 def teacher_view(user):
@@ -1262,39 +1324,38 @@ def teacher_view(user):
 
     students = db.get_all_students()
     if not students:
-        st.info("No students yet — ask a learner to create an account and begin.",
+        st.info("No children yet — ask a learner to create an account and begin.",
                 icon=":material/school:")
         return
 
-    tab_overview, tab_detail = st.tabs(["Class overview", "Student detail"])
+    tab_overview, tab_detail = st.tabs(["The class", "One child"])
     with tab_overview:
         _class_overview(students)
     with tab_detail:
         _student_detail(students)
 
 
-# Main — the router. The teacher dashboard is reached by ROLE, read from the
-# database on every rerun. There is no "I am a teacher" selector: a student
-# session cannot select its way into the class list, because nothing it can set
-# is consulted.
 def main():
     db.init_db()
     auth.init_auth()
     ui.inject()
     if not os.environ.get("TUTOR_SKIP_WARMUP"):
-        start_model_warmup()  # cached: the thread starts once per server
+        start_model_warmup()
 
     user = st.session_state.get("user")
     if user:
-        # Re-read the role from the DB rather than trusting the session copy.
         fresh = auth.get_user(user["id"])
         if not fresh:
             logout()
             return
         if fresh["role"] == auth.TEACHER:
             teacher_view(fresh)
-        else:
-            student_view(fresh)
+            return
+        language = current_language(fresh)
+        if language is None or st.session_state.get("view") == "language":
+            language_page(fresh)
+            return
+        student_view(fresh, language)
         return
 
     if st.session_state.get("view") == "auth":

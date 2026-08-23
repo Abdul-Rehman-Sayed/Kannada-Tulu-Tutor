@@ -30,8 +30,6 @@ try:
 except Exception:
     pass
 
-# Isolate from real learner data + skip the whisper warm-up thread. Must be set
-# BEFORE the app (and its db import) runs inside AppTest.
 _fd, _TMP_DB = tempfile.mkstemp(prefix="tutor_test_teacher_", suffix=".db")
 os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _TMP_DB
@@ -40,14 +38,10 @@ os.environ["TUTOR_TEACHER_PIN"] = "teacher-checkpoint-pin"
 
 from streamlit.testing.v1 import AppTest  # noqa: E402
 
+CARD = 'class="card word-card"' 
+
 from tutor import auth  # noqa: E402
 
-# Learners and teachers have SEPARATE doors, opened by separate landing buttons.
-# Within a door the Sign in tab renders before Create account, and both are in the
-# element tree at once, so these indices are stable.
-#   landing buttons: 0 = Start learning, 1 = Teacher sign in
-#   door text_input: 0,1 = sign-in user/pass; 2,3,4 = name/user/pass; 5 = PIN
-#   door buttons   : 0 = Back, 1 = switch door, 2 = Sign in, 3 = Create account
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
 BTN_BACK, BTN_SWITCH, BTN_SIGNIN, BTN_CREATE = 0, 1, 2, 3
@@ -76,9 +70,22 @@ def _signup(name, user, pw, teacher=False, pin=""):
     at.text_input[NEW_USER].set_value(user)
     at.text_input[NEW_PASS].set_value(pw)
     if teacher:
-        # The PIN exists only on the teacher door — a learner is never shown it.
         at.text_input[NEW_PIN].set_value(pin)
     at.button[BTN_CREATE].click().run()
+    return at
+
+
+def _choose_language(at, name="Kannada"):
+    """Answer the curriculum question a new learner is asked.
+
+    Sign-up no longer lands on a lesson: a learner picks Kannada or Tulu first,
+    because there is no honest default for a child who has not said which
+    language they came to learn.
+    """
+    labels = [b.label for b in at.button]
+    want = f"Learn {name}"
+    if want in labels:
+        at.button[labels.index(want)].click().run()
     return at
 
 
@@ -112,9 +119,9 @@ def _shows_dashboard(at):
 
 def run():
     print("A student session:")
-    student = _signup("Ravi", "ravi_t", "sunflower22")
+    student = _choose_language(_signup("Ravi", "ravi_t", "sunflower22"))
     check("a student lands on their flashcard, not the dashboard",
-          not _shows_dashboard(student) and "kannada-word" in _text(student))
+          not _shows_dashboard(student) and CARD in _text(student))
     check("...and is offered no teacher control of any kind",
           not any("Teacher" in b.label for b in student.button))
 
@@ -134,33 +141,25 @@ def run():
           "Mrs Rao" not in _text(student))
 
     print("\nSigning back in:")
-    # A returning teacher MUST have a sign-in of their own. Before the doors were
-    # split there was none: the only route to a teacher account was the Create
-    # account form, so this is the regression that split them.
     check("a teacher signing in at the teacher door returns to the dashboard",
           _shows_dashboard(_signin("mrs_rao_t", "chalkdust!", teacher=True)))
     check("a student signing in at the learner door does not",
           not _shows_dashboard(_signin("ravi_t", "sunflower22")))
     check("a wrong password gets nothing",
           not _shows_dashboard(_signin("mrs_rao_t", "not-the-password", teacher=True)))
-    # Using the wrong door is refused and explained, rather than silently landing
-    # someone in a view that does not match the account they typed.
     check("a student cannot sign in at the teacher door",
           not _shows_dashboard(_signin("ravi_t", "sunflower22", teacher=True)))
     check("a teacher signing in at the learner door is refused, not downgraded",
           not _shows_dashboard(_signin("mrs_rao_t", "chalkdust!")))
 
     print("\nTampering with the session — the real test:")
-    # The old build kept a boolean in the session; anything that could set it
-    # owned the class list. The role is now re-read from the DB on every rerun,
-    # so the session's copy is advisory and carries no authority.
-    forged = _signup("Sneaky", "sneaky_t", "password1")
+    forged = _choose_language(_signup("Sneaky", "sneaky_t", "password1"))
     forged.session_state["user"]["role"] = auth.TEACHER
     forged.run()
     check("setting role='teacher' in the session does NOT open the dashboard",
           not _shows_dashboard(forged))
     check("...and the forger is still sitting on their own flashcard",
-          "kannada-word" in _text(forged))
+          CARD in _text(forged))
 
     print("\nGuessing the teacher PIN is throttled:")
     auth._failures.clear()

@@ -42,7 +42,4 @@ TEACHER_PIN = str(
     or DEFAULT_PIN
 )
 
-# True when the app is running on the shipped default — the UI warns, loudly,
-# because "we forgot to change the PIN" is how the teacher dashboard ends up
-# world-readable.
 IS_DEFAULT_PIN = TEACHER_PIN == DEFAULT_PIN

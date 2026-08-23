@@ -15,9 +15,6 @@ import subprocess
 import sys
 import time
 
-# Tests and validators live in tests/ and are run as modules from the project
-# root, so `from tutor import ...` resolves and their relative data paths still
-# point at ./data and ./models.
 FAST = [
     ("dataset structure",  [sys.executable, "-m", "tests.validate_dataset", "data/vocabulary.csv"]),
     ("speech scorer",      [sys.executable, "-m", "tests.test_pronunciation"]),
@@ -30,9 +27,6 @@ FAST = [
 
 SLOW = [
     ("recogniser hears every concept", [sys.executable, "-m", "tests.validate_asr", "--quiet"]),
-    # The microphone gate got it backwards once: it threw away a correctly-spoken
-    # word for being quiet. This replays every concept through simulated mics —
-    # loud, soft, faint, and muted — and is the only check that can catch that.
     ("mic gate: soft voices heard, silence refused", [sys.executable, "-m", "tests.validate_mic"]),
 ]
 

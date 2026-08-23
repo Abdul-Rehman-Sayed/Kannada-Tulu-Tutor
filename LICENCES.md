@@ -33,7 +33,6 @@ Audited with `pip` metadata on the pinned versions in `requirements.txt`.
 | pandas 2.3.3 | BSD-3-Clause | no |
 | numpy 1.26.4 | BSD-3-Clause | no |
 | pillow 11.3.0 | MIT-CMU | no |
-| matplotlib 3.10.7 | PSF (BSD-compatible) | no |
 | gTTS 2.5.4 | MIT | no |
 
 ### One dependency was removed for licence reasons

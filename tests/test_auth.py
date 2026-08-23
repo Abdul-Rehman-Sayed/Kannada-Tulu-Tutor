@@ -13,7 +13,6 @@ import os
 import sys
 import tempfile
 
-# A temp DB, before db/auth read the path. Never touch real learner data.
 _fd, _path = tempfile.mkstemp(suffix=".db")
 os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _path
@@ -81,8 +80,6 @@ def hashing_tests():
     ok &= _check("...with a 32-byte digest", len(blob), 32)
     ok &= _check("...and a per-user random salt", len(bytes(row["salt"])), 16)
 
-    # Two users, same password -> different hashes. If they matched, one cracked
-    # password would crack every account that shares it.
     auth.register("asha2", "correct-horse")
     with closing(db.get_connection()) as conn:
         a = conn.execute("SELECT password_hash FROM users WHERE username='asha'").fetchone()[0]
@@ -111,7 +108,6 @@ def teacher_tests():
     ok &= _check("...and does not appear in the class list", "Mrs Rao" in names, False)
     ok &= _check("...while the students do", "Ravi" in names, True)
 
-    # The role is read from the DB, not from anything the browser sends.
     ok &= _check("the role is whatever the DB says", auth.get_user(t["id"])["role"], auth.TEACHER)
     return ok
 
@@ -130,7 +126,6 @@ def ratelimit_tests():
 
     ok &= _raises(f"locked out after {auth.MAX_LOGIN_ATTEMPTS} wrong passwords",
                   auth.login, "target", "wrong")
-    # ...and the lockout holds even if the attacker then guesses right.
     ok &= _raises("...the lockout holds even for the CORRECT password",
                   auth.login, "target", "realpassword")
 

@@ -25,10 +25,7 @@ from contextlib import closing
 _DEFAULT_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "tutor.db")
 DB_PATH = os.environ.get("TUTOR_DB_PATH") or _DEFAULT_DB
 
-# A concept counts as "mastered" at or above this score.
 MASTERY_THRESHOLD = 0.7
-# Weight given to the latest attempt in the moving average (0..1). Higher = more
-# reactive to the most recent answer. 0.75 means one correct answer from zero -> 0.75.
 EMA_ALPHA = 0.75
 
 _initialized = False
@@ -54,7 +51,8 @@ def init_db():
             """CREATE TABLE IF NOT EXISTS students (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
                 name          TEXT NOT NULL UNIQUE,
-                pin_optional  TEXT
+                pin_optional  TEXT,
+                language      TEXT
             )"""
         )
         conn.execute(
@@ -80,14 +78,13 @@ def init_db():
                 FOREIGN KEY (student_id) REFERENCES students(id)
             )"""
         )
-        # Migration: databases created before `heard` existed. The recogniser's
-        # output used to be shown to the child and then thrown away, so a teacher
-        # could see THAT a word was missed but never HOW — "expected ಅಮ್ಮ, said
-        # ಪಮ್ಮ five times" is a teachable fact; "score 0.36" is not. ALTER TABLE
-        # rather than a rebuild so an existing class's history survives.
         have = {r["name"] for r in conn.execute("PRAGMA table_info(attempts)")}
         if "heard" not in have:
             conn.execute("ALTER TABLE attempts ADD COLUMN heard TEXT")
+
+        have = {r["name"] for r in conn.execute("PRAGMA table_info(students)")}
+        if "language" not in have:
+            conn.execute("ALTER TABLE students ADD COLUMN language TEXT")
     global _initialized
     _initialized = True
 
@@ -104,9 +101,6 @@ def create_or_get_student(name, pin=None):
     if not name:
         raise ValueError("student name cannot be empty")
     with closing(get_connection()) as conn, conn:
-        # INSERT OR IGNORE + re-select is race-safe: if two sessions submit the
-        # same new name simultaneously, the UNIQUE constraint makes one insert a
-        # no-op and both then read the same row.
         conn.execute(
             "INSERT OR IGNORE INTO students (name, pin_optional) VALUES (?, ?)",
             (name, pin),
@@ -294,3 +288,22 @@ def reset_student(student_id):
     with closing(get_connection()) as conn, conn:
         conn.execute("DELETE FROM mastery WHERE student_id=?", (student_id,))
         conn.execute("DELETE FROM attempts WHERE student_id=?", (student_id,))
+
+
+def get_student_language(student_id):
+    """The curriculum this student chose, or None if they never have."""
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            "SELECT language FROM students WHERE id=?", (student_id,)
+        ).fetchone()
+        return (row["language"] or None) if row else None
+
+
+def set_student_language(student_id, language):
+    """Remember which curriculum this student is learning."""
+    _ensure_init()
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            "UPDATE students SET language=? WHERE id=?", (language, student_id)
+        )
