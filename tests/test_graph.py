@@ -1,14 +1,3 @@
-"""
-test_graph.py — Slice 1 checkpoint.
-
-Proves the concept graph traversal + SQLite mastery tracking work end to end.
-NO Streamlit, NO audio, NO whisper. Creates a dummy student and prints the
-concepts get_next_concept() serves as we mark each one correct — it should walk
-from the first vowel through the prerequisite chain in sensible order.
-
-Run:  python test_graph.py
-"""
-
 import os
 import sys
 import tempfile

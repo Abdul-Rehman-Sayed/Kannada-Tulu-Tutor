@@ -11,7 +11,7 @@ gatherUsageStats = false
 
 [client]
 toolbarMode = "minimal"
-showErrorDetails = false
+showErrorDetails = "none"
 
 [server]
 maxUploadSize = 5

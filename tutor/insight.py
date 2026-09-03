@@ -1,40 +1,3 @@
-"""
-insight.py — turning progress data into sentences a teacher can act on.
-
-WHY THIS EXISTS. The dashboard used to answer "how is this child doing?" with a
-NetworkX diagram: 273 coloured dots, laid out left-to-right by prerequisite
-depth, with no labels because labelling them made it an unreadable smear. To read
-it you had to already know what a directed acyclic graph is. A teacher in a
-village school does not, should not have to, and would get nothing from it if
-they did — the dots have no names, so even a correct reading of the picture
-cannot tell you WHICH letter a child is stuck on.
-
-So the picture is gone and this is what replaced it, in two parts:
-
-  * a varnamale chart — the alphabet, laid out the way it is on the classroom
-    wall, with each letter coloured by how that child is doing on it. Nothing to
-    learn: it is a chart of letters, and the letter you are worried about is
-    printed in it.
-
-  * findings — short sentences with the child's name in them. "Ravi has learned
-    8 of the 13 vowels." "He has tried ಏ six times and still not got it — sit
-    with him on ಏ, as in ಏಣಿ (ladder)." That is the whole output a teacher
-    needed from the diagram, said outright.
-
-The diagram itself came back later, in cogmap.py, but as a structural view at
-the bottom of the page — it shows the shape of the curriculum, with hover labels
-so a dot can at least say its own name. This is still what a teacher reads.
-
-Everything here is derived, never stored. It reads the same progress rows the
-tables read, so a number in a finding can always be traced to a row on the page.
-
-Public API:
-    student_findings(student_id, language, name)
-    class_findings(students, rows)
-    alphabet_chart(student_id, language)   -> chart cells for ui
-    topic_rows(student_id, language)       -> (label, done, total, caption) bars
-"""
-
 import datetime
 
 from . import db
@@ -58,7 +21,6 @@ CHART_LEGEND = [
 
 
 def state(row):
-    """Which of the four chart states a progress row is in."""
     if row["mastered"]:
         return LEARNED
     if row["attempts"] >= STRUGGLE_ATTEMPTS:
@@ -69,7 +31,6 @@ def state(row):
 
 
 def _days_since(iso_ts):
-    """Whole days between an ISO timestamp and now, or None if never."""
     if not iso_ts:
         return None
     try:
@@ -80,20 +41,10 @@ def _days_since(iso_ts):
 
 
 def _finding(text, do=False):
-    """One line of the findings list. `do` marks it as an action to take."""
     return {"text": text, "do": do}
 
 
 def alphabet_chart(student_id, language=graph_engine.KANNADA):
-    """
-    The varnamale, as chart cells: {"vowels": [cell, …], "consonants": [cell, …]}.
-
-    Each cell is {"glyph", "roman", "state", "title"} — the letter as printed on
-    the wall chart, its romanization, how this child is doing on it, and a
-    hover/tooltip line. Empty when the track has no alphabet tier (Tulu is taught
-    in Kannada script and has no letter cards of its own, so its chart is the
-    Kannada one on the Kannada track).
-    """
     rows = {r["concept_id"]: r for r in
             graph_engine.get_student_progress(student_id, language)}
     chart = {}
@@ -126,14 +77,6 @@ def alphabet_chart(student_id, language=graph_engine.KANNADA):
 
 
 def topic_rows(student_id, language=graph_engine.KANNADA):
-    """
-    Progress bars by topic: [(label, done, total, caption), …], hardest-hit
-    first, so the topic a child is furthest behind on is the top row.
-
-    Topics, not tiers — "animals 3 of 18" points a teacher at a lesson. Letters
-    are excluded because the alphabet chart above already shows them, letter by
-    letter, which is more useful than one bar saying 31 of 45.
-    """
     progress = graph_engine.get_student_progress(student_id, language)
     by_cat = {}
     for row in progress:
@@ -149,14 +92,6 @@ def topic_rows(student_id, language=graph_engine.KANNADA):
 
 
 def _tier_sentence(name, by_level):
-    """
-    "Ravi has learned 45 of 45 letters and 7 of 108 words."
-
-    Only the tiers the child has actually reached: every tier they have started,
-    plus the one they are working on now. Listing the rest turns a useful
-    sentence into "…0 of 14 two-word phrases; 0 of 30 complete sentences", which
-    reads as failure when it only means "not there yet".
-    """
     tiers = [(lv, m, t) for lv, (m, t) in by_level.items() if t]
     if not tiers:
         return None
@@ -183,12 +118,6 @@ def _tier_sentence(name, by_level):
 
 
 def student_findings(student_id, language=graph_engine.KANNADA, name="This child"):
-    """
-    What a teacher should know about one child, as sentences.
-
-    Ordered by what to do about it: where they are, what is blocking them, what
-    to do next, then whether they are turning up at all.
-    """
     progress = graph_engine.get_student_progress(student_id, language)
     if not progress:
         return [_finding(f"{name} is not studying this language.")]
@@ -290,12 +219,6 @@ def student_findings(student_id, language=graph_engine.KANNADA, name="This child
 
 
 def class_findings(rows):
-    """
-    What a teacher should know about the whole class, as sentences.
-
-    `rows` is the class overview table already built by the dashboard — the same
-    numbers, so a finding and the row it came from can never disagree.
-    """
     out = []
     if not rows:
         return [_finding("No children have signed up yet.")]
@@ -347,16 +270,6 @@ def class_findings(rows):
 
 
 def hardest_for_class(min_students=2, min_tries=3):
-    """
-    The concepts the CLASS keeps missing: [{"word", "concept_id", "rate", …}, …],
-    worst first.
-
-    Only counts concepts several children have genuinely attempted. One child
-    missing a word is a child to sit with; several children missing the same word
-    is a lesson to reteach — or a word the recogniser handles badly. An aggregate
-    is the only thing that can tell those apart, and a single child's bad morning
-    must not be able to look like either.
-    """
     out = []
     for stat in db.get_concept_stats():
         tries = stat["tries"] or 0

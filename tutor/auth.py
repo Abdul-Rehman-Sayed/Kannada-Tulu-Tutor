@@ -1,34 +1,5 @@
-"""
-auth.py — real accounts for the literacy tutor.
-
-WHAT THIS REPLACES. The app used to "log in" a student by asking for a name and
-trusting it: typing "Ravi" gave you Ravi's progress, and typing it again from any
-browser gave it to anyone else. The teacher dashboard — every child's name and
-score — sat behind one shared PIN, typed in full on every visit, with the default
-still shipped in config.py. Neither is authentication; both are an honour system.
-
-WHAT IT DOES INSTEAD.
-  * Every user has a password, stored as a scrypt hash with a per-user random
-    salt. The password itself is never written anywhere.
-  * scrypt (RFC 7914) is used, not a bare SHA-256. A plain hash is checked at
-    billions of guesses/second on a GPU; scrypt is deliberately slow AND
-    memory-hard (n=16384, r=8 -> ~16 MB per guess), which is what makes a stolen
-    tutor.db worth little. It is in hashlib — no new dependency.
-  * Hashes are compared with hmac.compare_digest, so a wrong password leaks
-    nothing through timing.
-  * A teacher account cannot simply be claimed: creating one requires the
-    TUTOR_TEACHER_PIN. The PIN is now a REGISTRATION secret, used once, instead
-    of a session password typed in front of a classroom of children — so it stops
-    being something a child can watch a teacher type and reuse.
-  * Failed logins are rate-limited per username.
-
-The role lives on the user row, so a student session has no path to the teacher
-view: `require_teacher()` reads the DB, not a session flag the client can set.
-"""
-
 import hashlib
 import hmac
-import os
 import re
 import secrets
 import sqlite3
@@ -56,11 +27,10 @@ _failures = {}
 
 
 class AuthError(Exception):
-    """Registration or login refused. The message is safe to show a user."""
+    pass
 
 
 def init_auth():
-    """Create the users table. Safe to call repeatedly."""
     db._ensure_init()
     with closing(db.get_connection()) as conn, conn:
         conn.execute(
@@ -80,7 +50,6 @@ def init_auth():
 
 
 def _hash(password, salt):
-    """scrypt(password, salt) -> (digest, kdf_descriptor)."""
     digest = hashlib.scrypt(
         password.encode("utf-8"), salt=salt,
         n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P, dklen=KEY_LEN,
@@ -90,7 +59,6 @@ def _hash(password, salt):
 
 
 def _verify_hash(password, salt, expected, kdf):
-    """Constant-time check of a password against a stored hash."""
     try:
         n, r, p = (int(x) for x in kdf.split("$")[1:4])
     except (ValueError, IndexError):
@@ -122,13 +90,6 @@ def _check_password(password):
 
 
 def register(username, password, display_name=None, role=STUDENT, teacher_pin=None):
-    """
-    Create an account. Returns the user dict.
-
-    A TEACHER account requires the teacher PIN — otherwise anyone who can reach
-    the sign-up form could grant themselves every child's records. The PIN is
-    compared in constant time, and the caller is rate-limited like a login.
-    """
     init_auth()
     username = _clean_username(username)
     _check_password(password)
@@ -149,7 +110,7 @@ def register(username, password, display_name=None, role=STUDENT, teacher_pin=No
     salt = secrets.token_bytes(16)
     digest, kdf = _hash(password, salt)
 
-    student_id = db.create_or_get_student(display_name) if role == STUDENT else None
+    student_id = db.create_student(display_name, hint=username) if role == STUDENT else None
 
     with closing(db.get_connection()) as conn, conn:
         try:
@@ -190,7 +151,6 @@ def _clear_failures(key):
 
 
 def login(username, password):
-    """Return the user dict, or raise AuthError. Never says WHICH half was wrong."""
     init_auth()
     username = (username or "").strip()
     key = f"login:{username.lower()}"
@@ -238,7 +198,6 @@ def user_count():
 
 
 def teacher_exists():
-    """Used by the UI to explain what the teacher PIN is for on first run."""
     init_auth()
     with closing(db.get_connection()) as conn:
         return conn.execute(

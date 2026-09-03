@@ -1,25 +1,3 @@
-"""
-convert_model.py — build the Kannada speech-recognition model used by the tutor.
-
-Stock multilingual whisper cannot score this curriculum: on the project's own
-clean TTS audio, whisper "small" recognises 2 of the 8 vocabulary words, writing
-Kannada in Devanagari and hallucinating repetition loops on isolated words. This
-script converts a Kannada fine-tune of the same size — which recognises 7 of 8 —
-into the CTranslate2 int8 format that faster-whisper loads.
-
-Source: vasista22/whisper-kannada-small (Speech Lab, IIT Madras; Apache-2.0),
-fetched straight from the Hub so no third party sits in the trust chain.
-
-Run once, then the tutor picks the model up automatically:
-
-    python convert_model.py
-
-Needs `transformers` + `torch` (conversion only — the tutor itself needs neither)
-and ~1 GB of download. Without it the app falls back to a pre-converted copy of
-the same fine-tune on the Hub, so this is an optional hardening step for an
-offline classroom deploy.
-"""
-
 import os
 import shutil
 import sys
@@ -31,12 +9,6 @@ OUTPUT_DIR = os.path.join(
 
 
 def _write_tokenizer(output_dir):
-    """
-    faster-whisper wants a `tokenizer.json` beside the weights. The source repo
-    only ships the slow-tokenizer parts (vocab.json + merges.txt); without this
-    file faster-whisper silently downloads openai/whisper-tiny's tokenizer at
-    load time, which defeats the point of an offline build.
-    """
     from transformers import WhisperTokenizerFast
 
     tokenizer = WhisperTokenizerFast.from_pretrained(SOURCE)
@@ -49,7 +21,7 @@ def main():
     except ImportError:
         sys.exit("ctranslate2 is required: pip install ctranslate2")
     try:
-        import transformers  # noqa: F401
+        import transformers
     except ImportError:
         sys.exit("conversion needs transformers + torch: pip install transformers torch")
 

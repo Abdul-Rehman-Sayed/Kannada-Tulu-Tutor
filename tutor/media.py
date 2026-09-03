@@ -1,15 +1,3 @@
-"""
-media.py — audio (TTS) and image assets for the tutor.
-
-get_audio() speaks a word with gTTS and caches the mp3 so it only hits the network
-once (offline thereafter). get_image() resolves a word's picture, and — crucially —
-synthesizes a labelled placeholder instead of crashing when the file is missing.
-
-Public API:
-    get_audio(concept_id, text) -> path to mp3
-    get_image(image_file, label=None) -> path to png (real asset or placeholder)
-"""
-
 import glob
 import hashlib
 import os
@@ -33,18 +21,6 @@ _FONT_CANDIDATES = [
 
 
 def get_audio(concept_id, text, lang="kn"):
-    """
-    Return the path to an mp3 of `text` spoken in `lang`, cached at
-    data/audio/{concept_id}_{texthash}.mp3. Generates it with gTTS on first use
-    only; subsequent calls return the cached file without touching the network.
-
-    The filename includes a hash of (lang, text) so editing a word in the CSV
-    invalidates its cached audio — otherwise the child would keep hearing the
-    OLD word while being scored against the new one.
-
-    Raises on a network failure during first generation (the caller/UI should
-    catch it), but never leaves a corrupt half-written cache file behind.
-    """
     os.makedirs(AUDIO_DIR, exist_ok=True)
     safe_id = "".join(c if (c.isalnum() or c in "-_") else "_" for c in str(concept_id)) or "audio"
     digest = hashlib.md5(f"{lang}:{text}".encode("utf-8")).hexdigest()[:8]
@@ -80,13 +56,6 @@ def get_audio(concept_id, text, lang="kn"):
 
 
 def get_image(image_file, label=None):
-    """
-    Return a filesystem path to the concept's image.
-
-    If data/images/{image_file} exists, return it. Otherwise synthesize (and
-    cache) a gray placeholder card showing `label` (or the filename) so the UI
-    always has something to display. Never raises on a missing image.
-    """
     if image_file:
         real = os.path.join(IMAGE_DIR, os.path.basename(image_file))
         if os.path.exists(real):
@@ -112,11 +81,11 @@ def _load_font(size):
 
 
 def _make_placeholder(text, image_file=None):
-    """Create (and cache) a 400x300 gray card with centered `text`."""
     os.makedirs(PLACEHOLDER_DIR, exist_ok=True)
-    key = image_file or text
-    safe = "".join(c if c.isalnum() else "_" for c in str(key))[:48] or "placeholder"
-    path = os.path.join(PLACEHOLDER_DIR, f"ph_{safe}.png")
+    key = f"{image_file}|{text}" if image_file else str(text)
+    stem = "".join(c if (c.isascii() and c.isalnum()) else "_" for c in key)[:32]
+    digest = hashlib.md5(key.encode("utf-8")).hexdigest()[:8]
+    path = os.path.join(PLACEHOLDER_DIR, f"ph_{stem}_{digest}.png")
     if os.path.exists(path):
         return path
 

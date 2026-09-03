@@ -1,32 +1,4 @@
-"""
-validate_asr.py — prove the recogniser can actually HEAR every concept we ship.
-
-A structurally valid dataset (validate_dataset.py) can still contain cards no
-child can ever pass, because the speech recogniser cannot resolve the sound. That
-is not a hypothetical: the original curriculum opened with a bare "ಅ", which the
-recogniser transcribes as ಮಾರ್ಕ್ — the first card in the app was unpassable.
-
-So this walks the whole curriculum, and for each concept:
-    1. speaks its `spoken_form` with the same TTS the Listen button uses,
-    2. transcribes that audio with the same recogniser that scores the child,
-    3. scores it with the same scorer, at the same threshold.
-
-A concept that fails here is a concept a child pronouncing it PERFECTLY would be
-marked wrong on — so it is a dataset bug, and the anchor word or the word itself
-should be changed. This is a lower bound on quality: clean TTS is easier to
-recognise than a six-year-old, so anything failing here is hopeless in the field.
-
-It doubles as the offline warm-up: every clip it generates is cached into
-data/audio/, so a classroom deploy with no internet still has all its Listen audio.
-
-    python validate_asr.py              # whole curriculum
-    python validate_asr.py --only V     # just the vowels (ids starting with V)
-
-Exit code 0 only if every concept is recognised.
-"""
-
 import argparse
-import os
 import sys
 import time
 

@@ -1,15 +1,3 @@
-"""
-run_tests.py — run every check, in the order that fails fastest.
-
-    python run_tests.py            # the fast suite (no network, no model)
-    python run_tests.py --full     # also re-checks that the recogniser can hear
-                                   # every concept (slow: loads whisper, ~5 min)
-
-The fast suite is what you run before every commit. --full is what you run after
-touching the curriculum or the scorer, because that is the only thing that can
-tell you a card has become unpassable.
-"""
-
 import argparse
 import subprocess
 import sys

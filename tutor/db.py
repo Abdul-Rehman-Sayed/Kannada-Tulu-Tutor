@@ -1,22 +1,3 @@
-"""
-db.py — SQLite persistence for the Kannada/Tulu literacy tutor.
-
-Two core tables (as specified for Slice 1):
-    students(id, name, pin_optional)
-    mastery(student_id, concept_id, mastery_score, attempts, last_seen)
-
-Plus one forward-looking table used by the teacher dashboard (Slice 5):
-    attempts(id, student_id, concept_id, score, correct, timestamp)  -- session history
-
-Mastery scoring uses a recent-performance-weighted moving average (EMA). A single
-confident correct answer crosses the mastery threshold; wrong answers pull it back
-down quickly. This keeps short tutoring sessions responsive.
-
-The DB path can be overridden with the TUTOR_DB_PATH environment variable —
-the test scripts point it at a temp file so checkpoint runs never touch real
-learner data.
-"""
-
 import os
 import sqlite3
 import datetime
@@ -32,12 +13,6 @@ _initialized = False
 
 
 def get_connection():
-    """Low-level connection helper. Ensures the data/ directory exists.
-
-    timeout=10 makes concurrent Streamlit sessions wait for a write lock
-    instead of instantly raising "database is locked" (extra important here
-    because the DB lives in a OneDrive-synced folder).
-    """
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
@@ -45,7 +20,6 @@ def get_connection():
 
 
 def init_db():
-    """Create tables if they do not exist. Safe to call repeatedly."""
     with closing(get_connection()) as conn, conn:
         conn.execute(
             """CREATE TABLE IF NOT EXISTS students (
@@ -95,7 +69,6 @@ def _ensure_init():
 
 
 def create_or_get_student(name, pin=None):
-    """Return the id of the student with this name, creating them if needed."""
     _ensure_init()
     name = (name or "").strip()
     if not name:
@@ -107,6 +80,32 @@ def create_or_get_student(name, pin=None):
         )
         row = conn.execute("SELECT id FROM students WHERE name = ?", (name,)).fetchone()
         return row["id"]
+
+
+def _student_name_candidates(base, hint):
+    yield base
+    if hint:
+        yield f"{base} ({hint})"
+    for n in range(2, 1000):
+        yield f"{base} ({n})"
+
+
+def create_student(name, hint=None):
+    _ensure_init()
+    base = (name or "").strip()
+    if not base:
+        raise ValueError("student name cannot be empty")
+    with closing(get_connection()) as conn, conn:
+        for candidate in _student_name_candidates(base, hint):
+            try:
+                cur = conn.execute(
+                    "INSERT INTO students (name, pin_optional) VALUES (?, NULL)",
+                    (candidate,),
+                )
+                return cur.lastrowid
+            except sqlite3.IntegrityError:
+                continue
+    raise ValueError(f"could not allocate a student row for {base!r}")
 
 
 def get_student(student_id):
@@ -124,7 +123,6 @@ def get_all_students():
 
 
 def get_mastery_map(student_id):
-    """Return {concept_id: mastery_score} for a student."""
     _ensure_init()
     with closing(get_connection()) as conn:
         rows = conn.execute(
@@ -135,19 +133,6 @@ def get_mastery_map(student_id):
 
 
 def update_mastery(student_id, concept_id, correct_bool, raw_score=None, heard=None):
-    """
-    Update the student's mastery of a concept given a correct/incorrect attempt.
-    Returns the new mastery score. Also appends a row to the session history.
-
-    `raw_score` is the actual pronunciation similarity (0..1) for this attempt;
-    when given it is what gets logged in the history table, so teachers see how
-    close each attempt was — not the smoothed mastery average. Falls back to
-    1/0 for callers that only know correct/incorrect.
-
-    `heard` is what the recogniser actually transcribed. Stored so the teacher
-    view can show a child's real error ("said ಪಮ್ಮ for ಅಮ್ಮ") instead of only a
-    score. Optional, so callers that do not run the recogniser still work.
-    """
     _ensure_init()
     target = 1.0 if correct_bool else 0.0
     logged = round(float(raw_score), 4) if raw_score is not None else target
@@ -183,7 +168,6 @@ def update_mastery(student_id, concept_id, correct_bool, raw_score=None, heard=N
 
 
 def get_mastery_rows(student_id):
-    """Raw mastery rows for a student (concept_id, mastery_score, attempts, last_seen)."""
     _ensure_init()
     with closing(get_connection()) as conn:
         rows = conn.execute(
@@ -195,7 +179,6 @@ def get_mastery_rows(student_id):
 
 
 def get_attempts(student_id=None):
-    """Session history, newest first. All students if student_id is None."""
     _ensure_init()
     with closing(get_connection()) as conn:
         if student_id is None:
@@ -214,15 +197,6 @@ def get_attempts(student_id=None):
 
 
 def get_concept_stats():
-    """
-    Per-concept difficulty ACROSS THE CLASS: tries, how many students touched it,
-    how many attempts were correct, and the mean pronunciation match.
-
-    This is the question the per-student views cannot answer. A concept one child
-    fails is a child who needs help; a concept the whole class fails is a lesson
-    that needs reteaching — or a word the recogniser handles badly. Only an
-    aggregate over students can tell those apart.
-    """
     _ensure_init()
     with closing(get_connection()) as conn:
         rows = conn.execute(
@@ -235,13 +209,6 @@ def get_concept_stats():
 
 
 def get_student_activity():
-    """
-    Per student: attempts, correct count, and when they were last active.
-
-    LEFT JOIN so a student who has never recorded anything still appears — those
-    are precisely the ones a teacher is looking for, and an INNER JOIN would hide
-    them completely.
-    """
     _ensure_init()
     with closing(get_connection()) as conn:
         rows = conn.execute(
@@ -256,14 +223,6 @@ def get_student_activity():
 
 
 def get_mishearings(student_id=None, only_wrong=True):
-    """
-    What the recogniser actually heard, grouped by (concept, heard) with a count.
-
-    `only_wrong` keeps just the attempts that did not match, which is where the
-    teaching signal is: a form that keeps coming back for the same concept is a
-    real, repeatable mispronunciation rather than a one-off slip. Rows recorded
-    before the `heard` column existed are skipped rather than shown as blanks.
-    """
     _ensure_init()
     where = ["heard IS NOT NULL", "TRIM(heard) <> ''"]
     params = []
@@ -283,7 +242,6 @@ def get_mishearings(student_id=None, only_wrong=True):
 
 
 def reset_student(student_id):
-    """Clear all mastery + history for a student (used by tests / retry)."""
     _ensure_init()
     with closing(get_connection()) as conn, conn:
         conn.execute("DELETE FROM mastery WHERE student_id=?", (student_id,))
@@ -291,7 +249,6 @@ def reset_student(student_id):
 
 
 def get_student_language(student_id):
-    """The curriculum this student chose, or None if they never have."""
     _ensure_init()
     with closing(get_connection()) as conn:
         row = conn.execute(
@@ -301,7 +258,6 @@ def get_student_language(student_id):
 
 
 def set_student_language(student_id, language):
-    """Remember which curriculum this student is learning."""
     _ensure_init()
     with closing(get_connection()) as conn, conn:
         conn.execute(

@@ -1,14 +1,3 @@
-"""
-test_auth.py — accounts, password hashing, and the teacher boundary.
-
-The thing being guarded here is a list of real children's names and how badly
-each of them is doing. So these tests care about more than "login works": they
-check that the password is not recoverable from the database, that a student
-cannot promote themselves to teacher, and that guessing is throttled.
-
-    python test_auth.py
-"""
-
 import os
 import sys
 import tempfile
@@ -18,8 +7,8 @@ os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _path
 os.environ["TUTOR_TEACHER_PIN"] = "test-pin-9271"
 
-from tutor import auth  # noqa: E402
-from tutor import db  # noqa: E402
+from tutor import auth
+from tutor import db
 
 
 def _check(label, got, want):
@@ -62,7 +51,6 @@ def account_tests():
 
 
 def hashing_tests():
-    """The database is the thing that gets stolen. It must not contain passwords."""
     print("\nPassword storage:")
     ok = True
     from contextlib import closing
@@ -89,7 +77,6 @@ def hashing_tests():
 
 
 def teacher_tests():
-    """A student session must have no path to the class list."""
     print("\nThe teacher boundary:")
     ok = True
 

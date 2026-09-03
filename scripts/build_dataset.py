@@ -1,51 +1,3 @@
-"""
-build_dataset.py — author data/vocabulary.csv, the tutor's whole curriculum.
-
-The curriculum is written HERE, in code, and generated into the CSV rather than
-hand-edited, because three of the CSV's columns must not be typed by a human:
-
-  * transliteration / ipa  are derived from the Kannada with `indic-transliteration`
-    (ISO-15919). Hand-typed romanization is where earlier versions went wrong.
-  * prereq_id             is computed: a word's prerequisite is the LETTER it
-    starts with, so the graph unlocks words as the alphabet is learned.
-  * spoken_form           is what the child is asked to say and what the speech
-    scorer compares against (see below).
-
-Run:  python build_dataset.py          (then: python validate_dataset.py)
-
---------------------------------------------------------------------------- #
-Why letters carry an "anchor word"
---------------------------------------------------------------------------- #
-A bare vowel is the one thing the speech recogniser cannot hear. Measured on
-this project's own audio, an isolated "ಅ" (0.55 s) is transcribed as ಮಾರ್ಕ್ —
-there is simply not enough acoustic evidence in a 1-phoneme utterance, and no
-decoding option recovers it (prompting, hotwords, padding, repetition and a
-temperature sweep were all tried and all failed). Because ಅ is the FIRST card in
-the curriculum, a child could say it perfectly, be marked wrong, and never
-advance. That was the "voice input doesn't work" bug.
-
-So every letter is taught the way a Kannada varnamale chart teaches it — the
-letter followed by a word that carries it ("ಅ… ಅಮ್ಮ", exactly like "A for
-Apple"). The child says both; the extra syllables give the recogniser the
-context it needs. Measured: 6/7 letters recognised this way, and a child saying
-the WRONG letter is still rejected (0.22), so scoring keeps its teeth.
-
---------------------------------------------------------------------------- #
-Why ಙ and ಞ are not in the curriculum
---------------------------------------------------------------------------- #
-The varnamale lists 34 consonants, but ಙ (ṅa) and ಞ (ña) do not occur
-independently in modern written Kannada — the anusvara ಂ took their place. They
-cannot be spoken in isolation, cannot anchor a word, and could never be scored.
-Including them would only manufacture cards no child can pass, so the speaking
-curriculum uses 13 vowels + 32 consonants. This is a deliberate curriculum
-decision, not an omission.
-
-Tulu: filled in only where there is a reliable source. Tulu has no standardised
-orthography and is under-documented; a blank tulu_word renders as "no Tulu form
-recorded" rather than a guess, because a wrong word in a teaching tool is worse
-than a missing one.
-"""
-
 import csv
 import os
 import sys
@@ -340,12 +292,10 @@ _SIGNS = set("ಾಿೀುೂೃೄೆೇೈೊೋೌ್ಂಃ")
 
 
 def iso(word):
-    """ISO-15919 romanization — the app's scorer romanizes the same way."""
     return transliterate(word.strip(), sanscript.KANNADA, sanscript.ISO)
 
 
 def base_letter(word):
-    """The first *base* letter of a Kannada word (skipping any vowel sign)."""
     for ch in word:
         if ch not in _SIGNS:
             return ch
@@ -353,16 +303,6 @@ def base_letter(word):
 
 
 def display_word(row):
-    """
-    The word the CHILD sees and says for a concept — Tulu on the Tulu track,
-    Kannada on the Kannada track.
-
-    Every row carries both scripts, because the Kannada-word/Tulu-equivalent
-    pairing is the dataset this project contributes and the teacher dashboard
-    reads it. Only ONE of them is ever shown to a learner, and this is the single
-    place that decides which, so the CSV's derived columns (transliteration) and
-    the app agree by construction instead of by coincidence.
-    """
     if row.get("language") == LANG_TULU:
         return (row.get("tulu_word") or row.get("kannada_word") or "").strip()
     return (row.get("kannada_word") or "").strip()

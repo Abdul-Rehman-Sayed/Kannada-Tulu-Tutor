@@ -1,18 +1,3 @@
-"""
-test_app_boot.py — headless end-to-end test for the Streamlit app.
-
-Uses Streamlit's AppTest to actually run app.py in a simulated runtime (no
-browser, no mic, no audio playback) and drive the real journey: landing page ->
-create an account -> choose a curriculum -> the first flashcard. Then it checks
-the thing that actually guards children's records — that a student session cannot
-reach the teacher dashboard, and a teacher account cannot be created without the
-PIN.
-
-The live microphone loop still needs a human; everything up to it is here.
-
-Run:  python test_app_boot.py
-"""
-
 import os
 import sys
 import tempfile
@@ -29,9 +14,9 @@ os.environ["TUTOR_DB_PATH"] = _TMP_DB
 os.environ["TUTOR_SKIP_WARMUP"] = "1"
 os.environ["TUTOR_TEACHER_PIN"] = "boot-test-pin"
 
-from streamlit.testing.v1 import AppTest  # noqa: E402
+from streamlit.testing.v1 import AppTest
 
-CARD = 'class="card word-card"' 
+CARD = 'class="card word-card"'
 
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
@@ -45,7 +30,6 @@ def _fresh():
 
 
 def _goto_signup(at, teacher=False):
-    """Landing -> the learner or the teacher door."""
     at.button[1 if teacher else 0].click().run()
     return at
 
@@ -61,12 +45,6 @@ def _signup(at, name, user, pw, teacher=False, pin=""):
 
 
 def _choose_language(at, name="Kannada"):
-    """The chooser that now stands between a new account and its first lesson.
-
-    A learner is asked once which curriculum they are here for, because there is
-    no honest default: serving Kannada to a child who came for Tulu is exactly
-    the behaviour the language split removed.
-    """
     labels = [b.label for b in at.button]
     want = f"Learn {name}"
     assert want in labels, f"language chooser has no {want!r} button: {labels}"
@@ -75,7 +53,6 @@ def _choose_language(at, name="Kannada"):
 
 
 def _login(at, user, pw, teacher=False):
-    """Sign in through one of the two doors."""
     at.text_input[LOGIN_USER].set_value(user)
     at.text_input[LOGIN_PASS].set_value(pw)
     at.button[BTN_SIGN_IN].click().run()
@@ -152,7 +129,6 @@ def student_journey_tests():
 
 
 def teacher_boundary_tests():
-    """The dashboard holds every child's name and score. It is the thing to guard."""
     print("\nTeacher boundary:")
 
     at = _signup(_goto_signup(_fresh(), teacher=True), "Impostor", "impostor",
@@ -187,8 +163,6 @@ def teacher_boundary_tests():
 
 
 def no_emoji_tests():
-    """Icons are Material Symbols. Emoji render differently on every device and
-    read as decoration rather than as controls."""
     print("\nInterface:")
     at = _signup(_goto_signup(_fresh()), "Asha", "asha_b", "password1")
 

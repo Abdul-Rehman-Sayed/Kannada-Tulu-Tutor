@@ -1,32 +1,3 @@
-"""
-tune_threshold.py — set the pass mark from evidence instead of from a guess.
-
-PRONUNCIATION_THRESHOLD decides whether a child is told "correct" or "try again".
-It was originally 0.7 because 0.7 is a round number. That is the wrong way to
-choose it: too high and a child pronouncing the word properly is marked wrong
-(the failure this project already had); too low and any noise passes, so the app
-teaches nothing and the mastery scores are fiction.
-
-So measure it. For every concept we build two populations:
-
-  POSITIVES — the concept's own audio scored against its own accepted forms.
-              This is a child saying the right word. These SHOULD pass.
-  NEGATIVES — the concept's audio scored against a DIFFERENT concept's accepted
-              forms. This is a child saying the wrong word. These MUST fail.
-
-Then sweep the threshold and report, at each one, the true-accept rate (how many
-correct answers are accepted) and the false-accept rate (how many wrong answers
-sneak through). The chosen value maximises Youden's J = TPR - FPR, which is the
-threshold that best separates the two populations — and, because a false accept
-teaches a child the wrong pronunciation, ties are broken towards fewer of those.
-
-Transcriptions are cached in data/asr_transcripts.json, so re-running the sweep
-after a dataset change is instant instead of a six-minute re-transcribe.
-
-    python tune_threshold.py                # sweep, using the cache
-    python tune_threshold.py --retranscribe # force a fresh ASR pass
-"""
-
 import argparse
 import json
 import os
@@ -49,7 +20,6 @@ NEGATIVES_PER_CONCEPT = 12
 
 
 def transcripts(concepts, retranscribe=False):
-    """{concept_id: what the recogniser heard}, cached on disk."""
     cache = {}
     if os.path.exists(CACHE) and not retranscribe:
         with open(CACHE, encoding="utf-8") as f:

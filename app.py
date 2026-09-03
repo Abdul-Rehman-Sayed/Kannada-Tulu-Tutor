@@ -1,32 +1,3 @@
-"""
-app.py — Interactive Kannada/Tulu literacy tutor (Streamlit).
-
-Landing  : what the tool is, for a teacher deciding whether to use it.
-Language : which curriculum the child is here to learn — Kannada or Tulu. The two
-           are separate syllabuses that share nothing but this app: a Tulu learner
-           is never served a Kannada card, and a Kannada learner is never shown a
-           Tulu translation they did not ask for. The choice is stored on the
-           student row, so it survives to the next device and shows up on the
-           teacher's dashboard.
-Student  : a flashcard loop — see a letter, word or sentence with a picture, hear
-           it, say it, get scored, advance — sequenced by the prerequisite graph
-           (graph_engine), speech scoring (pronunciation) and media (media).
-Teacher  : a dashboard of the class, reachable only by an account whose ROLE says
-           teacher. The role is read from the database on every rerun, never from
-           a session flag, so a student session has no path to it.
-
-Accounts and password hashing live in auth.py; the visual system in ui.py.
-
-A note on the interface: there are no emoji in it. Icons are Material Symbols,
-drawn as vectors at the right size and weight; emoji render differently on every
-device, sit at the wrong baseline, and read as decoration rather than as controls.
-A child using this in a classroom needs an obvious "speak" button, not a picture
-of a microphone in someone else's font. What the whole thing should look like is
-argued out in ui.py.
-
-Run:  streamlit run app.py
-"""
-
 import datetime
 import hashlib
 import html
@@ -57,7 +28,6 @@ def _esc(value):
 
 
 def _hide_sidebar():
-    """The landing and sign-in pages have no sidebar to show."""
     st.markdown(
         "<style>[data-testid='stSidebar'],"
         "[data-testid='stSidebarCollapsedControl']{display:none !important;}</style>",
@@ -82,17 +52,6 @@ _SETTLED = (pronunciation.READY, pronunciation.FAILED)
 
 
 def _status_caption():
-    """
-    Say what the speech recogniser is doing. Out loud, always.
-
-    The first load takes ~8-10 seconds. The app used to show nothing at all
-    during it — a child would tap the microphone and the page would simply sit
-    there. The wait cannot be removed; the silence about it can.
-
-    Writes to whatever container it is called in, because the polling wrapper
-    below is a fragment and a fragment may not address st.sidebar itself — the
-    sidebar caller wraps it in `with st.sidebar`.
-    """
     state = pronunciation.load_state()
 
     if state == pronunciation.READY:
@@ -112,31 +71,10 @@ def _status_caption():
         )
     else:
         st.caption(":material/hourglass_top: Waking the speech recogniser "
-                   "(first time only, about 4-5 minutes)…")
+                   "(first time only)…")
 
 
 def recogniser_status():
-    """
-    The status line — and, while the model is still coming up, the WAIT for it.
-
-    This deliberately blocks instead of polling. Two polling designs were tried
-    and both broke the page:
-
-      * a plain render is never repainted (Streamlit renders once and stops), so
-        the caption froze on "Waking…" while the recogniser was in fact live —
-        the page claiming minutes of delay over an 8-second load;
-      * an st.fragment(run_every=2) DID repaint, but it reruns while
-        st.audio_input holds a live MediaRecorder, remounting the recorder faster
-        than it tears down until the browser's main thread died ("Page
-        Unresponsive" mid-recording). It is also called from two places in one
-        script run (sidebar + student page), which collides.
-
-    get_model() simply joins the warm-up thread's in-flight load via _MODEL_LOCK,
-    so this waits exactly as long as the load has left to run — measured 6.6s from
-    a cold start, and ZERO once loaded, because get_model() returns the cached
-    instance without taking the lock. One spinner, once per server, then never
-    again. Nothing to get stuck on.
-    """
     if pronunciation.load_state() not in _SETTLED:
         with st.spinner("Waking the speech recogniser (first time only)…"):
             try:
@@ -147,16 +85,6 @@ def recogniser_status():
 
 
 def score_recording(sid, concept, wav_bytes):
-    """
-    Score a browser recording. Sets st.session_state.last_result to one of:
-      {"error": msg}                    — the recogniser failed outright
-      {"retry": reason, ...}            — unusable audio; NOT a wrong answer
-      {"word":…, "score":…, "correct":…}— a real score (mastery recorded)
-
-    A bad recording never costs the child a mark and never advances them. That
-    matters: a muted mic produces confident nonsense from Whisper, and the old
-    build turned that into "you said it wrong".
-    """
     ok, reason, stats, samples = pronunciation.prepare_audio(wav_bytes)
     if not ok:
         st.session_state.last_result = {"retry": reason, "stats": stats}
@@ -308,7 +236,6 @@ def _language_card(code):
 
 
 def language_page(user):
-    """Ask which curriculum this learner is here for."""
     _hide_sidebar()
     ui.narrow(760)
     ui.card(
@@ -336,7 +263,6 @@ def language_page(user):
 
 
 def _set_language(user, code):
-    """Record the chosen curriculum and drop anything from the previous one."""
     code = graph_engine.normalize_language(code)
     db.set_student_language(user["student_id"], code)
     st.session_state.language = code
@@ -351,14 +277,6 @@ def _set_language(user, code):
 
 
 def current_language(user):
-    """
-    The curriculum this learner is on: the session's copy, else the one stored on
-    their student row, else nothing — and nothing means "ask them".
-
-    Normalized against the dataset on the way out, so a stored code for a track
-    that has since been removed from the CSV falls back to one that exists
-    instead of serving an empty curriculum.
-    """
     code = st.session_state.get("language") or db.get_student_language(
         user["student_id"])
     if not code:
@@ -382,7 +300,6 @@ def _finish_login(user):
 
 
 def _goto_auth(role, tab):
-    """Open one of the two sign-in doors."""
     st.session_state.view = "auth"
     st.session_state.auth_role = role
     st.session_state.auth_tab = tab
@@ -390,15 +307,6 @@ def _goto_auth(role, tab):
 
 
 def _login_as(username, password, expected_role):
-    """
-    Sign in through a specific door, and refuse an account of the other kind.
-
-    The refusal is a NAVIGATION aid, not the security boundary — the dashboard is
-    still gated on the role stored in the database and re-read every rerun (see
-    main()), so nothing here can promote anyone. Its job is to stop a learner
-    typing their details into the teacher door and getting an unexplained refusal
-    from register(), which is exactly the confusion the single mixed form caused.
-    """
     user = auth.login(username, password)
     if user["role"] != expected_role:
         actual = "teacher" if user["role"] == auth.TEACHER else "learner"
@@ -410,7 +318,6 @@ def _login_as(username, password, expected_role):
 
 
 def auth_page():
-    """Route to the learner or the teacher door; ask which if we do not know."""
     _hide_sidebar()
     ui.narrow(560)
     role = st.session_state.get("auth_role")
@@ -460,7 +367,6 @@ def _auth_header(title, lede):
 
 
 def _student_auth():
-    """The learner door. No teacher controls appear here at all."""
     _auth_header("Learner sign in", "Sign in to pick up where you left off.")
 
     b1, b2 = st.columns(2)
@@ -505,7 +411,6 @@ def _student_auth():
 
 
 def _teacher_auth():
-    """The teacher door. The PIN is a REGISTRATION secret and only appears here."""
     _auth_header("Teacher sign in",
                  "Sign in to see your class, or create a teacher account.")
 
@@ -599,20 +504,9 @@ _RETRY_TEXT = {
 
 
 def render_word_card(concept):
-    """
-    The card: a picture, the word itself in the language being learned, what it
-    means, and — when they differ — what to actually say.
-
-    ONE language is on this card. It used to print the Kannada word with the Tulu
-    equivalent underneath it on every card, which meant a Kannada learner was
-    reading a language they had not asked for and a Tulu learner had no card of
-    their own at all. The dataset still pairs the two (that pairing is what this
-    project contributes, and the teacher's dashboard reads it) — but a learner
-    sees only the track they chose.
-    """
     img_path = media.get_image(concept["image_file"],
                                label=graph_engine.display_word(concept))
-    left, mid, right = st.columns([1, 3, 1])
+    _left, mid, _right = st.columns([1, 3, 1])
     with mid:
         st.image(img_path, width="stretch")
 
@@ -697,7 +591,6 @@ def render_feedback():
 
 
 def current_concept(student_id, language):
-    """The concept on screen, fetched lazily and cached for the session."""
     if st.session_state.get("concept") is None:
         st.session_state.concept = graph_engine.get_next_concept(student_id, language)
     return st.session_state.concept
@@ -844,7 +737,6 @@ def student_view(user, language):
 
 
 def _findings(items):
-    """Render insight.py's sentences as a plain list."""
     if not items:
         return
     rows = []
@@ -857,14 +749,6 @@ def _findings(items):
 
 
 def _alphabet_chart(student_id, language):
-    """
-    The varnamale, coloured in for one child.
-
-    Vowels then consonants, in the order they are taught, each letter printed
-    with its romanization underneath. A teacher can point at a red cell and know
-    both which letter it is and that this child needs help with it — which is
-    the entire thing the old network diagram could not do.
-    """
     chart = insight.alphabet_chart(student_id, language)
     if not chart:
         return
@@ -892,15 +776,6 @@ def _alphabet_chart(student_id, language):
 
 
 def _cognitive_map(student_id, language, display_name):
-    """
-    The prerequisite graph as an SVG, with this child's progress painted on.
-
-    Structural, not diagnostic — see cogmap.py for why it sits at the bottom of
-    the page rather than beside the alphabet chart. Drawn inline so it needs no
-    plotting library and no image round-trip: cogmap gives back coordinates and
-    this turns them into <line> and <circle>, with the concept name in a <title>
-    so hovering a dot says what it is.
-    """
     try:
         plan = cogmap.layout(student_id, language)
     except Exception:
@@ -944,7 +819,6 @@ def _cognitive_map(student_id, language, display_name):
 
 
 def _days_since(iso_ts):
-    """Whole days between an ISO timestamp and now, or None if never."""
     if not iso_ts:
         return None
     try:
@@ -954,15 +828,11 @@ def _days_since(iso_ts):
 
 
 def _student_language(student):
-    """The curriculum a child is on — the default until they have picked one."""
     return graph_engine.normalize_language(
         student.get("language") or graph_engine.DEFAULT_LANGUAGE)
 
 
 def _class_rows(students):
-    """One row per child for the class table. Each child is measured against
-    THEIR OWN curriculum: counting a Tulu learner out of the Kannada total would
-    make them look permanently behind."""
     activity = {a["student_id"]: a for a in db.get_student_activity()}
     rows = []
     for s in students:
@@ -1045,12 +915,6 @@ def _class_overview(students):
 
 
 def _hardest_concepts():
-    """
-    Which concepts the CLASS finds hard — the one question a per-student view
-    cannot answer. A word one child misses is a child to sit with; a word most of
-    the class misses is a lesson to reteach, or a word the recogniser handles
-    badly. Only an aggregate separates those.
-    """
     stats = db.get_concept_stats()
     if not stats:
         return
@@ -1101,11 +965,6 @@ def _hardest_concepts():
 
 
 def _class_trend(all_attempts):
-    """
-    Activity and accuracy over time. Every attempt is timestamped, but the
-    dashboard showed only snapshots — so a class getting steadily better and one
-    that stalled a fortnight ago looked identical.
-    """
     if not all_attempts:
         return
     df = pd.DataFrame(all_attempts)
@@ -1141,8 +1000,6 @@ def _class_trend(all_attempts):
 
 
 def _class_export(table):
-    """One CSV for the whole class — export was per-student only, so a teacher
-    keeping records had to download each child separately."""
     ui.spacer()
     st.download_button(
         "Download the whole class (CSV)",
@@ -1180,7 +1037,6 @@ def _student_detail(students):
     attempted = sum(1 for p in progress if p["attempts"] > 0)
     struggling = [p for p in progress
                   if p["attempts"] >= insight.STRUGGLE_ATTEMPTS and not p["mastered"]]
-    parked = [p for p in progress if p["parked"]]
 
     ui.spacer(8)
     st.subheader(f"What {display_name} needs")
@@ -1199,8 +1055,8 @@ def _student_detail(students):
     if topics:
         ui.spacer(24)
         st.subheader("Words, by topic")
-        ui.note("Least finished first — the top row is where this child has the "
-                "most left to learn.")
+        ui.note("Topics they have started, least finished first. Topics they "
+                "have not reached yet come last.")
         ui.bars(topics)
 
     if struggling:

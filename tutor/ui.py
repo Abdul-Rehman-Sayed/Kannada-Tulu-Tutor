@@ -1,52 +1,3 @@
-"""
-ui.py — the design system.
-
-Everything visual lives here so app.py can stay about teaching.
-
-WHAT THIS LOOKS LIKE, AND WHY.
-
-The reference is a printed school reader, not a software product page. Warm paper
-ground, near-black ink, hairline rules, a serif for headings and a plain sans for
-everything a child has to act on. That is a deliberate move away from what the
-interface used to be — a violet accent, soft-tinted icon tiles in a three-across
-feature row, an uppercase eyebrow label over a centred hero, a strip of four big
-round numbers. Every one of those is a house style, and it is the house style of
-generated marketing pages; a literacy tool for a village classroom should look
-like it was made by someone who has been in one.
-
-Four rules this follows.
-
-1. No gradients, no shadows, no blur, no glass, no emoji. Rank is carried by
-   size, weight and space. There is no decorative colour anywhere.
-
-2. Colour is semantic ONLY. Ink is the interface; green, brick and amber mean
-   correct, wrong and try-again and are used nowhere else. There is no brand
-   accent competing with them — a purple button next to a green "correct" panel
-   is two colours saying nothing and one colour saying something, and the child
-   has to work out which is which.
-
-3. It does not fake any control. Every button, field and recorder on screen is a
-   real Streamlit widget that has been restyled — there is no decorative HTML
-   pretending to be interactive. A child tapping something that only looks like a
-   button is a bug, not a design.
-
-4. Phone first. This is used on a shared handset as often as a laptop, so every
-   tap target is at least 48px, inputs are 16px (anything smaller makes iOS zoom
-   the page on focus), Streamlit's side-by-side columns stack below 760px instead
-   of squeezing to unreadable slivers, and no table is allowed to widen the page —
-   they scroll inside themselves.
-
-Inputs are styled on their CONTAINER, never on the bare <input>. Streamlit wraps
-a field and its trailing controls (the password reveal eye) together in one
-[data-baseweb="input"] box. Bordering the inner <input> alone leaves that eye
-button stranded outside the field — which is exactly how the sign-up form came to
-look broken.
-
-Streamlit chrome (toolbar, Deploy, menu) is removed in .streamlit/config.toml,
-not here: data-testid names change between releases, and a stylesheet that hides
-the Deploy button is one upgrade away from it reappearing over a flashcard.
-"""
-
 import html
 
 import streamlit as st
@@ -435,31 +386,18 @@ div[data-baseweb="input"] button{{
 
 
 def inject():
-    """Install the stylesheet. Call once, first thing, on every rerun."""
     st.markdown(_CSS, unsafe_allow_html=True)
 
 
 def esc(value):
-    """Escape anything going into an unsafe_allow_html block."""
     return html.escape(str(value))
 
 
 def card(html_body, extra=""):
-    """Wrap markup in a card."""
     st.markdown(f'<div class="card {extra}">{html_body}</div>', unsafe_allow_html=True)
 
 
 def narrow(px=860):
-    """
-    Constrain this view to a reading measure, centred in the full-bleed page.
-
-    This has to be done by styling Streamlit's own block container: emitting a
-    <div> from st.markdown and hoping the next widgets land inside it does not
-    work — Streamlit renders every element as a sibling, so the div closes
-    immediately and wraps nothing. A flashcard stretched across a 1440px projector
-    is unreadable; the teacher's tables want the whole width, so they simply do
-    not call this.
-    """
     st.markdown(
         f"<style>.stMainBlockContainer,.block-container"
         f"{{max-width:{px}px !important;margin:0 auto !important;}}</style>",
@@ -476,18 +414,10 @@ def spacer(px=14):
 
 
 def note(text):
-    """A short explanatory line under a heading, at a readable measure."""
     st.markdown(f'<p class="section-note">{text}</p>', unsafe_allow_html=True)
 
 
 def bars(rows):
-    """
-    A stack of labelled progress bars: [(label, done, total, caption), …].
-
-    Used wherever a teacher needs "how far through X is this child" — tiers,
-    topics, the class. A bar under a name is read correctly by anyone; a coloured
-    node in a graph is not.
-    """
     parts = []
     for label, done, total, caption in rows:
         pct = (done / total * 100) if total else 0.0
@@ -503,7 +433,6 @@ def bars(rows):
 
 
 def legend(items, title="What the colours mean"):
-    """A colour key: [(css_class, label), …], introduced by `title`."""
     parts = [
         f'<span><i class="{cls}"></i>{esc(label)}</span>' for cls, label in items
     ]

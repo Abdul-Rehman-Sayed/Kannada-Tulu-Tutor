@@ -28,15 +28,22 @@ stack (see **[LICENCES.md](LICENCES.md)**).
 
 ```bash
 pip install -r requirements.txt
-python -m scripts.convert_model   # one-off: builds the Kannada speech model (~250 MB)
 streamlit run app.py
 ```
 
-Open <http://localhost:8501>.
+Open <http://localhost:8501>. The first recording that gets scored pulls the
+Kannada speech model (~250 MB) from the HuggingFace Hub and caches it; everything
+after that runs offline.
 
-If you skip the conversion step the app downloads the same model from the
-HuggingFace Hub on first use, so it still works; converting locally just means the
-app never needs the network again.
+To build the model locally instead, so the machine never needs the network at
+all, run the one-off conversion first. It needs two packages that are
+deliberately **not** in `requirements.txt`, because only the conversion uses them
+and they are a gigabyte the tutor would otherwise carry for nothing:
+
+```bash
+pip install transformers torch
+python -m scripts.convert_model
+```
 
 Everything is run from the project root, so `./data` and `./models` resolve.
 
@@ -65,6 +72,12 @@ Every password is stored as a **scrypt** hash with a per-user random salt, and
 compared in constant time. The role lives on the user row and is re-read from the
 database on every rerun, so a student session has no path to the dashboard: there
 is no session flag a client could set to promote itself.
+
+Each account gets its **own** progress record, which matters because two children
+in one class are routinely both called Ravi. Sign-up allocates a new learner row
+rather than reusing whichever one happens to match by name, and a duplicate shows
+on the dashboard with the username appended — `Ravi`, then `Ravi (ravi_b)` — so a
+teacher can tell them apart.
 
 ---
 
@@ -210,17 +223,24 @@ cards no child can pass. This is a deliberate curriculum decision.
 ### That 0.65 is measured, not guessed
 
 `python -m scripts.tune_threshold` scores every concept against its own audio
-(121 correct answers) and against other concepts' (1,452 wrong answers), then sweeps:
+(267 correct answers) and against twelve other concepts' each (3,204 wrong
+answers), then sweeps. Re-measured across the whole 267-concept curriculum:
 
 | threshold | accepts correct | accepts **wrong** |
 |---|---|---|
-| 0.55 | 99% | 3.8% |
-| **0.65** | **97%** | **1.9%** |
-| 0.70 *(the old guess)* | 94% | 0.9% |
+| 0.55 | 100% | 3.0% |
+| **0.65** | **100%** | **1.1%** |
+| 0.70 *(the original guess)* | 96% | 0.7% |
 
-Youden's J peaks at 0.55, but 0.55 lets nearly twice as many *wrong* pronunciations
-through, and a false accept silently teaches a child the wrong sound. 0.65 keeps 97%
-of correct answers at half the risk.
+Youden's J peaks at 0.65 (0.989), and 0.65 is the highest value that still accepts
+*every* correct pronunciation — at 0.70 the scorer starts marking correctly-spoken
+words wrong, which is the failure this project exists to remove. Every step below
+0.65 buys nothing in return and lets through more genuinely wrong pronunciations,
+and a false accept silently teaches a child the wrong sound.
+
+The same run doubles as proof that **every card is passable**: all 267 concepts
+score at or above 0.65 against their own audio, so there is no card on which a
+child pronouncing the word perfectly would be marked wrong.
 
 ### A word it could not make out is never a wrong answer
 
@@ -385,6 +405,8 @@ not on absolute level, because level is a fact about mic gain and distance rathe
 than about whether a child spoke. It replays every concept through simulated
 microphones and is the only check that can catch that class of injustice:
 
+Measured over the corpus at the time the gate was rewritten:
+
 | microphone | accepted | scored correct |
 |---|---|---|
 | normal voice, quiet room | 100% | 98.3% |
@@ -446,8 +468,23 @@ docker build -t kannada-tutor .
 docker run -p 8501:8501 -e TUTOR_TEACHER_PIN=<pin> -v tutor-data:/app/data kannada-tutor
 ```
 
-The model is baked into the image, so the container needs no network at all. Mount a
-volume on `/app/data` or the children's progress dies with the container.
+The build caches the speech model inside the image, so the container needs no
+network at run time. It pulls the already-converted CTranslate2 build rather than
+running `scripts/convert_model.py`, which would drag `transformers` and `torch`
+into the image for the same result. If that pull fails the build still succeeds
+and the app fetches the model on first use instead.
+
+For the Listen button to work offline too, run `python -m tests.validate_asr`
+before building: it fills `data/audio/` with a clip for every concept, and the
+build copies that cache in. Without it the first play of each word needs the
+network once.
+
+`.dockerignore` keeps `data/tutor.db` and `.streamlit/secrets.toml` out of the
+image — children's names and your teacher PIN must not be baked into something
+you push to a registry.
+
+Mount a volume on `/app/data` or the children's progress dies with the
+container.
 
 ### The microphone needs HTTPS
 
@@ -473,6 +510,10 @@ uploads. If recordings arrive silent, lower the browser's shields for the site.
 | `TUTOR_SKIP_WARMUP` | *(unset)* | Skip loading the model at boot (used by the tests). |
 | `TUTOR_CONTACT` | *(unset)* | Your email/URL, sent to Wikimedia when fetching images. |
 
+Everything else lives in `.streamlit/config.toml`: the theme, the 5 MB upload cap
+that bounds a recording, and the error-detail setting described under *Data and
+privacy*.
+
 ---
 
 ## How it fits together
@@ -485,7 +526,16 @@ scripts/            one-off data prep + tuning  (python -m scripts.<name>)
 tests/              tests and validators       (python -m tests.<name>)
 data/               vocabulary.csv, images, cached audio, tutor.db
 models/             the offline Kannada speech model
+Dockerfile          the offline container build
+.dockerignore       keeps tutor.db and secrets out of the image
 ```
+
+**The source carries no comments.** This README is the documentation, and the
+reasoning that would otherwise sit in a docstring is written up here, next to the
+measurement that settled it — why letters are taught with an anchor word, why the
+pass mark is 0.65 and not 0.55, why a clip the recogniser could not make out is
+never a wrong answer, why the dashboard is sentences instead of a graph. The test
+names carry the rest: each one states the behaviour it protects.
 
 | Module | Responsibility |
 |---|---|
@@ -497,6 +547,7 @@ models/             the offline Kannada speech model
 | `tutor/pronunciation.py` | Speech recognition, romanisation, scoring, and the microphone gate |
 | `tutor/db.py` | SQLite: students, mastery (EMA), attempt history, class aggregates |
 | `tutor/media.py` | Text-to-speech (cached) and image resolution |
+| `tutor/cogmap.py` | Lays out the prerequisite graph for the structural view at the foot of a child's page |
 | `tutor/config.py` | The teacher registration PIN, from env or Streamlit secrets |
 | `scripts/build_dataset.py` | **The curriculum itself** — generates `data/vocabulary.csv` |
 | `scripts/fetch_images.py` | Free-licensed pictures + attribution, and locally drawn cards |
@@ -529,8 +580,18 @@ distance, a moving average, and a key-derivation function.
 
 ## Data and privacy
 
-`data/tutor.db` holds **real children's names and scores**. It is gitignored. Keep it
-that way, and mount it as a volume rather than baking it into an image.
+`data/tutor.db` holds **real children's names and scores**. It is in `.gitignore`
+and in `.dockerignore`, so it is neither committed nor baked into a container
+image. Keep it that way, and mount it as a volume instead.
 
 Speech is recognised on the machine running the app. No recording of a child's voice
 is ever sent anywhere.
+
+`.streamlit/config.toml` sets `client.showErrorDetails = "none"`, so an uncaught
+error shows a short generic message instead of a Python traceback with server
+paths in it. The real error still goes to the server log. While developing,
+override it: `streamlit run app.py --client.showErrorDetails=full`.
+
+(The obvious-looking `showErrorDetails = false` does **not** do this. Streamlit
+keeps `false` as a legacy value meaning *stacktrace*, so it hides the message and
+then prints the traceback anyway.)

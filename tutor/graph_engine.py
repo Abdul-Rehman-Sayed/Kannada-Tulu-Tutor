@@ -1,18 +1,3 @@
-"""
-graph_engine.py — concept graph + adaptive sequencing for the literacy tutor.
-
-Loads data/vocabulary.csv and builds a directed NetworkX graph where each
-concept_id is a node and prereq_id defines a directed edge (prereq -> concept).
-The graph drives an adaptive curriculum: a student is always shown the easiest
-concept they are *ready* for (all prerequisites mastered) but have not mastered.
-
-Public API (used by app.py):
-    load_graph()
-    get_next_concept(student_id)
-    update_mastery(student_id, concept_id, correct_bool)
-    get_student_progress(student_id)
-"""
-
 import os
 from collections import deque
 
@@ -58,7 +43,6 @@ DEFAULT_LANGUAGE = KANNADA
 
 
 def language_info(code):
-    """The metadata block for a language code, falling back to Kannada."""
     return LANGUAGES.get(code) or LANGUAGES[DEFAULT_LANGUAGE]
 
 
@@ -67,20 +51,10 @@ def language_name(code):
 
 
 def display_word(concept):
-    """
-    The word a learner is shown and scored on — Tulu on the Tulu track, Kannada
-    on the Kannada track.
-
-    Every row carries both scripts, because the Kannada-word/Tulu-equivalent
-    pairing is the dataset this project contributes and the teacher dashboard
-    reads it. Only one of the two is ever put in front of a child, and this is
-    the single place that decides which. build_dataset.py derives the CSV's
-    transliteration column through the identical rule, so the romanization on a
-    card always belongs to the word printed above it.
-    """
     if (concept.get("language") or KANNADA) == TULU:
         return (concept.get("tulu_word") or concept.get("kannada_word") or "").strip()
     return (concept.get("kannada_word") or "").strip()
+
 
 LEVELS = ["Basic", "Intermediate", "Advanced", "Sentences"]
 
@@ -93,18 +67,6 @@ LEVEL_MEANING = {
 
 
 def load_graph(language=None, force_reload=False):
-    """
-    The concept DiGraph from vocabulary.csv (cached).
-
-    With no `language` this is the whole dataset — both curricula, as two
-    disconnected components. With one, it is that language's curriculum alone,
-    which is what every learner-facing call wants: the Tulu track must not be
-    able to see, count, or serve a Kannada concept.
-
-    The subgraph is a real filtered copy rather than a view, so callers can treat
-    it as an ordinary graph, and it is cached per language because it is rebuilt
-    on every Streamlit rerun otherwise.
-    """
     if language is not None:
         if force_reload:
             _SUBGRAPHS.clear()
@@ -148,15 +110,15 @@ def load_graph(language=None, force_reload=False):
             ) from None
         kannada_word = row["kannada_word"].strip()
         tulu_word = row["tulu_word"].strip()
-        language = row["language"].strip() or KANNADA
+        row_language = row["language"].strip() or KANNADA
         G.add_node(
             cid,
             concept_id=cid,
-            language=language,
+            language=row_language,
             kannada_word=kannada_word,
             tulu_word=tulu_word,
             display_word=display_word(
-                {"language": language, "kannada_word": kannada_word,
+                {"language": row_language, "kannada_word": kannada_word,
                  "tulu_word": tulu_word}
             ),
             transliteration=row["transliteration"].strip(),
@@ -197,12 +159,6 @@ def load_graph(language=None, force_reload=False):
 
 
 def concept_info(concept_id):
-    """Return the attribute dict for one concept, or None if unknown.
-
-    Deliberately searches the FULL graph, not one language: this is how the
-    teacher dashboard resolves a concept id out of the attempt history, and a
-    class contains children on both tracks.
-    """
     G = load_graph()
     return dict(G.nodes[concept_id]) if concept_id in G else None
 
@@ -211,7 +167,6 @@ PARK_AFTER_ATTEMPTS = 6
 
 
 def _progression_sets(student_id, G):
-    """(mastered, parked) — parked = tried hard, still failing, moved past."""
     mastered, parked = set(), set()
     for row in db.get_mastery_rows(student_id):
         cid = row["concept_id"]
@@ -225,15 +180,6 @@ def _progression_sets(student_id, G):
 
 
 def get_next_concept(student_id, language=DEFAULT_LANGUAGE):
-    """
-    The concept the student should learn next *in the language they chose*: the
-    lowest-difficulty concept that is not yet mastered, not parked, and whose
-    prerequisites are all cleared. Returns None when nothing is left on that
-    track.
-
-    `language` is not optional in spirit — a call without it would serve a child
-    the whole dataset and hand a Tulu learner Kannada consonants.
-    """
     G = load_graph(language)
     mastered, parked = _progression_sets(student_id, G)
     cleared = mastered | parked
@@ -269,26 +215,10 @@ def get_next_concept(student_id, language=DEFAULT_LANGUAGE):
 
 
 def update_mastery(student_id, concept_id, correct_bool, raw_score=None, heard=None):
-    """Record an attempt and return the updated mastery score.
-
-    `raw_score` (optional, 0..1) is the pronunciation similarity for this
-    attempt; it is logged in the session history for the teacher view.
-    `heard` (optional) is what the recogniser transcribed, logged so the teacher
-    can see the child's actual error rather than only its score.
-    """
     return db.update_mastery(student_id, concept_id, correct_bool, raw_score, heard)
 
 
 def get_student_progress(student_id, language=DEFAULT_LANGUAGE):
-    """
-    Full progress view for ONE track: every concept in `language`, enriched with
-    the student's mastery. Concepts never attempted appear with score 0 /
-    attempts 0. Sorted by (difficulty, concept_id) so it reads as a curriculum.
-
-    Pass language=None for every concept across both tracks — the teacher
-    dashboard's whole-class exports want that; a learner's own progress never
-    does, because "12 of 273" would count a curriculum they are not studying.
-    """
     G = load_graph(language)
     rows = {r["concept_id"]: r for r in db.get_mastery_rows(student_id)}
 
@@ -323,22 +253,12 @@ def get_student_progress(student_id, language=DEFAULT_LANGUAGE):
 
 
 def mastery_summary(student_id, language=DEFAULT_LANGUAGE):
-    """Return (mastered_count, total_count) for one track's progress display."""
     progress = get_student_progress(student_id, language)
     mastered = sum(1 for p in progress if p["mastered"])
     return mastered, len(progress)
 
 
 def mastery_by_level(student_id, language=DEFAULT_LANGUAGE):
-    """
-    Per-tier progress for one track: {level: (mastered, total)} in
-    Basic -> Intermediate -> Advanced -> Sentences order. Lets the UI show the
-    leveled progression explicitly rather than as one flat bar.
-
-    Tiers with no concepts on this track are dropped — the Tulu track has no
-    alphabet and no sentences, and an empty "Basic 0/0" line would read as a
-    child who has learned no letters rather than a tier that does not exist.
-    """
     progress = get_student_progress(student_id, language)
     out = {lv: [0, 0] for lv in LEVELS}
     for p in progress:
@@ -351,13 +271,6 @@ def mastery_by_level(student_id, language=DEFAULT_LANGUAGE):
 
 
 def available_languages():
-    """
-    The language codes that actually have concepts in the dataset, in the order
-    LANGUAGES declares them.
-
-    Read from the data rather than hard-coded, so a deployment that ships a CSV
-    with only one track shows one door instead of offering an empty curriculum.
-    """
     G = load_graph()
     present = {d.get("language", KANNADA) for _, d in G.nodes(data=True)}
     codes = [c for c in LANGUAGES if c in present]
@@ -365,21 +278,11 @@ def available_languages():
 
 
 def normalize_language(code):
-    """Coerce anything (None, a stale session value, a dropped track) to a code
-    the dataset actually has."""
     available = available_languages()
     return code if code in available else available[0]
 
 
 def letters_in_order(language=KANNADA):
-    """
-    The alphabet as a teacher would write it out: vowels first, then consonants,
-    each in curriculum order.
-
-    This is what the teacher dashboard's varnamale chart is drawn from. It is a
-    list, not a graph, because that is what the thing on screen actually is — a
-    chart of letters, in the order children learn them.
-    """
     G = load_graph(language)
     out = {}
     for cat in ("vowels", "consonants"):
@@ -391,11 +294,6 @@ def letters_in_order(language=KANNADA):
 
 
 def concepts_by_category(language=KANNADA, exclude_letters=True):
-    """
-    Concepts grouped by topic ({category: [node dicts]}), in the order they are
-    taught. The teacher dashboard shows words this way because "animals 3/18" is
-    a fact a teacher can act on; a node in a network diagram is not.
-    """
     G = load_graph(language)
     out = {}
     for _, d in G.nodes(data=True):

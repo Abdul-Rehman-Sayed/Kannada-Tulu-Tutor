@@ -1,26 +1,5 @@
-"""
-validate_dataset.py — catches the dataset problems that silently break the app.
-Run this before every app launch. If it prints FAIL, the app will misbehave; fix
-the CSV, don't touch app code.
-
-    python validate_dataset.py data/vocabulary.csv
-
-Checks:
-  1. Duplicate concept_id (breaks graph nodes)
-  2. prereq_id pointing to a concept that doesn't exist (breaks graph edges / traversal)
-  3. Cycles in prereqs (get_next_concept would loop forever)
-  4. Missing required fields (kannada_word, english_meaning, category)
-  5. Orphan roots sanity (how many concepts have no prereq — your starting points)
-  6. Non-numeric difficulty (the app int()s it at load — "easy" would crash boot)
-  7. Unknown language codes, and prerequisites that cross between languages
-     (a Tulu concept behind a Kannada one would stall the Tulu track behind a
-     letter nobody on it is ever taught)
-  8. A word the child is shown: every row must have something to display in the
-     language it belongs to
-
-Reads utf-8-sig so a CSV saved from Excel (BOM-prefixed) validates identically.
-"""
 import sys, csv, os
+
 
 def main(path):
     if not os.path.exists(path):
@@ -113,6 +92,7 @@ def main(path):
         for p in problems: print("  -", p)
         sys.exit(1)
     print("PASS — dataset is structurally sound. App will run cleanly.")
+
 
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else "data/vocabulary.csv")

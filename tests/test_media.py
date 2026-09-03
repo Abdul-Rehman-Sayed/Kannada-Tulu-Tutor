@@ -1,14 +1,3 @@
-"""
-test_media.py — Slice 3 checkpoint.
-
-Proves both media paths:
-  1. get_audio() generates (and caches) a Kannada mp3.
-  2. get_image() resolves a real image, and returns a placeholder for a missing one.
-
-Run:  python test_media.py
-Then: play the printed mp3 and open the placeholder png to eyeball them.
-"""
-
 import os
 import sys
 

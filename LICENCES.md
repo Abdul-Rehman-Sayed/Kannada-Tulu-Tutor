@@ -46,15 +46,15 @@ of the scoring code.
 It has been replaced with **`rapidfuzz`** (MIT). This is not an approximation —
 `Levenshtein.ratio()` and `rapidfuzz.distance.Indel.normalized_similarity()`
 compute the same quantity by definition. The swap was verified: identical results
-on 200,000 random string pairs (max difference 0.00e+00) and on all 121
-curriculum concepts (0 scores changed).
+on 200,000 random string pairs (max difference 0.00e+00) and on every
+curriculum concept in the dataset at the time (0 scores changed).
 
 **Do not add `python-Levenshtein` back.**
 
 ## The speech model
 
 - **Model:** `vasista22/whisper-kannada-small`, converted to CTranslate2 int8 by
-  `convert_model.py`.
+  `scripts/convert_model.py`.
 - **Author:** Speech Lab, IIT Madras. Compute funded by *Bhashini*, India's
   National Language Translation Mission.
 - **Licence:** **Apache-2.0** — free to use, redistribute, and use commercially,
@@ -68,7 +68,7 @@ what makes the scoring honest.
 ## Pictures
 
 Every picture is fetched from **Wikipedia / Wikimedia Commons** by
-`fetch_images.py`, which **only accepts freely-licensed files** (public domain,
+`scripts/fetch_images.py`, which **only accepts freely-licensed files** (public domain,
 CC0, CC BY, CC BY-SA, GFDL). Anything whose licence is not recognised as free is
 skipped rather than shipped.
 
@@ -80,7 +80,7 @@ If you publish this app, keep `CREDITS.csv` with it. That is what satisfies the
 attribution requirement.
 
 Colour and number cards are **not** fetched — they are drawn locally by
-`fetch_images.py`, so they carry no licence at all.
+`scripts/fetch_images.py`, so they carry no licence at all.
 
 ## Spoken audio (gTTS) — read this one
 
@@ -94,11 +94,11 @@ Two honest caveats:
    change it, and Google's terms discourage automated access. There is no cost
    or licence exposure to you, but there is a *reliability* risk.
 2. Because of that, the app **caches every clip** in `data/audio/`. Run
-   `python validate_asr.py` once and all 121 clips are generated and cached; the
-   deployed app then never calls the network for audio again. A classroom
+   `python -m tests.validate_asr` once and a clip for every concept is generated
+   and cached; the deployed app then never calls the network for audio again. A classroom
    deployment works fully offline.
 
-If you want to remove even that dependency, `media.py` isolates all text-to-speech
+If you want to remove even that dependency, `tutor/media.py` isolates all text-to-speech
 behind `get_audio()`; a locally-installed engine such as **espeak-ng**
 (GPL-3.0, invoked as a separate binary, which does *not* impose the GPL on this
 app) supports Kannada and can be dropped in there. The default is gTTS because

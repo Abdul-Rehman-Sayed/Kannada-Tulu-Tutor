@@ -1,24 +1,3 @@
-"""
-fetch_images.py — download one freely-licensed picture per concept.
-
-Source: Wikimedia Commons, via its public MediaWiki API. No key, no account, no
-paid service, and everything on Commons is under a free licence (public domain or
-Creative Commons), so the pictures can ship with the app and be shown in a
-classroom. Every file's licence and author are recorded in data/images/CREDITS.csv
-— attribution is a condition of the CC licences, not an optional courtesy.
-
-Each image is normalised to a 640x480 JPEG so the flashcards are a uniform size
-(a wall of differently-shaped photos is what made the old UI feel broken).
-
-    python fetch_images.py                # fetch everything still missing
-    python fetch_images.py --force        # re-fetch even if a file exists
-    python fetch_images.py --only V01,W003
-    python fetch_images.py --contact-sheet  # build a montage to eyeball the set
-
-Images already present are left alone, so a teacher can drop in a better picture
-(same filename) and it will never be overwritten.
-"""
-
 import argparse
 import csv
 import io
@@ -56,10 +35,9 @@ _FREE_HINTS = ("cc", "public domain", "pd", "gfdl", "attribution")
 
 
 def _open(url, timeout=30):
-    """GET with backoff. Honours Retry-After on 429; retries transient 5xx."""
     delay = 2.0
     last = None
-    for attempt in range(MAX_RETRIES):
+    for _ in range(MAX_RETRIES):
         req = urllib.request.Request(url, headers={"User-Agent": UA})
         try:
             return urllib.request.urlopen(req, timeout=timeout).read()
@@ -145,14 +123,6 @@ OVERRIDE = {
 
 
 def search_wikipedia_image(query, title=None):
-    """
-    The lead image of the best-matching Wikipedia article.
-
-    Far more reliable than a raw image search: an article's lead image has been
-    chosen by editors to *depict the subject*, whereas a file-name search just
-    matches text. Lead images live on Commons, so the licence is still free — we
-    look it up and record it exactly as for a Commons hit.
-    """
     if title:
         params = {"action": "query", "titles": title}
     else:
@@ -176,7 +146,6 @@ def search_wikipedia_image(query, title=None):
 
 
 def _commons_licence(file_title):
-    """(licence, author) for a Commons file, so attribution can be recorded."""
     try:
         data = _get({"action": "query", "titles": file_title,
                      "prop": "imageinfo", "iiprop": "extmetadata"})
@@ -192,7 +161,6 @@ def _commons_licence(file_title):
 
 
 def search_image(query):
-    """Best free bitmap on Commons for `query` -> (image_url, licence, author, page)."""
     data = _get({
         "action": "query",
         "generator": "search",
@@ -232,7 +200,6 @@ def _strip_html(s):
 
 
 def download_card(url, dest):
-    """Fetch `url` and write it as a CARD_W x CARD_H JPEG (centre-cropped)."""
     raw = _open(url, timeout=60)
     img = Image.open(io.BytesIO(raw))
     img = ImageOps.exif_transpose(img)
@@ -277,7 +244,6 @@ def draw_colour_card(meaning, dest):
 
 
 def draw_number_card(meaning, dest):
-    """The Kannada numeral plus exactly that many dots, so it can be counted."""
     from PIL import ImageDraw
     n = _NUMBERS[meaning]
     img = Image.new("RGB", (CARD_W, CARD_H), (250, 250, 252))
@@ -305,7 +271,6 @@ def draw_number_card(meaning, dest):
 
 
 def _card_font(size):
-    """A font that can actually render Kannada digits — else they come out tofu."""
     from PIL import ImageFont
     for path in (
         r"C:\Windows\Fonts\Nirmala.ttc",
@@ -321,7 +286,6 @@ def _card_font(size):
 
 
 def draw_local(row, dest):
-    """Draw this concept's card locally. Returns True if it was handled here."""
     meaning = (row.get("english_meaning") or "").strip().lower()
     if row.get("category") == "colours" and meaning in _SWATCHES:
         draw_colour_card(meaning, dest)
@@ -333,15 +297,6 @@ def draw_local(row, dest):
 
 
 def contact_sheet(rows, per_page=36):
-    """
-    Labelled montages of every fetched image.
-
-    A search API will happily return a heron for "mouse" and an oil painting for
-    "mother", and you cannot tell which tile is which concept from an unlabelled
-    grid. Each thumbnail is captioned with its concept id and meaning, so the
-    sheet can actually be checked rather than glanced at. Paginated, because 121
-    legible captions do not fit on one image.
-    """
     from PIL import ImageDraw
 
     have = [r for r in rows if os.path.exists(os.path.join(IMAGE_DIR, r["image_file"]))]

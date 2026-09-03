@@ -1,13 +1,3 @@
-"""
-test_pronunciation.py — the speech scorer, including regressions for the bugs
-that made this app mark correct children wrong.
-
-Runs entirely offline (no whisper, no network) unless you hand it an audio file:
-
-    python test_pronunciation.py                    # scorer unit tests
-    python test_pronunciation.py my_recording.wav ಅಮ್ಮ   # + real transcription
-"""
-
 import csv
 import io
 import os
@@ -78,7 +68,6 @@ def scorer_tests():
 
 
 def _wav(seconds, amplitude, rate=16000):
-    """A synthetic WAV clip, for the microphone quality gate."""
     import io
 
     n = int(seconds * rate)
@@ -93,11 +82,6 @@ def _wav(seconds, amplitude, rate=16000):
 
 
 def mic_tests():
-    """
-    The microphone gate. Whisper does not fail on a silent clip — it hallucinates
-    a word, confidently, and the child is then told they said the wrong thing. A
-    muted or unplugged mic must be caught BEFORE it reaches the recogniser.
-    """
     print("\nMicrophone quality gate:")
     ok = True
 
@@ -127,12 +111,6 @@ def mic_tests():
 
 
 def _clip(seconds, amplitude, noise, rate=16000):
-    """A word-shaped burst inside a quiet lead/tail, as a real recording arrives.
-
-    `amplitude` is the voice, `noise` the room. A real mic never returns a bare
-    tone: there is always a floor, and the ratio between the two is the whole
-    question the gate has to answer. Quantized to 16-bit, like the browser's.
-    """
     import io
 
     rng = np.random.default_rng(7)
@@ -156,18 +134,6 @@ def _clip(seconds, amplitude, noise, rate=16000):
 
 
 def soft_voice_tests():
-    """
-    REGRESSION — "I said the exact word and it says it couldn't hear anything."
-
-    The gate used to veto any clip peaking below 0.02, which is a statement about
-    microphone gain, not about whether a child spoke. Measured against the real
-    recogniser: a clip peaking at 0.0027 in a quiet room transcribes at 1.00,
-    while a LOUDER one (0.0055) in a noisy room is pure hallucination. Level
-    ranked them backwards. What separates them is signal-to-noise.
-
-    So: a soft voice in a quiet room must be ACCEPTED however faint it is, and a
-    noisy room with no voice in it must still be REJECTED.
-    """
     print("\nSoft-voice regression (the 'couldn't hear anything' bug):")
     ok = True
 
@@ -202,16 +168,6 @@ def soft_voice_tests():
 
 
 def confidence_tests():
-    """
-    REGRESSION — "it says 45% match when it can't even hear me."
-
-    A non-match on a clip the recogniser could not make out must be a free retry,
-    not a wrong mark. is_low_confidence() reads the model's own certainty to tell
-    a genuine wrong answer (a confident decode of a different word) from a clip we
-    simply failed to recognise. Characterised in pronunciation.py: a word the
-    model actually heard sits near avg_logprob 0, a clip it guessed at drifts well
-    below MIN_CONFIDENT_LOGPROB, and noise reports a high no_speech_prob.
-    """
     print("\nRecogniser-confidence gate (the 'says 45% when it can't hear me' bug):")
     ok = True
 
@@ -233,16 +189,6 @@ def confidence_tests():
 
 
 def grace_tests():
-    """
-    REGRESSION — "I said it right and it marked me wrong."
-
-    On real-world (noisy) audio the recogniser confidently mis-transcribes a
-    correctly-spoken word — measured: ಉ ಉಪ್ಪು -> ಉಕ್ಕು at avg_logprob -0.17,
-    scoring 0.50. The confidence gate cannot catch this (the decode IS confident),
-    so a single confident non-match must be a free retry, not a wrong mark. It
-    only becomes a real, logged wrong answer once it keeps happening — which is
-    what still lets the parking rule move a genuinely stuck child on.
-    """
     print("\nGrace rule (the 'said it right, marked wrong' bug):")
     ok = True
     confident = {"avg_logprob": -0.17, "no_speech_prob": 0.0}
@@ -275,21 +221,6 @@ def grace_tests():
 
 
 def decode_budget_tests():
-    """
-    The decode cap must cover the longest thing the curriculum asks a child to say.
-
-    THE BUG THIS CATCHES. max_new_tokens was 24, set when the longest item in the
-    curriculum was a single 8-token word. Nothing failed loudly when longer items
-    were added — the recogniser simply stopped decoding part-way and returned a
-    PREFIX. "ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ" came back as "ನಾನು ಶಾಲ", scored 0.52, and a
-    child who read the sentence perfectly was marked wrong. Every two-word phrase
-    was being clipped by it as well.
-
-    It is checked here, in the fast suite, against the CSV and a calibrated
-    upper-bound estimate — not against the real tokenizer — because the tokenizer
-    ships inside the model directory, and the whole point is that this must fail
-    on a laptop with no model, before anyone runs the slow ASR pass.
-    """
     print("\nDecode budget (the cap must fit the longest spoken form):")
     ok = True
 

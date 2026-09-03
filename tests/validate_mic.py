@@ -1,31 +1,3 @@
-"""
-validate_mic.py — does the microphone gate accept real speech and reject silence?
-
-This exists because the gate got it backwards once already. It vetoed any clip
-peaking below 0.02, which is a fact about microphone gain, not about whether a
-child spoke: a faint voice in a quiet room was thrown away with "I couldn't hear
-anything" while a LOUDER clip of pure room noise sailed through to the recogniser
-and came back as a confident, wrong word. Level ranked them backwards.
-
-So the gate now asks whether the sound rises above the room (signal-to-noise),
-not whether it is loud — and this script measures that claim against every
-concept in the corpus, under the microphone conditions a classroom actually has.
-
-Each concept's reference audio is replayed through a simulated microphone:
-scaled to a voice level, dropped into a room with a noise floor, padded with the
-hesitation a child leaves either side, and quantized to 16-bit like a browser's.
-Then the REAL pipeline runs: prepare_audio() -> transcribe() -> score.
-
-    python validate_mic.py            # all 121 concepts
-    python validate_mic.py 25         # a 25-concept sample (faster)
-
-What must hold:
-    * a normal voice is accepted and scored           (no regression)
-    * a SOFT voice in a quiet room is accepted        (the bug: was 0% accepted)
-    * silence / a muted mic is NEVER scored           (whisper hallucinates
-                                                       "ಮುಕ್ತಾಯ" — the end — on it)
-"""
-
 import csv
 import io
 import os
@@ -52,7 +24,6 @@ CONDITIONS = [
 
 
 def load_reference(path):
-    """The concept's reference clip as mono 16 kHz float32."""
     out = subprocess.run(
         ["ffmpeg", "-v", "quiet", "-i", path, "-ac", "1", "-ar", str(RATE), "-f", "wav", "pipe:1"],
         capture_output=True, check=True,
@@ -63,7 +34,6 @@ def load_reference(path):
 
 
 def simulate_mic(word, amplitude, noise, rng):
-    """Replay a clip through a microphone: a voice, a room, hesitation, 16-bit."""
     peak = float(np.abs(word).max()) or 1.0
     voice = word / peak * amplitude
     lead = rng.normal(0, noise, int(1.0 * RATE)) if noise else np.zeros(int(1.0 * RATE))
@@ -103,20 +73,19 @@ def main():
     t_start = time.time()
 
     for label, amp, noise, must_accept in CONDITIONS:
-        scored = accepted = correct = 0
+        accepted = correct = 0
         times = []
         for c in concepts:
             word = load_reference(audio[c["concept_id"]])
             wav = simulate_mic(word, amp, noise, rng)
 
-            ok, reason, stats, samples = pronunciation.prepare_audio(wav)
+            ok, _reason, _stats, samples = pronunciation.prepare_audio(wav)
             if ok:
                 accepted += 1
                 t0 = time.time()
                 heard = pronunciation.transcribe(samples)
                 times.append(time.time() - t0)
                 if heard.strip():
-                    scored += 1
                     expected, alts = pronunciation.accepted_forms(c)
                     _, is_right = pronunciation.score_pronunciation(expected, heard, alts)
                     correct += bool(is_right)

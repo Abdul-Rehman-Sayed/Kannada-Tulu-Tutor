@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN python -m scripts.convert_model || \
-    echo "WARNING: model conversion failed at build time; the app will download it on first use."
+RUN python -c "from faster_whisper import WhisperModel; from tutor import pronunciation; WhisperModel(pronunciation.KANNADA_MODEL, device='cpu', compute_type='int8')" \
+    || echo "WARNING: could not cache the speech model at build time; it will be downloaded on first use."
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health').read()"

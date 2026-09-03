@@ -1,26 +1,3 @@
-"""
-test_app_teacher.py — the access-separation checkpoint (headless, via AppTest).
-
-The teacher dashboard lists every child in the class by name, with how badly each
-of them is doing. That is the asset worth guarding. This file assumes an attacker
-who is a curious ten-year-old with the app open — the realistic threat here — and
-checks that none of the obvious moves work:
-
-  * signing in as a student shows no route to the dashboard at all,
-  * a teacher account cannot be created without the deployer's PIN,
-  * guessing that PIN is rate-limited,
-  * and — the one that matters — the dashboard is gated on the ROLE IN THE
-    DATABASE, not on anything the session carries, so tampering with session
-    state cannot promote a student.
-
-That last point is why the old shared-PIN gate was replaced. It set
-`teacher_authed = True` in the session, and anything that could set that flag
-owned the class list. It also asked a teacher to type the PIN in full, in front
-of the class, every single visit.
-
-Run:  python test_app_teacher.py
-"""
-
 import os
 import sys
 import tempfile
@@ -36,11 +13,11 @@ os.environ["TUTOR_DB_PATH"] = _TMP_DB
 os.environ["TUTOR_SKIP_WARMUP"] = "1"
 os.environ["TUTOR_TEACHER_PIN"] = "teacher-checkpoint-pin"
 
-from streamlit.testing.v1 import AppTest  # noqa: E402
+from streamlit.testing.v1 import AppTest
 
-CARD = 'class="card word-card"' 
+CARD = 'class="card word-card"'
 
-from tutor import auth  # noqa: E402
+from tutor import auth
 
 LOGIN_USER, LOGIN_PASS = 0, 1
 NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
@@ -57,7 +34,6 @@ def check(label, condition):
 
 
 def _auth_page(teacher=False):
-    """Landing -> the learner door, or the teacher door."""
     at = AppTest.from_file("app.py", default_timeout=60)
     at.run()
     at.button[1 if teacher else 0].click().run()
@@ -76,12 +52,6 @@ def _signup(name, user, pw, teacher=False, pin=""):
 
 
 def _choose_language(at, name="Kannada"):
-    """Answer the curriculum question a new learner is asked.
-
-    Sign-up no longer lands on a lesson: a learner picks Kannada or Tulu first,
-    because there is no honest default for a child who has not said which
-    language they came to learn.
-    """
     labels = [b.label for b in at.button]
     want = f"Learn {name}"
     if want in labels:
@@ -98,12 +68,6 @@ def _signin(user, pw, teacher=False):
 
 
 def _text(at):
-    """Everything the page actually puts in front of a human.
-
-    The dataframes matter as much as the headings: the class list — every child's
-    name and score — is rendered as a table, so a leak check that only reads
-    markdown would happily pass an app that was printing the whole roster.
-    """
     parts = []
     for coll in (at.title, at.header, at.subheader, at.markdown, at.caption):
         parts.extend(str(getattr(e, "value", "")) for e in coll)
