@@ -166,6 +166,7 @@ TOO_LONG = "too_long"
 UNREADABLE = "unreadable"
 NO_SPEECH = "no_speech"
 NOT_RECOGNISED = "not_recognised"
+UNSCOREABLE = "unscoreable"
 
 OUTCOME_CORRECT = "correct"
 OUTCOME_RETRY = "retry"
@@ -312,9 +313,25 @@ def is_silence_filler(text):
     return bool(got) and got in {_normalize(t) for t in _SILENCE_FILLERS}
 
 
-def classify_attempt(correct, snr, confidence, prior_confident_misses):
+UNSCOREABLE_ALONE = {"ಘ", "ಛ", "ಠ", "ಢ", "ಧ"}
+
+
+def is_scoreable(concept):
+    """Can the recogniser judge this concept at all?
+
+    Everything except a handful of letters that only exist inside words.
+    """
+    if (concept or {}).get("category") not in ("vowels", "consonants"):
+        return True
+    return (concept or {}).get("kannada_word", "").strip() not in UNSCOREABLE_ALONE
+
+
+def classify_attempt(correct, snr, confidence, prior_confident_misses,
+                     scoreable=True):
     if correct:
         return OUTCOME_CORRECT
+    if not scoreable:
+        return OUTCOME_RETRY
     if snr < MIN_SNR:
         return OUTCOME_RETRY
     if is_low_confidence(confidence):
@@ -379,6 +396,17 @@ def score_pronunciation(expected_ipa_or_word, whisper_output, alternates=()):
 
 
 def accepted_forms(concept):
+    """What counts as having said this concept.
+
+    A letter is accepted as itself, or repeated - "a", or "a, a", which is how
+    a child answers a card that plays the sound twice.  It is not accepted as
+    its example word: the card used to ask for "a amma" and take either, which
+    would now let a child pass the card for a by saying amma without ever
+    saying the letter.
+    """
     spoken = concept.get("spoken_form") or concept.get("kannada_word", "")
+    if (concept.get("category") or "") in ("vowels", "consonants"):
+        letter = spoken.strip()
+        return spoken, ([f"{letter} {letter}"] if letter else [])
     anchor = (concept.get("anchor_word") or "").strip()
     return spoken, ([anchor] if anchor else [])

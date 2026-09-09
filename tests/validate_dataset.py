@@ -1,5 +1,7 @@
 import sys, csv, os
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 def main(path):
     if not os.path.exists(path):
@@ -64,6 +66,70 @@ def main(path):
                 int(d)
             except ValueError:
                 problems.append(f"{r.get('concept_id','?')} difficulty '{d}' is not a whole number")
+
+    try:
+        from tutor import illustrations
+    except Exception as e:
+        problems.append(f"could not import the drawings: {e}")
+        illustrations = None
+
+    letters = [r for r in rows
+               if (r.get("category") or "").strip() in ("vowels", "consonants")]
+
+    if illustrations is not None:
+        for r in rows:
+            cid = r["concept_id"].strip()
+            icon = (r.get("icon") or "").strip()
+            is_letter = (r.get("category") or "").strip() in ("vowels",
+                                                              "consonants")
+            if is_letter:
+                if icon:
+                    problems.append(
+                        f"{cid} is a letter but carries the picture '{icon}' — "
+                        "a letter is taught on its own, with no picture of a "
+                        "word")
+            elif not icon:
+                problems.append(f"{cid} has no icon")
+            elif not illustrations.has(icon):
+                problems.append(f"{cid} icon '{icon}' has no drawing")
+
+    for r in letters:
+        cid = r["concept_id"].strip()
+        letter = (r.get("kannada_word") or "").strip()
+        spoken = (r.get("spoken_form") or "").strip()
+        if spoken != letter:
+            problems.append(
+                f"{cid} asks a child to say '{spoken}', but a letter card asks "
+                f"for the letter alone: '{letter}'")
+
+    by_id = {r["concept_id"].strip(): r for r in rows}
+    letter_glyph = {r["concept_id"].strip(): (r.get("kannada_word") or "").strip()
+                    for r in letters}
+    languages_with_letters = {(r.get("language") or "").strip() for r in letters}
+    for lang in sorted({(r.get("language") or "").strip() for r in rows}):
+        if lang and lang not in languages_with_letters:
+            problems.append(f"'{lang}' has no alphabet — every syllabus starts "
+                            "at the letters")
+
+    for r in rows:
+        if (r.get("level") or "").strip() != "Intermediate":
+            continue
+        cid = r["concept_id"].strip()
+        lang = (r.get("language") or "").strip()
+        word = ((r.get("tulu_word") if lang == "tu"
+                 else r.get("kannada_word")) or "").strip()
+        parent = (r.get("prereq_id") or "").strip()
+        if parent not in letter_glyph:
+            problems.append(
+                f"{cid} ({word}) sits behind "
+                f"{parent or 'nothing'}, not behind a letter")
+        elif word and not word.startswith(letter_glyph[parent]):
+            problems.append(
+                f"{cid} ({word}) sits behind the letter "
+                f"{letter_glyph[parent]}, which is not the letter it begins "
+                "with")
+        elif by_id[parent].get("language", "").strip() != lang:
+            problems.append(f"{cid} ({lang}) sits behind a {lang} letter")
 
     graph = {r["concept_id"].strip(): (r.get("prereq_id") or "").strip()
              for r in rows if r.get("concept_id","").strip()}

@@ -2,6 +2,7 @@ import datetime
 
 from . import db
 from . import graph_engine
+from . import pronunciation
 
 STRUGGLE_ATTEMPTS = 2
 
@@ -10,12 +11,14 @@ IDLE_DAYS = 7
 LEARNED = "cell-ok"
 TRYING = "cell-try"
 STUCK = "cell-stuck"
+NOT_SCORED = "cell-mute"
 NOT_STARTED = ""
 
 CHART_LEGEND = [
     (LEARNED, "Learned it"),
     (TRYING, "Practising"),
     (STUCK, "Stuck — needs you"),
+    (NOT_SCORED, "The app can't hear this one — you judge it"),
     ("", "Not started yet"),
 ]
 
@@ -56,7 +59,12 @@ def alphabet_chart(student_id, language=graph_engine.KANNADA):
                 continue
             cell_state = state(row)
             tries = row["attempts"]
-            if cell_state == LEARNED:
+            if not pronunciation.is_scoreable(node):
+                if cell_state != LEARNED:
+                    cell_state = NOT_SCORED
+                status = "the app cannot hear this letter on its own — " \
+                         "listen to this one yourself"
+            elif cell_state == LEARNED:
                 status = "learned"
             elif cell_state == STUCK:
                 status = f"stuck after {tries} tries"
@@ -69,7 +77,7 @@ def alphabet_chart(student_id, language=graph_engine.KANNADA):
                 "roman": node["transliteration"],
                 "state": cell_state,
                 "title": f"{node['kannada_word']} ({node['transliteration']}) — "
-                         f"{status}. As in {node.get('anchor_word', '')}.",
+                         f"{status}.",
             })
         if cells:
             chart[cat] = cells

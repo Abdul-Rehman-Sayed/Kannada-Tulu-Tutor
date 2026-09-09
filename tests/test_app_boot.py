@@ -113,8 +113,11 @@ def student_journey_tests():
     print("  OK  chose Kannada -> first flashcard rendered (ಅ / V01)")
 
     assert "Say this" in blob, "letter card is missing the 'Say this' prompt"
-    assert "ಅ ಅಮ್ಮ" in blob, "letter card must ask for the letter + anchor word"
-    print("  OK  card asks for 'ಅ ಅಮ್ಮ' (letter + anchor), not a bare ಅ")
+    assert "ಅಮ್ಮ" not in blob, \
+        "letter card is still showing an example word alongside the letter"
+    assert "Just the letter" in blob, \
+        "letter card does not tell the child to say the letter on its own"
+    print("  OK  card asks for a bare ಅ — no example word beside it")
 
     labels = [b.label for b in at.button]
     assert any("Listen" in l for l in labels), f"Listen button missing: {labels}"
@@ -179,9 +182,56 @@ def no_emoji_tests():
     return True
 
 
+def word_stage_tests():
+    """The word stage, once the whole alphabet is behind the learner.
+
+    Two things have to be true of it: the letter's family of words is on the
+    screen beside the card, and the card names the letter the word grew out of.
+    """
+    from tutor import db, graph_engine
+
+    print("\nWord stage:")
+    at = _choose_language(
+        _signup(_goto_signup(_fresh()), "Nita", "nita_w", "sunflower23"))
+    assert not at.exception, at.exception
+
+    sid = at.session_state["user"]["student_id"]
+    letters = [cid for cid, d in
+               graph_engine.load_graph(graph_engine.KANNADA).nodes(data=True)
+               if d["category"] in ("vowels", "consonants")]
+    for cid in letters:
+        db.update_mastery(sid, cid, correct_bool=True)
+    at.session_state["concept"] = None
+    at.run()
+    assert not at.exception, f"raised on the first word card: {at.exception}"
+
+    concept = at.session_state["concept"]
+    assert concept["level"] == graph_engine.WORDS_LEVEL, \
+        f"after all {len(letters)} letters the learner got {concept['level']}"
+
+    blob = " ".join(m.value for m in at.markdown)
+    assert 'class="lw"' in blob, \
+        "the family of words for this letter is not beside the card"
+
+    letter = graph_engine.letter_of(concept["concept_id"], graph_engine.KANNADA)
+    family = graph_engine.words_for_letter(letter["concept_id"],
+                                           graph_engine.KANNADA)
+    for row in family[:3]:
+        assert row["word"] in blob, \
+            f"{row['word']} is missing from the panel beside the card"
+    assert "lw-now" in blob, "the panel does not mark the word being taught"
+    assert "is for" in blob, "the word card does not name the letter it grew from"
+    print(f"  OK  {concept['kannada_word']} is taught beside all "
+          f"{len(family)} words of {letter['kannada_word']}, "
+          f"and the card reads '{letter['kannada_word']} is for "
+          f"{concept['kannada_word']}'")
+    return True
+
+
 def run():
     ok = landing_tests()
     ok &= student_journey_tests()
+    ok &= word_stage_tests()
     ok &= teacher_boundary_tests()
     ok &= no_emoji_tests()
     print("\nBoot test PASSED." if ok else "\nBoot test FAILED.")

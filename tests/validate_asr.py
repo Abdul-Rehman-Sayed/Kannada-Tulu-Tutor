@@ -30,11 +30,14 @@ def main():
         print("WARNING: not the Kannada model — scores below are not representative.")
     print(f"Checking {len(concepts)} concepts at threshold {pronunciation.PRONUNCIATION_THRESHOLD}\n")
 
-    failures, errors = [], []
+    failures, errors, unscored = [], [], []
     t_start = time.time()
 
     for i, c in enumerate(concepts, 1):
-        cid, spoken = c["concept_id"], c["spoken_form"]
+        if not pronunciation.is_scoreable(c):
+            unscored.append((c["concept_id"], c["spoken_form"]))
+            continue
+        cid, spoken = c["concept_id"], graph_engine.listen_form(c)
         try:
             audio = media.get_audio(cid, spoken)
         except Exception as e:
@@ -53,10 +56,19 @@ def main():
             print(f"[{i:3}/{len(concepts)}] {cid:5} {mark} say={spoken!r:18} heard={heard!r:18} {score:.2f}")
 
     took = time.time() - t_start
-    n = len(concepts)
+    n = len(concepts) - len(unscored)
     passed = n - len(failures) - len(errors)
     print(f"\n{'='*70}")
-    print(f"RECOGNISED {passed}/{n} concepts  ({passed/n*100:.0f}%)  in {took:.0f}s")
+    print(f"RECOGNISED {passed}/{n} scored concepts  ({passed/n*100:.0f}%)  "
+          f"in {took:.0f}s")
+
+    if unscored:
+        print(f"\n{len(unscored)} letter(s) the app does not mark at all — the "
+              "recogniser cannot")
+        print("hear them said alone, so an attempt is a retry, never a wrong "
+              "answer:")
+        for cid, spoken in unscored:
+            print(f"  {cid:5} {spoken!r}")
 
     if errors:
         print(f"\n{len(errors)} TTS error(s) — audio could not be generated (network?):")

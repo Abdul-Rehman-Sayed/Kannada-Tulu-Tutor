@@ -1,268 +1,405 @@
-﻿concept_id,language,kannada_word,tulu_word,transliteration,ipa,english_meaning,image_file,category,prereq_id,difficulty,level,spoken_form,anchor_word,phrase_gloss,image_query
-V01,kn,ಅ,,a,a amma,vowel a — as in ಅಮ್ಮ (mother),V01.jpg,vowels,,1,Basic,ಅ ಅಮ್ಮ,ಅಮ್ಮ,,indian mother baby
-V02,kn,ಆ,,ā,ā āne,vowel ā — as in ಆನೆ (elephant),V02.jpg,vowels,V01,1,Basic,ಆ ಆನೆ,ಆನೆ,,Indian elephant
-V03,kn,ಇ,,i,i ili,vowel i — as in ಇಲಿ (mouse),V03.jpg,vowels,V02,1,Basic,ಇ ಇಲಿ,ಇಲಿ,,house mouse
-V04,kn,ಈ,,ī,ī īruḷḷi,vowel ī — as in ಈರುಳ್ಳಿ (onion),V04.jpg,vowels,V03,1,Basic,ಈ ಈರುಳ್ಳಿ,ಈರುಳ್ಳಿ,,onion
-V05,kn,ಉ,,u,u uppu,vowel u — as in ಉಪ್ಪು (salt),V05.jpg,vowels,V04,1,Basic,ಉ ಉಪ್ಪು,ಉಪ್ಪು,,salt
-V06,kn,ಊ,,ū,ū ūṭa,vowel ū — as in ಊಟ (meal),V06.jpg,vowels,V05,1,Basic,ಊ ಊಟ,ಊಟ,,Indian meal thali
-V07,kn,ಋ,,r̥,r̥ r̥ṣi,vowel r̥ — as in ಋಷಿ (sage),V07.jpg,vowels,V06,1,Basic,ಋ ಋಷಿ,ಋಷಿ,,hindu sage statue
-V08,kn,ಎ,,e,e ele,vowel e — as in ಎಲೆ (leaf),V08.jpg,vowels,V07,1,Basic,ಎ ಎಲೆ,ಎಲೆ,,leaf
-V09,kn,ಏ,,ē,ē ēṇi,vowel ē — as in ಏಣಿ (ladder),V09.jpg,vowels,V08,1,Basic,ಏ ಏಣಿ,ಏಣಿ,,ladder
-V10,kn,ಐ,,ai,ai aidu,vowel ai — as in ಐದು (five),V10.jpg,vowels,V09,1,Basic,ಐ ಐದು,ಐದು,,number five
-V11,kn,ಒ,,o,o oṁṭe,vowel o — as in ಒಂಟೆ (camel),V11.jpg,vowels,V10,1,Basic,ಒ ಒಂಟೆ,ಒಂಟೆ,,camel
-V12,kn,ಓ,,ō,ō ōdu,vowel ō — as in ಓದು (reading),V12.jpg,vowels,V11,1,Basic,ಓ ಓದು,ಓದು,,child reading book
-V13,kn,ಔ,,au,au auṣadhi,vowel au — as in ಔಷಧಿ (medicine),V13.jpg,vowels,V12,1,Basic,ಔ ಔಷಧಿ,ಔಷಧಿ,,medicine tablets
-C01,kn,ಕ,,ka,ka kamala,consonant ka — as in ಕಮಲ (lotus),C01.jpg,consonants,V13,2,Basic,ಕ ಕಮಲ,ಕಮಲ,,lotus flower
-C02,kn,ಖ,,kha,kha kharjūra,consonant kha — as in ಖರ್ಜೂರ (dates),C02.jpg,consonants,V13,3,Basic,ಖ ಖರ್ಜೂರ,ಖರ್ಜೂರ,,date fruit
-C03,kn,ಗ,,ga,ga giḍa,consonant ga — as in ಗಿಡ (plant),C03.jpg,consonants,V13,2,Basic,ಗ ಗಿಡ,ಗಿಡ,,young plant
-C04,kn,ಘ,,gha,gha ghaṁṭe,consonant gha — as in ಘಂಟೆ (bell),C04.jpg,consonants,V13,3,Basic,ಘ ಘಂಟೆ,ಘಂಟೆ,,temple bell
-C05,kn,ಚ,,ca,ca caṁdra,consonant ca — as in ಚಂದ್ರ (moon),C05.jpg,consonants,V13,2,Basic,ಚ ಚಂದ್ರ,ಚಂದ್ರ,,moon
-C06,kn,ಛ,,cha,cha chatri,consonant cha — as in ಛತ್ರಿ (umbrella),C06.jpg,consonants,V13,3,Basic,ಛ ಛತ್ರಿ,ಛತ್ರಿ,,umbrella
-C07,kn,ಜ,,ja,ja jiṁke,consonant ja — as in ಜಿಂಕೆ (deer),C07.jpg,consonants,V13,2,Basic,ಜ ಜಿಂಕೆ,ಜಿಂಕೆ,,spotted deer
-C08,kn,ಝ,,jha,jha jhari,consonant jha — as in ಝರಿ (stream),C08.jpg,consonants,V13,3,Basic,ಝ ಝರಿ,ಝರಿ,,mountain stream
-C09,kn,ಟ,,ṭa,ṭa ṭōpi,consonant ṭa — as in ಟೋಪಿ (cap),C09.jpg,consonants,V13,3,Basic,ಟ ಟೋಪಿ,ಟೋಪಿ,,cap hat
-C10,kn,ಠ,,ṭha,ṭha ṭhāṇe,consonant ṭha — as in ಠಾಣೆ (police station),C10.jpg,consonants,V13,3,Basic,ಠ ಠಾಣೆ,ಠಾಣೆ,,police station
-C11,kn,ಡ,,ḍa,ḍa ḍabbi,consonant ḍa — as in ಡಬ್ಬಿ (box),C11.jpg,consonants,V13,3,Basic,ಡ ಡಬ್ಬಿ,ಡಬ್ಬಿ,,tin box
-C12,kn,ಢ,,ḍha,ḍha ḍhamaru,consonant ḍha — as in ಢಮರು (damaru drum),C12.jpg,consonants,V13,3,Basic,ಢ ಢಮರು,ಢಮರು,,damaru drum
-C13,kn,ಣ,,ṇa,ṇa bāṇa,consonant ṇa — as in ಬಾಣ (arrow),C13.jpg,consonants,V13,3,Basic,ಣ ಬಾಣ,ಬಾಣ,,arrow
-C14,kn,ತ,,ta,ta tale,consonant ta — as in ತಲೆ (head),C14.jpg,consonants,V13,2,Basic,ತ ತಲೆ,ತಲೆ,,child face portrait
-C15,kn,ಥ,,tha,tha graṁtha,consonant tha — as in ಗ್ರಂಥ (scripture),C15.jpg,consonants,V13,3,Basic,ಥ ಗ್ರಂಥ,ಗ್ರಂಥ,,old manuscript book
-C16,kn,ದ,,da,da dīpa,consonant da — as in ದೀಪ (lamp),C16.jpg,consonants,V13,2,Basic,ದ ದೀಪ,ದೀಪ,,oil lamp diya
-C17,kn,ಧ,,dha,dha dhvaja,consonant dha — as in ಧ್ವಜ (flag),C17.jpg,consonants,V13,3,Basic,ಧ ಧ್ವಜ,ಧ್ವಜ,,flag of India
-C18,kn,ನ,,na,na nāyi,consonant na — as in ನಾಯಿ (dog),C18.jpg,consonants,V13,2,Basic,ನ ನಾಯಿ,ನಾಯಿ,,dog
-C19,kn,ಪ,,pa,pa pustaka,consonant pa — as in ಪುಸ್ತಕ (book),C19.jpg,consonants,V13,2,Basic,ಪ ಪುಸ್ತಕ,ಪುಸ್ತಕ,,book
-C20,kn,ಫ,,pha,pha phala,consonant pha — as in ಫಲ (fruit),C20.jpg,consonants,V13,3,Basic,ಫ ಫಲ,ಫಲ,,assorted fruit
-C21,kn,ಬ,,ba,ba bāgilu,consonant ba — as in ಬಾಗಿಲು (door),C21.jpg,consonants,V13,3,Basic,ಬ ಬಾಗಿಲು,ಬಾಗಿಲು,,wooden door
-C22,kn,ಭ,,bha,bha bhūmi,consonant bha — as in ಭೂಮಿ (earth),C22.jpg,consonants,V13,3,Basic,ಭ ಭೂಮಿ,ಭೂಮಿ,,planet Earth
-C23,kn,ಮ,,ma,ma mane,consonant ma — as in ಮನೆ (house),C23.jpg,consonants,V13,2,Basic,ಮ ಮನೆ,ಮನೆ,,village house
-C24,kn,ಯ,,ya,ya yaṁtra,consonant ya — as in ಯಂತ್ರ (machine),C24.jpg,consonants,V13,3,Basic,ಯ ಯಂತ್ರ,ಯಂತ್ರ,,industrial machine
-C25,kn,ರ,,ra,ra railu,consonant ra — as in ರೈಲು (train),C25.jpg,consonants,V13,3,Basic,ರ ರೈಲು,ರೈಲು,,train
-C26,kn,ಲ,,la,la liṁbe,consonant la — as in ಲಿಂಬೆ (lemon),C26.jpg,consonants,V13,3,Basic,ಲ ಲಿಂಬೆ,ಲಿಂಬೆ,,lemon
-C27,kn,ವ,,va,va vimāna,consonant va — as in ವಿಮಾನ (aeroplane),C27.jpg,consonants,V13,3,Basic,ವ ವಿಮಾನ,ವಿಮಾನ,,airplane
-C28,kn,ಶ,,śa,śa śāle,consonant śa — as in ಶಾಲೆ (school),C28.jpg,consonants,V13,3,Basic,ಶ ಶಾಲೆ,ಶಾಲೆ,,school building
-C29,kn,ಷ,,ṣa,ṣa puṣpa,consonant ṣa — as in ಪುಷ್ಪ (flower),C29.jpg,consonants,V13,3,Basic,ಷ ಪುಷ್ಪ,ಪುಷ್ಪ,,flower
-C30,kn,ಸ,,sa,sa sūrya,consonant sa — as in ಸೂರ್ಯ (sun),C30.jpg,consonants,V13,3,Basic,ಸ ಸೂರ್ಯ,ಸೂರ್ಯ,,sun
-C31,kn,ಹ,,ha,ha hasu,consonant ha — as in ಹಸು (cow),C31.jpg,consonants,V13,2,Basic,ಹ ಹಸು,ಹಸು,,cow
-C32,kn,ಳ,,ḷa,ḷa maḷe,consonant ḷa — as in ಮಳೆ (rain),C32.jpg,consonants,V13,3,Basic,ಳ ಮಳೆ,ಮಳೆ,,rain
-W001,kn,ಅಮ್ಮ,ಅಪ್ಪೆ,amma,amma,mother,W001.jpg,family,V01,4,Intermediate,ಅಮ್ಮ,,,indian mother baby
-W002,kn,ಅಪ್ಪ,ಅಮ್ಮೆ,appa,appa,father,W002.jpg,family,V01,4,Intermediate,ಅಪ್ಪ,,,father child playing
-W003,kn,ಅಣ್ಣ,ಪಳಯೆ,aṇṇa,aṇṇa,elder brother,W003.jpg,family,V01,4,Intermediate,ಅಣ್ಣ,,,indian school boys
-W004,kn,ಅಕ್ಕ,ಪಳ್ದಿ,akka,akka,elder sister,W004.jpg,family,V01,4,Intermediate,ಅಕ್ಕ,,,indian school girls
-W005,kn,ತಮ್ಮ,ಮೆಗ್ಯೆ,tamma,tamma,younger brother,W005.jpg,family,C14,5,Intermediate,ತಮ್ಮ,,,boy portrait child
-W006,kn,ತಂಗಿ,ಮೆಗ್ದಿ,taṁgi,taṁgi,younger sister,W006.jpg,family,C14,5,Intermediate,ತಂಗಿ,,,girl portrait child
-W007,kn,ಮಗು,ಬಾಲೆ,magu,magu,child,W007.jpg,family,C23,4,Intermediate,ಮಗು,,,smiling baby infant
-W008,kn,ಅಜ್ಜ,ಅಜ್ಜೆ,ajja,ajja,grandfather,W008.jpg,family,V01,5,Intermediate,ಅಜ್ಜ,,,elderly indian man portrait
-W009,kn,ಅಜ್ಜಿ,ಅಜ್ಜಿ,ajji,ajji,grandmother,W009.jpg,family,V01,5,Intermediate,ಅಜ್ಜಿ,,,elderly indian woman portrait
-W010,kn,ಸ್ನೇಹಿತ,ದೋಸ್ತಿ,snēhita,snēhita,friend,W010.jpg,family,C30,5,Intermediate,ಸ್ನೇಹಿತ,,,children playing together
-W011,kn,ಹಸು,ಪೆತ್ತ,hasu,hasu,cow,W011.jpg,animals,C31,4,Intermediate,ಹಸು,,,cow
-W012,kn,ನಾಯಿ,ನಾಯಿ,nāyi,nāyi,dog,W012.jpg,animals,C18,4,Intermediate,ನಾಯಿ,,,dog
-W013,kn,ಬೆಕ್ಕು,ಪುಚ್ಚೆ,bekku,bekku,cat,W013.jpg,animals,C21,4,Intermediate,ಬೆಕ್ಕು,,,cat
-W014,kn,ಆನೆ,ಆನೆ,āne,āne,elephant,W014.jpg,animals,V02,4,Intermediate,ಆನೆ,,,Indian elephant
-W015,kn,ಕುದುರೆ,ಕುದುರೆ,kudure,kudure,horse,W015.jpg,animals,C01,5,Intermediate,ಕುದುರೆ,,,horse
-W016,kn,ಹಂದಿ,ಪಂಜಿ,haṁdi,haṁdi,pig,W016.jpg,animals,C31,5,Intermediate,ಹಂದಿ,,,pig
-W017,kn,ಕುರಿ,ಕುರಿ,kuri,kuri,sheep,W017.jpg,animals,C01,5,Intermediate,ಕುರಿ,,,sheep
-W018,kn,ಇಲಿ,ಇಲಿ,ili,ili,mouse,W018.jpg,animals,V03,5,Intermediate,ಇಲಿ,,,house mouse
-W019,kn,ಮೀನು,ಮೀನ್,mīnu,mīnu,fish,W019.jpg,animals,C23,4,Intermediate,ಮೀನು,,,fish
-W020,kn,ಹಕ್ಕಿ,ಪಕ್ಕಿ,hakki,hakki,bird,W020.jpg,animals,C31,4,Intermediate,ಹಕ್ಕಿ,,,bird
-W021,kn,ಕೋಳಿ,ಕೋರಿ,kōḷi,kōḷi,hen,W021.jpg,animals,C01,5,Intermediate,ಕೋಳಿ,,,hen
-W022,kn,ಹುಲಿ,ಪಿಲಿ,huli,huli,tiger,W022.jpg,animals,C31,5,Intermediate,ಹುಲಿ,,,tiger
-W023,kn,ನೀರು,ನೀರ್,nīru,nīru,water,W023.jpg,nature,C18,4,Intermediate,ನೀರು,,,glass of water
-W024,kn,ಗಾಳಿ,ಗಾಳಿ,gāḷi,gāḷi,wind,W024.jpg,nature,C03,5,Intermediate,ಗಾಳಿ,,,windmill wind
-W025,kn,ಬೆಂಕಿ,ತೂ,beṁki,beṁki,fire,W025.jpg,nature,C21,5,Intermediate,ಬೆಂಕಿ,,,fire
-W026,kn,ಮಳೆ,ಬರ್ಸ,maḷe,maḷe,rain,W026.jpg,nature,C23,4,Intermediate,ಮಳೆ,,,rain
-W027,kn,ಸೂರ್ಯ,ಸೂರ್ಯೆ,sūrya,sūrya,sun,W027.jpg,nature,C30,4,Intermediate,ಸೂರ್ಯ,,,sun
-W028,kn,ಚಂದ್ರ,ಚಂದ್ರೆ,caṁdra,caṁdra,moon,W028.jpg,nature,C05,4,Intermediate,ಚಂದ್ರ,,,moon
-W029,kn,ನಕ್ಷತ್ರ,ಬೊಳ್ಳಿ,nakṣatra,nakṣatra,star,W029.jpg,nature,C18,5,Intermediate,ನಕ್ಷತ್ರ,,,star night sky
-W030,kn,ಮರ,ಮರ,mara,mara,tree,W030.jpg,nature,C23,4,Intermediate,ಮರ,,,tree
-W031,kn,ಹೂವು,ಪೂ,hūvu,hūvu,flower,W031.jpg,nature,C31,4,Intermediate,ಹೂವು,,,flower
-W032,kn,ಎಲೆ,ಎಲೆ,ele,marada ele,leaf,W032.jpg,nature,V08,5,Intermediate,ಮರದ ಎಲೆ,,the leaf of a tree,leaf
-W033,kn,ಬೆಟ್ಟ,ಬೆಟ್ಟು,beṭṭa,beṭṭa,hill,W033.jpg,nature,C21,5,Intermediate,ಬೆಟ್ಟ,,,hill
-W034,kn,ಕಡಲು,ಕಡಲ್,kaḍalu,kaḍalu,sea,W034.jpg,nature,C01,5,Intermediate,ಕಡಲು,,,sea
-W035,kn,ಅನ್ನ,ಅನ್ನ,anna,anna,cooked rice,W035.jpg,food,V01,4,Intermediate,ಅನ್ನ,,,cooked rice
-W036,kn,ಹಾಲು,ಪೇರ್,hālu,hālu,milk,W036.jpg,food,C31,4,Intermediate,ಹಾಲು,,,glass of milk
-W037,kn,ಉಪ್ಪು,ಉಪ್ಪು,uppu,uppu,salt,W037.jpg,food,V05,5,Intermediate,ಉಪ್ಪು,,,salt
-W038,kn,ಹಣ್ಣು,ಪರ್ಂದ್,haṇṇu,haṇṇu,fruit,W038.jpg,food,C31,4,Intermediate,ಹಣ್ಣು,,,assorted fruit
-W039,kn,ಬಾಳೆಹಣ್ಣು,,bāḷehaṇṇu,bāḷehaṇṇu,banana,W039.jpg,food,C21,5,Intermediate,ಬಾಳೆಹಣ್ಣು,,,banana
-W040,kn,ಮೊಸರು,ಮೊಸರು,mosaru,mosaru,curd,W040.jpg,food,C23,5,Intermediate,ಮೊಸರು,,,curd yogurt
-W041,kn,ಸಕ್ಕರೆ,,sakkare,sakkare,sugar,W041.jpg,food,C30,5,Intermediate,ಸಕ್ಕರೆ,,,sugar
-W042,kn,ರೊಟ್ಟಿ,,roṭṭi,roṭṭi,flatbread,W042.jpg,food,C25,5,Intermediate,ರೊಟ್ಟಿ,,,roti flatbread
-W043,kn,ತಲೆ,ತರೆ,tale,nanna tale,head,W043.jpg,body,C14,4,Intermediate,ನನ್ನ ತಲೆ,,my head,child face portrait
-W044,kn,ಕಣ್ಣು,ಕಣ್ಣ್,kaṇṇu,kaṇṇu,eye,W044.jpg,body,C01,4,Intermediate,ಕಣ್ಣು,,,human eye closeup
-W045,kn,ಕಿವಿ,ಕೆಬಿ,kivi,kivi,ear,W045.jpg,body,C01,4,Intermediate,ಕಿವಿ,,,human ear closeup
-W046,kn,ಮೂಗು,ಮೂಕು,mūgu,mūgu,nose,W046.jpg,body,C23,4,Intermediate,ಮೂಗು,,,human nose closeup
-W047,kn,ಬಾಯಿ,ಬಾಯಿ,bāyi,bāyi,mouth,W047.jpg,body,C21,5,Intermediate,ಬಾಯಿ,,,human lips closeup
-W048,kn,ಕೈ,ಕೈ,kai,nanna kai,hand,W048.jpg,body,C01,4,Intermediate,ನನ್ನ ಕೈ,,my hand,open human hand
-W049,kn,ಕಾಲು,ಕಾರ್,kālu,kālu,leg,W049.jpg,body,C01,5,Intermediate,ಕಾಲು,,,human legs walking
-W050,kn,ಹಲ್ಲು,ಪಲ್ಲ್,hallu,hallu,tooth,W050.jpg,body,C31,5,Intermediate,ಹಲ್ಲು,,,tooth
-W051,kn,ಕೆಂಪು,ಕೆಂಪು,keṁpu,keṁpu,red,W051.jpg,colours,C01,4,Intermediate,ಕೆಂಪು,,,red colour
-W052,kn,ಹಸಿರು,ಪಚ್ಚೆ,hasiru,hasiru,green,W052.jpg,colours,C31,4,Intermediate,ಹಸಿರು,,,green colour
-W053,kn,ಹಳದಿ,ಮಂಜಲ್,haḷadi,haḷadi,yellow,W053.jpg,colours,C31,4,Intermediate,ಹಳದಿ,,,yellow colour
-W054,kn,ನೀಲಿ,ನೀಲಿ,nīli,nīli,blue,W054.jpg,colours,C18,4,Intermediate,ನೀಲಿ,,,blue colour
-W055,kn,ಕಪ್ಪು,ಕಪ್ಪು,kappu,kappu,black,W055.jpg,colours,C01,5,Intermediate,ಕಪ್ಪು,,,black colour
-W056,kn,ಬಿಳಿ,ಬೊಲ್ದು,biḷi,biḷi,white,W056.jpg,colours,C21,5,Intermediate,ಬಿಳಿ,,,white colour
-W057,kn,ಒಂದು,ಒಂಜಿ,oṁdu,oṁdu,one,W057.jpg,numbers,V11,4,Intermediate,ಒಂದು,,,number one
-W058,kn,ಎರಡು,ರಡ್ಡ್,eraḍu,eraḍu,two,W058.jpg,numbers,V08,4,Intermediate,ಎರಡು,,,number two
-W059,kn,ಮೂರು,ಮೂಜಿ,mūru,mūru,three,W059.jpg,numbers,C23,4,Intermediate,ಮೂರು,,,number three
-W060,kn,ನಾಲ್ಕು,ನಾಲ್,nālku,nālku,four,W060.jpg,numbers,C18,4,Intermediate,ನಾಲ್ಕು,,,number four
-W061,kn,ಐದು,ಐನ್,aidu,aidu,five,W061.jpg,numbers,V10,4,Intermediate,ಐದು,,,number five
-W062,kn,ಆರು,ಆಜಿ,āru,āru,six,W062.jpg,numbers,V02,5,Intermediate,ಆರು,,,number six
-W063,kn,ಏಳು,ಏಳ್,ēḷu,ēḷu,seven,W063.jpg,numbers,V09,5,Intermediate,ಏಳು,,,number seven
-W064,kn,ಎಂಟು,ಎಣ್ಮ,eṁṭu,eṁṭu,eight,W064.jpg,numbers,V08,5,Intermediate,ಎಂಟು,,,number eight
-W065,kn,ಒಂಬತ್ತು,ಒರ್ಂಬ,oṁbattu,oṁbattu,nine,W065.jpg,numbers,V11,5,Intermediate,ಒಂಬತ್ತು,,,number nine
-W066,kn,ಹತ್ತು,ಪತ್ತ್,hattu,hattu,ten,W066.jpg,numbers,C31,5,Intermediate,ಹತ್ತು,,,number ten
-W067,kn,ಮನೆ,ಇಲ್ಲ್,mane,mane,house,W067.jpg,home,C23,4,Intermediate,ಮನೆ,,,village house
-W068,kn,ಬಾಗಿಲು,ಬಾಕಿಲ್,bāgilu,bāgilu,door,W068.jpg,home,C21,5,Intermediate,ಬಾಗಿಲು,,,wooden door
-W069,kn,ಕುರ್ಚಿ,ಕುರ್ಚಿ,kurci,kurci,chair,W069.jpg,home,C01,5,Intermediate,ಕುರ್ಚಿ,,,chair
-W070,kn,ದೀಪ,,dīpa,dīpa,lamp,W070.jpg,home,C16,5,Intermediate,ದೀಪ,,,oil lamp diya
-W071,kn,ಪುಸ್ತಕ,ಪುಸ್ತಕ,pustaka,pustaka,book,W071.jpg,school,C19,4,Intermediate,ಪುಸ್ತಕ,,,book
-W072,kn,ಶಾಲೆ,ಶಾಲೆ,śāle,śāle,school,W072.jpg,school,C28,4,Intermediate,ಶಾಲೆ,,,school building
-W073,kn,ಪೆನ್ಸಿಲ್,,pensil,pensil,pencil,W073.jpg,school,C19,5,Intermediate,ಪೆನ್ಸಿಲ್,,,pencil
-W074,kn,ರೈಲು,,railu,railu,train,W074.jpg,travel,C25,5,Intermediate,ರೈಲು,,,train
-W075,kn,ಬಸ್ಸು,,bassu,bassu,bus,W075.jpg,travel,C21,5,Intermediate,ಬಸ್ಸು,,,bus
-W076,kn,ವಿಮಾನ,,vimāna,vimāna,aeroplane,W076.jpg,travel,C27,5,Intermediate,ವಿಮಾನ,,,airplane
-W077,kn,ಮಾವು,,māvu,māvu,mango,W077.jpg,fruits,C23,4,Intermediate,ಮಾವು,,,mango fruit
-W078,kn,ಸೇಬು,,sēbu,sēbu,apple,W078.jpg,fruits,C30,4,Intermediate,ಸೇಬು,,,red apple
-W079,kn,ಕಿತ್ತಳೆ,,kittaḷe,kittaḷe,orange,W079.jpg,fruits,C01,4,Intermediate,ಕಿತ್ತಳೆ,,,orange fruit
-W080,kn,ದ್ರಾಕ್ಷಿ,,drākṣi,drākṣi,grapes,W080.jpg,fruits,C16,5,Intermediate,ದ್ರಾಕ್ಷಿ,,,bunch of grapes
-W081,kn,ಕಲ್ಲಂಗಡಿ,,kallaṁgaḍi,kallaṁgaḍi,watermelon,W081.jpg,fruits,C01,5,Intermediate,ಕಲ್ಲಂಗಡಿ,,,watermelon
-W082,kn,ಆಲೂಗಡ್ಡೆ,,ālūgaḍḍe,ālūgaḍḍe,potato,W082.jpg,vegetables,V02,4,Intermediate,ಆಲೂಗಡ್ಡೆ,,,potato
-W083,kn,ಬದನೆಕಾಯಿ,,badanekāyi,badanekāyi,brinjal,W083.jpg,vegetables,C21,5,Intermediate,ಬದನೆಕಾಯಿ,,,brinjal eggplant
-W084,kn,ಬೆಂಡೆಕಾಯಿ,,beṁḍekāyi,beṁḍekāyi,okra,W084.jpg,vegetables,C21,5,Intermediate,ಬೆಂಡೆಕಾಯಿ,,,okra ladyfinger
-W085,kn,ದೋಸೆ,,dōse,dōse,dosa,W085.jpg,food,C16,4,Intermediate,ದೋಸೆ,,,dosa south indian
-W086,kn,ಇಡ್ಲಿ,,iḍli,iḍli,idli,W086.jpg,food,V03,4,Intermediate,ಇಡ್ಲಿ,,,idli steamed cake
-W087,kn,ಜೇನು,,jēnu,jēnu,honey,W087.jpg,food,C07,5,Intermediate,ಜೇನು,,,honey jar
-W088,kn,ಬೆಣ್ಣೆ,,beṇṇe,beṇṇe,butter,W088.jpg,food,C21,5,Intermediate,ಬೆಣ್ಣೆ,,,butter block
-W089,kn,ಮಂಗ,,maṁga,maṁga,monkey,W089.jpg,animals,C23,4,Intermediate,ಮಂಗ,,,monkey
-W090,kn,ಗಿಳಿ,,giḷi,giḷi,parrot,W090.jpg,animals,C03,4,Intermediate,ಗಿಳಿ,,,green parrot
-W091,kn,ಕಾಗೆ,,kāge,kāge,crow,W091.jpg,animals,C01,5,Intermediate,ಕಾಗೆ,,,crow bird
-W092,kn,ನವಿಲು,,navilu,navilu,peacock,W092.jpg,animals,C18,4,Intermediate,ನವಿಲು,,,peacock
-W093,kn,ಮೊಲ,,mola,mola,rabbit,W093.jpg,animals,C23,5,Intermediate,ಮೊಲ,,,rabbit
-W094,kn,ಅಳಿಲು,,aḷilu,aḷilu,squirrel,W094.jpg,animals,V01,5,Intermediate,ಅಳಿಲು,,,squirrel
-W095,kn,ಮುಖ,,mukha,mukha,face,W095.jpg,body,C23,4,Intermediate,ಮುಖ,,,child smiling face
-W096,kn,ಕೂದಲು,,kūdalu,kūdalu,hair,W096.jpg,body,C01,4,Intermediate,ಕೂದಲು,,,hair
-W097,kn,ಬೆರಳು,,beraḷu,beraḷu,finger,W097.jpg,body,C21,5,Intermediate,ಬೆರಳು,,,finger pointing
-W098,kn,ಮೋಡ,,mōḍa,mōḍa,cloud,W098.jpg,nature,C23,4,Intermediate,ಮೋಡ,,,white cloud sky
-W099,kn,ನದಿ,,nadi,nadi,river,W099.jpg,nature,C18,4,Intermediate,ನದಿ,,,river
-W100,kn,ಆಕಾಶ,,ākāśa,ākāśa,sky,W100.jpg,nature,V02,4,Intermediate,ಆಕಾಶ,,,blue sky
-W101,kn,ಕಲ್ಲು,,kallu,kallu,stone,W101.jpg,nature,C01,5,Intermediate,ಕಲ್ಲು,,,stone rock
-W102,kn,ಹಾಸಿಗೆ,,hāsige,hāsige,bed,W102.jpg,home,C31,4,Intermediate,ಹಾಸಿಗೆ,,,bed
-W103,kn,ಕಿಟಕಿ,,kiṭaki,kiṭaki,window,W103.jpg,home,C01,5,Intermediate,ಕಿಟಕಿ,,,window
-W104,kn,ಗಡಿಯಾರ,,gaḍiyāra,gaḍiyāra,clock,W104.jpg,home,C03,5,Intermediate,ಗಡಿಯಾರ,,,wall clock
-W105,kn,ಚೆಂಡು,,ceṁḍu,ceṁḍu,ball,W105.jpg,home,C05,4,Intermediate,ಚೆಂಡು,,,colourful ball
-W106,kn,ಅಂಗಿ,,aṁgi,aṁgi,shirt,W106.jpg,clothes,V01,4,Intermediate,ಅಂಗಿ,,,shirt
-W107,kn,ಸೀರೆ,,sīre,sīre,saree,W107.jpg,clothes,C30,5,Intermediate,ಸೀರೆ,,,indian saree
-W108,kn,ಕಾರು,,kāru,kāru,car,W108.jpg,travel,C01,4,Intermediate,ಕಾರು,,,car
-P001,kn,ನನ್ನ ಅಮ್ಮ,,nanna amma,nanna amma,my mother,W001.jpg,phrases,W001,6,Advanced,ನನ್ನ ಅಮ್ಮ,,my mother,
-P002,kn,ನನ್ನ ಮನೆ,,nanna mane,nanna mane,my house,W067.jpg,phrases,W067,6,Advanced,ನನ್ನ ಮನೆ,,my house,
-P003,kn,ನನ್ನ ಶಾಲೆ,,nanna śāle,nanna śāle,my school,W072.jpg,phrases,W072,6,Advanced,ನನ್ನ ಶಾಲೆ,,my school,
-P004,kn,ಒಂದು ಹಸು,,oṁdu hasu,oṁdu hasu,one cow,W011.jpg,phrases,W011,6,Advanced,ಒಂದು ಹಸು,,one cow,
-P005,kn,ಎರಡು ಕಣ್ಣು,,eraḍu kaṇṇu,eraḍu kaṇṇu,two eyes,W044.jpg,phrases,W044,6,Advanced,ಎರಡು ಕಣ್ಣು,,two eyes,
-P006,kn,ಮೂರು ಮೀನು,,mūru mīnu,mūru mīnu,three fish,W019.jpg,phrases,W019,6,Advanced,ಮೂರು ಮೀನು,,three fish,
-P007,kn,ಕೆಂಪು ಹೂವು,,keṁpu hūvu,keṁpu hūvu,a red flower,W031.jpg,phrases,W031,6,Advanced,ಕೆಂಪು ಹೂವು,,a red flower,
-P008,kn,ಹಸಿರು ಎಲೆ,,hasiru ele,hasiru ele,a green leaf,W032.jpg,phrases,W032,6,Advanced,ಹಸಿರು ಎಲೆ,,a green leaf,
-P009,kn,ಬಿಳಿ ಹಾಲು,,biḷi hālu,biḷi hālu,white milk,W036.jpg,phrases,W036,6,Advanced,ಬಿಳಿ ಹಾಲು,,white milk,
-P010,kn,ನೀಲಿ ಆಕಾಶ,,nīli ākāśa,nīli ākāśa,the blue sky,W100.jpg,phrases,W100,6,Advanced,ನೀಲಿ ಆಕಾಶ,,the blue sky,
-P011,kn,ದೊಡ್ಡ ಆನೆ,,doḍḍa āne,doḍḍa āne,a big elephant,W014.jpg,phrases,W014,6,Advanced,ದೊಡ್ಡ ಆನೆ,,a big elephant,
-P012,kn,ಪುಟ್ಟ ಮಗು,,puṭṭa magu,puṭṭa magu,a little child,W007.jpg,phrases,W007,6,Advanced,ಪುಟ್ಟ ಮಗು,,a little child,
-P013,kn,ಸಿಹಿ ಹಣ್ಣು,,sihi haṇṇu,sihi haṇṇu,a sweet fruit,W038.jpg,phrases,W038,6,Advanced,ಸಿಹಿ ಹಣ್ಣು,,a sweet fruit,
-P014,kn,ಒಳ್ಳೆಯ ಸ್ನೇಹಿತ,,oḷḷeya snēhita,oḷḷeya snēhita,a good friend,W010.jpg,phrases,W010,6,Advanced,ಒಳ್ಳೆಯ ಸ್ನೇಹಿತ,,a good friend,
-S001,kn,ಇದು ನನ್ನ ಮನೆ,,idu nanna mane,idu nanna mane,This is my house,W067.jpg,sentences,W067,7,Sentences,ಇದು ನನ್ನ ಮನೆ,,This is my house,
-S002,kn,ಇದು ನನ್ನ ಪುಸ್ತಕ,,idu nanna pustaka,idu nanna pustaka,This is my book,W071.jpg,sentences,W071,7,Sentences,ಇದು ನನ್ನ ಪುಸ್ತಕ,,This is my book,
-S003,kn,ಇದು ನನ್ನ ಸ್ನೇಹಿತ,,idu nanna snēhita,idu nanna snēhita,This is my friend,W010.jpg,sentences,W010,7,Sentences,ಇದು ನನ್ನ ಸ್ನೇಹಿತ,,This is my friend,
-S004,kn,ನನ್ನ ಶಾಲೆ ದೊಡ್ಡದು,,nanna śāle doḍḍadu,nanna śāle doḍḍadu,My school is big,W072.jpg,sentences,W072,7,Sentences,ನನ್ನ ಶಾಲೆ ದೊಡ್ಡದು,,My school is big,
-S005,kn,ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ,,nānu śālege hōguttēne,nānu śālege hōguttēne,I go to school,W072.jpg,sentences,W072,7,Sentences,ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ,,I go to school,
-S006,kn,ನಾನು ಪುಸ್ತಕ ಓದುತ್ತೇನೆ,,nānu pustaka ōduttēne,nānu pustaka ōduttēne,I read a book,W071.jpg,sentences,W071,7,Sentences,ನಾನು ಪುಸ್ತಕ ಓದುತ್ತೇನೆ,,I read a book,
-S007,kn,ನಾನು ಹಾಲು ಕುಡಿಯುತ್ತೇನೆ,,nānu hālu kuḍiyuttēne,nānu hālu kuḍiyuttēne,I drink milk,W036.jpg,sentences,W036,7,Sentences,ನಾನು ಹಾಲು ಕುಡಿಯುತ್ತೇನೆ,,I drink milk,
-S008,kn,ನಾನು ನೀರು ಕುಡಿಯುತ್ತೇನೆ,,nānu nīru kuḍiyuttēne,nānu nīru kuḍiyuttēne,I drink water,W023.jpg,sentences,W023,7,Sentences,ನಾನು ನೀರು ಕುಡಿಯುತ್ತೇನೆ,,I drink water,
-S009,kn,ನಾನು ಅನ್ನ ತಿನ್ನುತ್ತೇನೆ,,nānu anna tinnuttēne,nānu anna tinnuttēne,I eat rice,W035.jpg,sentences,W035,7,Sentences,ನಾನು ಅನ್ನ ತಿನ್ನುತ್ತೇನೆ,,I eat rice,
-S010,kn,ನಾನು ಚೆಂಡು ಆಡುತ್ತೇನೆ,,nānu ceṁḍu āḍuttēne,nānu ceṁḍu āḍuttēne,I play with the ball,W105.jpg,sentences,W105,7,Sentences,ನಾನು ಚೆಂಡು ಆಡುತ್ತೇನೆ,,I play with the ball,
-S011,kn,ನಾವು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇವೆ,,nāvu śālege hōguttēve,nāvu śālege hōguttēve,We go to school,W072.jpg,sentences,W072,7,Sentences,ನಾವು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇವೆ,,We go to school,
-S012,kn,ಅಮ್ಮ ಮನೆಯಲ್ಲಿ ಇದ್ದಾರೆ,,amma maneyalli iddāre,amma maneyalli iddāre,Mother is at home,W001.jpg,sentences,W001,7,Sentences,ಅಮ್ಮ ಮನೆಯಲ್ಲಿ ಇದ್ದಾರೆ,,Mother is at home,
-S013,kn,ಅಪ್ಪ ಕೆಲಸಕ್ಕೆ ಹೋಗುತ್ತಾರೆ,,appa kelasakke hōguttāre,appa kelasakke hōguttāre,Father goes to work,W002.jpg,sentences,W002,7,Sentences,ಅಪ್ಪ ಕೆಲಸಕ್ಕೆ ಹೋಗುತ್ತಾರೆ,,Father goes to work,
-S014,kn,ಅಜ್ಜಿ ಕಥೆ ಹೇಳುತ್ತಾರೆ,,ajji kathe hēḷuttāre,ajji kathe hēḷuttāre,Grandmother tells a story,W009.jpg,sentences,W009,7,Sentences,ಅಜ್ಜಿ ಕಥೆ ಹೇಳುತ್ತಾರೆ,,Grandmother tells a story,
-S015,kn,ನನ್ನ ಅಣ್ಣ ಶಾಲೆಗೆ ಹೋಗುತ್ತಾನೆ,,nanna aṇṇa śālege hōguttāne,nanna aṇṇa śālege hōguttāne,My elder brother goes to school,W003.jpg,sentences,W003,7,Sentences,ನನ್ನ ಅಣ್ಣ ಶಾಲೆಗೆ ಹೋಗುತ್ತಾನೆ,,My elder brother goes to school,
-S016,kn,ಮಗು ಆಟ ಆಡುತ್ತದೆ,,magu āṭa āḍuttade,magu āṭa āḍuttade,The child plays,W007.jpg,sentences,W007,7,Sentences,ಮಗು ಆಟ ಆಡುತ್ತದೆ,,The child plays,
-S017,kn,ಹಸು ಹಾಲು ಕೊಡುತ್ತದೆ,,hasu hālu koḍuttade,hasu hālu koḍuttade,The cow gives milk,W011.jpg,sentences,W011,7,Sentences,ಹಸು ಹಾಲು ಕೊಡುತ್ತದೆ,,The cow gives milk,
-S018,kn,ನಾಯಿ ಮನೆಯಲ್ಲಿ ಇದೆ,,nāyi maneyalli ide,nāyi maneyalli ide,The dog is in the house,W012.jpg,sentences,W012,7,Sentences,ನಾಯಿ ಮನೆಯಲ್ಲಿ ಇದೆ,,The dog is in the house,
-S019,kn,ಬೆಕ್ಕು ಹಾಲು ಕುಡಿಯುತ್ತದೆ,,bekku hālu kuḍiyuttade,bekku hālu kuḍiyuttade,The cat drinks milk,W013.jpg,sentences,W013,7,Sentences,ಬೆಕ್ಕು ಹಾಲು ಕುಡಿಯುತ್ತದೆ,,The cat drinks milk,
-S020,kn,ಮೀನು ನೀರಿನಲ್ಲಿ ಇದೆ,,mīnu nīrinalli ide,mīnu nīrinalli ide,The fish is in the water,W019.jpg,sentences,W019,7,Sentences,ಮೀನು ನೀರಿನಲ್ಲಿ ಇದೆ,,The fish is in the water,
-S021,kn,ಹಕ್ಕಿ ಆಕಾಶದಲ್ಲಿ ಹಾರುತ್ತದೆ,,hakki ākāśadalli hāruttade,hakki ākāśadalli hāruttade,The bird flies in the sky,W020.jpg,sentences,W020,7,Sentences,ಹಕ್ಕಿ ಆಕಾಶದಲ್ಲಿ ಹಾರುತ್ತದೆ,,The bird flies in the sky,
-S022,kn,ಆನೆ ತುಂಬಾ ದೊಡ್ಡದು,,āne tuṁbā doḍḍadu,āne tuṁbā doḍḍadu,The elephant is very big,W014.jpg,sentences,W014,7,Sentences,ಆನೆ ತುಂಬಾ ದೊಡ್ಡದು,,The elephant is very big,
-S023,kn,ಮಂಗ ಮರ ಹತ್ತುತ್ತದೆ,,maṁga mara hattuttade,maṁga mara hattuttade,The monkey climbs the tree,W089.jpg,sentences,W089,7,Sentences,ಮಂಗ ಮರ ಹತ್ತುತ್ತದೆ,,The monkey climbs the tree,
-S024,kn,ನವಿಲು ಚೆನ್ನಾಗಿ ಕುಣಿಯುತ್ತದೆ,,navilu cennāgi kuṇiyuttade,navilu cennāgi kuṇiyuttade,The peacock dances beautifully,W092.jpg,sentences,W092,7,Sentences,ನವಿಲು ಚೆನ್ನಾಗಿ ಕುಣಿಯುತ್ತದೆ,,The peacock dances beautifully,
-S025,kn,ಸೂರ್ಯ ಆಕಾಶದಲ್ಲಿ ಇದ್ದಾನೆ,,sūrya ākāśadalli iddāne,sūrya ākāśadalli iddāne,The sun is in the sky,W027.jpg,sentences,W027,7,Sentences,ಸೂರ್ಯ ಆಕಾಶದಲ್ಲಿ ಇದ್ದಾನೆ,,The sun is in the sky,
-S026,kn,ಚಂದ್ರ ರಾತ್ರಿ ಕಾಣುತ್ತಾನೆ,,caṁdra rātri kāṇuttāne,caṁdra rātri kāṇuttāne,The moon is seen at night,W028.jpg,sentences,W028,7,Sentences,ಚಂದ್ರ ರಾತ್ರಿ ಕಾಣುತ್ತಾನೆ,,The moon is seen at night,
-S027,kn,ಇವತ್ತು ಮಳೆ ಬರುತ್ತಿದೆ,,ivattu maḷe baruttide,ivattu maḷe baruttide,It is raining today,W026.jpg,sentences,W026,7,Sentences,ಇವತ್ತು ಮಳೆ ಬರುತ್ತಿದೆ,,It is raining today,
-S028,kn,ಮರದಲ್ಲಿ ಹಣ್ಣು ಇದೆ,,maradalli haṇṇu ide,maradalli haṇṇu ide,There is fruit on the tree,W030.jpg,sentences,W030,7,Sentences,ಮರದಲ್ಲಿ ಹಣ್ಣು ಇದೆ,,There is fruit on the tree,
-S029,kn,ಈ ಹೂವು ಕೆಂಪಾಗಿದೆ,,ī hūvu keṁpāgide,ī hūvu keṁpāgide,This flower is red,W031.jpg,sentences,W031,7,Sentences,ಈ ಹೂವು ಕೆಂಪಾಗಿದೆ,,This flower is red,
-S030,kn,ನನಗೆ ಎರಡು ಕಣ್ಣು ಇವೆ,,nanage eraḍu kaṇṇu ive,nanage eraḍu kaṇṇu ive,I have two eyes,W044.jpg,sentences,W044,7,Sentences,ನನಗೆ ಎರಡು ಕಣ್ಣು ಇವೆ,,I have two eyes,
-TW001,tu,ಅಮ್ಮ,ಅಪ್ಪೆ,appe,appe batter,mother,W001.jpg,family,,4,Intermediate,ಅಪ್ಪೆ ಬತ್ತೆರ್,,mother came,indian mother baby
-TW002,tu,ಅಪ್ಪ,ಅಮ್ಮೆ,amme,amme,father,W002.jpg,family,TW001,4,Intermediate,ಅಮ್ಮೆ,,,father child playing
-TW003,tu,ಅಣ್ಣ,ಪಳಯೆ,paḷaye,paḷaye,elder brother,W003.jpg,family,TW002,4,Intermediate,ಪಳಯೆ,,,indian school boys
-TW004,tu,ಅಕ್ಕ,ಪಳ್ದಿ,paḷdi,enna paḷdi,elder sister,W004.jpg,family,TW003,4,Intermediate,ಎನ್ನ ಪಳ್ದಿ,,my elder sister,indian school girls
-TW005,tu,ತಮ್ಮ,ಮೆಗ್ಯೆ,megye,megye,younger brother,W005.jpg,family,TW004,5,Intermediate,ಮೆಗ್ಯೆ,,,boy portrait child
-TW006,tu,ತಂಗಿ,ಮೆಗ್ದಿ,megdi,megdi,younger sister,W006.jpg,family,TW005,5,Intermediate,ಮೆಗ್ದಿ,,,girl portrait child
-TW007,tu,ಮಗು,ಬಾಲೆ,bāle,bāle,child,W007.jpg,family,TW006,4,Intermediate,ಬಾಲೆ,,,smiling baby infant
-TW008,tu,ಅಜ್ಜ,ಅಜ್ಜೆ,ajje,ajje,grandfather,W008.jpg,family,TW007,5,Intermediate,ಅಜ್ಜೆ,,,elderly indian man portrait
-TW009,tu,ಅಜ್ಜಿ,ಅಜ್ಜಿ,ajji,ajji,grandmother,W009.jpg,family,TW008,5,Intermediate,ಅಜ್ಜಿ,,,elderly indian woman portrait
-TW010,tu,ಸ್ನೇಹಿತ,ದೋಸ್ತಿ,dōsti,dōsti,friend,W010.jpg,family,TW009,5,Intermediate,ದೋಸ್ತಿ,,,children playing together
-TW011,tu,ಹಸು,ಪೆತ್ತ,petta,enna petta,cow,W011.jpg,animals,,6,Intermediate,ಎನ್ನ ಪೆತ್ತ,,my cow,cow
-TW012,tu,ನಾಯಿ,ನಾಯಿ,nāyi,nāyi,dog,W012.jpg,animals,TW011,6,Intermediate,ನಾಯಿ,,,dog
-TW013,tu,ಬೆಕ್ಕು,ಪುಚ್ಚೆ,pucce,pucce,cat,W013.jpg,animals,TW012,6,Intermediate,ಪುಚ್ಚೆ,,,cat
-TW014,tu,ಆನೆ,ಆನೆ,āne,āne,elephant,W014.jpg,animals,TW013,6,Intermediate,ಆನೆ,,,Indian elephant
-TW015,tu,ಕುದುರೆ,ಕುದುರೆ,kudure,kudure,horse,W015.jpg,animals,TW014,7,Intermediate,ಕುದುರೆ,,,horse
-TW016,tu,ಹಂದಿ,ಪಂಜಿ,paṁji,paṁji,pig,W016.jpg,animals,TW015,7,Intermediate,ಪಂಜಿ,,,pig
-TW017,tu,ಕುರಿ,ಕುರಿ,kuri,kuri,sheep,W017.jpg,animals,TW016,7,Intermediate,ಕುರಿ,,,sheep
-TW018,tu,ಇಲಿ,ಇಲಿ,ili,ili,mouse,W018.jpg,animals,TW017,7,Intermediate,ಇಲಿ,,,house mouse
-TW019,tu,ಮೀನು,ಮೀನ್,mīn,mīn,fish,W019.jpg,animals,TW018,6,Intermediate,ಮೀನ್,,,fish
-TW020,tu,ಹಕ್ಕಿ,ಪಕ್ಕಿ,pakki,enna pakki,bird,W020.jpg,animals,TW019,6,Intermediate,ಎನ್ನ ಪಕ್ಕಿ,,my bird,bird
-TW021,tu,ಕೋಳಿ,ಕೋರಿ,kōri,kōri,hen,W021.jpg,animals,TW020,7,Intermediate,ಕೋರಿ,,,hen
-TW022,tu,ಹುಲಿ,ಪಿಲಿ,pili,pili,tiger,W022.jpg,animals,TW021,7,Intermediate,ಪಿಲಿ,,,tiger
-TW023,tu,ತಲೆ,ತರೆ,tare,tare,head,W043.jpg,body,,8,Intermediate,ತರೆ,,,child face portrait
-TW024,tu,ಕಣ್ಣು,ಕಣ್ಣ್,kaṇṇ,enna kaṇṇ,eye,W044.jpg,body,TW023,8,Intermediate,ಎನ್ನ ಕಣ್ಣ್,,my eye,human eye closeup
-TW025,tu,ಕಿವಿ,ಕೆಬಿ,kebi,kebi,ear,W045.jpg,body,TW024,8,Intermediate,ಕೆಬಿ,,,human ear closeup
-TW026,tu,ಮೂಗು,ಮೂಕು,mūku,mūku,nose,W046.jpg,body,TW025,8,Intermediate,ಮೂಕು,,,human nose closeup
-TW027,tu,ಬಾಯಿ,ಬಾಯಿ,bāyi,bāyi,mouth,W047.jpg,body,TW026,9,Intermediate,ಬಾಯಿ,,,human lips closeup
-TW028,tu,ಕೈ,ಕೈ,kai,enna kai,hand,W048.jpg,body,TW027,8,Intermediate,ಎನ್ನ ಕೈ,,my hand,open human hand
-TW029,tu,ಕಾಲು,ಕಾರ್,kār,kār,leg,W049.jpg,body,TW028,9,Intermediate,ಕಾರ್,,,human legs walking
-TW030,tu,ಹಲ್ಲು,ಪಲ್ಲ್,pall,pall,tooth,W050.jpg,body,TW029,9,Intermediate,ಪಲ್ಲ್,,,tooth
-TW031,tu,ಅನ್ನ,ಅನ್ನ,anna,anna,cooked rice,W035.jpg,food,,10,Intermediate,ಅನ್ನ,,,cooked rice
-TW032,tu,ಹಾಲು,ಪೇರ್,pēr,pēr,milk,W036.jpg,food,TW031,10,Intermediate,ಪೇರ್,,,glass of milk
-TW033,tu,ಉಪ್ಪು,ಉಪ್ಪು,uppu,uppu,salt,W037.jpg,food,TW032,11,Intermediate,ಉಪ್ಪು,,,salt
-TW034,tu,ಹಣ್ಣು,ಪರ್ಂದ್,parṁd,parṁd,fruit,W038.jpg,food,TW033,10,Intermediate,ಪರ್ಂದ್,,,assorted fruit
-TW035,tu,ಮೊಸರು,ಮೊಸರು,mosaru,mosaru,curd,W040.jpg,food,TW034,11,Intermediate,ಮೊಸರು,,,curd yogurt
-TW036,tu,ನೀರು,ನೀರ್,nīr,nīr,water,W023.jpg,nature,,12,Intermediate,ನೀರ್,,,glass of water
-TW037,tu,ಗಾಳಿ,ಗಾಳಿ,gāḷi,gāḷi,wind,W024.jpg,nature,TW036,13,Intermediate,ಗಾಳಿ,,,windmill wind
-TW038,tu,ಬೆಂಕಿ,ತೂ,tū,tū uṁḍu,fire,W025.jpg,nature,TW037,13,Intermediate,ತೂ ಉಂಡು,,there is fire,fire
-TW039,tu,ಮಳೆ,ಬರ್ಸ,barsa,barsa,rain,W026.jpg,nature,TW038,12,Intermediate,ಬರ್ಸ,,,rain
-TW040,tu,ಸೂರ್ಯ,ಸೂರ್ಯೆ,sūrye,sūrye,sun,W027.jpg,nature,TW039,12,Intermediate,ಸೂರ್ಯೆ,,,sun
-TW041,tu,ಚಂದ್ರ,ಚಂದ್ರೆ,caṁdre,caṁdre,moon,W028.jpg,nature,TW040,12,Intermediate,ಚಂದ್ರೆ,,,moon
-TW042,tu,ನಕ್ಷತ್ರ,ಬೊಳ್ಳಿ,boḷḷi,boḷḷi,star,W029.jpg,nature,TW041,13,Intermediate,ಬೊಳ್ಳಿ,,,star night sky
-TW043,tu,ಮರ,ಮರ,mara,mara,tree,W030.jpg,nature,TW042,12,Intermediate,ಮರ,,,tree
-TW044,tu,ಬೆಟ್ಟ,ಬೆಟ್ಟು,beṭṭu,beṭṭu,hill,W033.jpg,nature,TW043,13,Intermediate,ಬೆಟ್ಟು,,,hill
-TW045,tu,ಕಡಲು,ಕಡಲ್,kaḍal,kaḍal,sea,W034.jpg,nature,TW044,13,Intermediate,ಕಡಲ್,,,sea
-TW046,tu,ಒಂದು,ಒಂಜಿ,oṁji,oṁji,one,W057.jpg,numbers,,14,Intermediate,ಒಂಜಿ,,,number one
-TW047,tu,ಎರಡು,ರಡ್ಡ್,raḍḍ,oṁji raḍḍ mūji,two,W058.jpg,numbers,TW046,14,Intermediate,ಒಂಜಿ ರಡ್ಡ್ ಮೂಜಿ,,"one, two, three",number two
-TW048,tu,ಮೂರು,ಮೂಜಿ,mūji,mūji,three,W059.jpg,numbers,TW047,14,Intermediate,ಮೂಜಿ,,,number three
-TW049,tu,ನಾಲ್ಕು,ನಾಲ್,nāl,nāl,four,W060.jpg,numbers,TW048,14,Intermediate,ನಾಲ್,,,number four
-TW050,tu,ಆರು,ಆಜಿ,āji,āji,six,W062.jpg,numbers,TW049,15,Intermediate,ಆಜಿ,,,number six
-TW051,tu,ಎಂಟು,ಎಣ್ಮ,eṇma,eṇma,eight,W064.jpg,numbers,TW050,15,Intermediate,ಎಣ್ಮ,,,number eight
-TW052,tu,ಒಂಬತ್ತು,ಒರ್ಂಬ,orṁba,orṁba,nine,W065.jpg,numbers,TW051,15,Intermediate,ಒರ್ಂಬ,,,number nine
-TW053,tu,ಹತ್ತು,ಪತ್ತ್,patt,patt,ten,W066.jpg,numbers,TW052,15,Intermediate,ಪತ್ತ್,,,number ten
-TW054,tu,ಕೆಂಪು,ಕೆಂಪು,keṁpu,keṁpu,red,W051.jpg,colours,,16,Intermediate,ಕೆಂಪು,,,red colour
-TW055,tu,ಹಸಿರು,ಪಚ್ಚೆ,pacce,pacce,green,W052.jpg,colours,TW054,16,Intermediate,ಪಚ್ಚೆ,,,green colour
-TW056,tu,ಹಳದಿ,ಮಂಜಲ್,maṁjal,maṁjal,yellow,W053.jpg,colours,TW055,16,Intermediate,ಮಂಜಲ್,,,yellow colour
-TW057,tu,ನೀಲಿ,ನೀಲಿ,nīli,nīli,blue,W054.jpg,colours,TW056,16,Intermediate,ನೀಲಿ,,,blue colour
-TW058,tu,ಕಪ್ಪು,ಕಪ್ಪು,kappu,kappu,black,W055.jpg,colours,TW057,17,Intermediate,ಕಪ್ಪು,,,black colour
-TW059,tu,ಬಿಳಿ,ಬೊಲ್ದು,boldu,boldu,white,W056.jpg,colours,TW058,17,Intermediate,ಬೊಲ್ದು,,,white colour
-TW060,tu,ಮನೆ,ಇಲ್ಲ್,ill,ill,house,W067.jpg,home,,18,Intermediate,ಇಲ್ಲ್,,,village house
-TW061,tu,ಬಾಗಿಲು,ಬಾಕಿಲ್,bākil,bākil,door,W068.jpg,home,TW060,19,Intermediate,ಬಾಕಿಲ್,,,wooden door
-TW062,tu,ಕುರ್ಚಿ,ಕುರ್ಚಿ,kurci,kurci,chair,W069.jpg,home,TW061,19,Intermediate,ಕುರ್ಚಿ,,,chair
-TW063,tu,ಪುಸ್ತಕ,ಪುಸ್ತಕ,pustaka,pustaka,book,W071.jpg,school,,20,Intermediate,ಪುಸ್ತಕ,,,book
-TW064,tu,ಶಾಲೆ,ಶಾಲೆ,śāle,śāle,school,W072.jpg,school,TW063,20,Intermediate,ಶಾಲೆ,,,school building
-TP001,tu,,ಎನ್ನ ಇಲ್ಲ್,enna ill,uṁdu enna ill,my house,W067.jpg,phrases,TW060,22,Advanced,ಉಂದು ಎನ್ನ ಇಲ್ಲ್,,my house,
-TP002,tu,,ಎನ್ನ ಶಾಲೆ,enna śāle,enna śāle,my school,W072.jpg,phrases,TW064,22,Advanced,ಎನ್ನ ಶಾಲೆ,,my school,
-TP003,tu,,ಒಂಜಿ ಪೆತ್ತ,oṁji petta,oṁji petta,one cow,W011.jpg,phrases,TW011,22,Advanced,ಒಂಜಿ ಪೆತ್ತ,,one cow,
-TP004,tu,,ರಡ್ಡ್ ಕಣ್ಣ್,raḍḍ kaṇṇ,raḍḍ kaṇṇ uṁḍu,two eyes,W044.jpg,phrases,TW024,22,Advanced,ರಡ್ಡ್ ಕಣ್ಣ್ ಉಂಡು,,two eyes,
-TP005,tu,,ಮೂಜಿ ಮೀನ್,mūji mīn,mūji mīn,three fish,W019.jpg,phrases,TW019,22,Advanced,ಮೂಜಿ ಮೀನ್,,three fish,
-TP006,tu,,ಬೊಲ್ದು ಪೇರ್,boldu pēr,boldu pēr,white milk,W036.jpg,phrases,TW032,22,Advanced,ಬೊಲ್ದು ಪೇರ್,,white milk,
+concept_id,language,kannada_word,tulu_word,transliteration,ipa,english_meaning,image_file,category,prereq_id,difficulty,level,spoken_form,anchor_word,phrase_gloss,image_query,icon
+V01,kn,ಅ,,a,a,the vowel a,V01.jpg,vowels,,1,Basic,ಅ,ಅಮ್ಮ,,,
+V02,kn,ಆ,,ā,ā,the vowel ā,V02.jpg,vowels,V01,1,Basic,ಆ,ಆನೆ,,,
+V03,kn,ಇ,,i,i,the vowel i,V03.jpg,vowels,V02,1,Basic,ಇ,ಇಲಿ,,,
+V04,kn,ಈ,,ī,ī,the vowel ī,V04.jpg,vowels,V03,1,Basic,ಈ,ಈರುಳ್ಳಿ,,,
+V05,kn,ಉ,,u,u,the vowel u,V05.jpg,vowels,V04,1,Basic,ಉ,ಉಪ್ಪು,,,
+V06,kn,ಊ,,ū,ū,the vowel ū,V06.jpg,vowels,V05,1,Basic,ಊ,ಊಟ,,,
+V07,kn,ಋ,,r̥,r̥,the vowel r̥,V07.jpg,vowels,V06,1,Basic,ಋ,ಋಷಿ,,,
+V08,kn,ಎ,,e,e,the vowel e,V08.jpg,vowels,V07,1,Basic,ಎ,ಎಲೆ,,,
+V09,kn,ಏ,,ē,ē,the vowel ē,V09.jpg,vowels,V08,1,Basic,ಏ,ಏಣಿ,,,
+V10,kn,ಐ,,ai,ai,the vowel ai,V10.jpg,vowels,V09,1,Basic,ಐ,ಐದು,,,
+V11,kn,ಒ,,o,o,the vowel o,V11.jpg,vowels,V10,1,Basic,ಒ,ಒಂಟೆ,,,
+V12,kn,ಓ,,ō,ō,the vowel ō,V12.jpg,vowels,V11,1,Basic,ಓ,ಓಲೆ,,,
+V13,kn,ಔ,,au,au,the vowel au,V13.jpg,vowels,V12,1,Basic,ಔ,ಔಷಧಿ,,,
+C01,kn,ಕ,,ka,ka,the consonant ka,C01.jpg,consonants,V13,2,Basic,ಕ,ಕಮಲ,,,
+C02,kn,ಖ,,kha,kha,the consonant kha,C02.jpg,consonants,V13,3,Basic,ಖ,ಖರ್ಜೂರ,,,
+C03,kn,ಗ,,ga,ga,the consonant ga,C03.jpg,consonants,V13,2,Basic,ಗ,ಗಿಡ,,,
+C04,kn,ಘ,,gha,gha,the consonant gha,C04.jpg,consonants,V13,3,Basic,ಘ,ಘಂಟೆ,,,
+C05,kn,ಚ,,ca,ca,the consonant ca,C05.jpg,consonants,V13,2,Basic,ಚ,ಚಂದ್ರ,,,
+C06,kn,ಛ,,cha,cha,the consonant cha,C06.jpg,consonants,V13,3,Basic,ಛ,ಛತ್ರಿ,,,
+C07,kn,ಜ,,ja,ja,the consonant ja,C07.jpg,consonants,V13,2,Basic,ಜ,ಜಿಂಕೆ,,,
+C08,kn,ಝ,,jha,jha,the consonant jha,C08.jpg,consonants,V13,3,Basic,ಝ,ಝರಿ,,,
+C09,kn,ಟ,,ṭa,ṭa,the consonant ṭa,C09.jpg,consonants,V13,3,Basic,ಟ,ಟೋಪಿ,,,
+C10,kn,ಠ,,ṭha,ṭha,the consonant ṭha,C10.jpg,consonants,V13,3,Basic,ಠ,ಠಾಣೆ,,,
+C11,kn,ಡ,,ḍa,ḍa,the consonant ḍa,C11.jpg,consonants,V13,3,Basic,ಡ,ಡಬ್ಬಿ,,,
+C12,kn,ಢ,,ḍha,ḍha,the consonant ḍha,C12.jpg,consonants,V13,3,Basic,ಢ,ಢಮರು,,,
+C13,kn,ಣ,,ṇa,ṇa,the consonant ṇa,C13.jpg,consonants,V13,3,Basic,ಣ,ಬಾಣ,,,
+C14,kn,ತ,,ta,ta,the consonant ta,C14.jpg,consonants,V13,2,Basic,ತ,ತಲೆ,,,
+C15,kn,ಥ,,tha,tha,the consonant tha,C15.jpg,consonants,V13,3,Basic,ಥ,ಪಥ,,,
+C16,kn,ದ,,da,da,the consonant da,C16.jpg,consonants,V13,2,Basic,ದ,ದೀಪ,,,
+C17,kn,ಧ,,dha,dha,the consonant dha,C17.jpg,consonants,V13,3,Basic,ಧ,ಧ್ವಜ,,,
+C18,kn,ನ,,na,na,the consonant na,C18.jpg,consonants,V13,2,Basic,ನ,ನಾಯಿ,,,
+C19,kn,ಪ,,pa,pa,the consonant pa,C19.jpg,consonants,V13,2,Basic,ಪ,ಪುಸ್ತಕ,,,
+C20,kn,ಫ,,pha,pha,the consonant pha,C20.jpg,consonants,V13,3,Basic,ಫ,ಫಲ,,,
+C21,kn,ಬ,,ba,ba,the consonant ba,C21.jpg,consonants,V13,3,Basic,ಬ,ಬಾಗಿಲು,,,
+C22,kn,ಭ,,bha,bha,the consonant bha,C22.jpg,consonants,V13,3,Basic,ಭ,ಭೂಮಿ,,,
+C23,kn,ಮ,,ma,ma,the consonant ma,C23.jpg,consonants,V13,2,Basic,ಮ,ಮನೆ,,,
+C24,kn,ಯ,,ya,ya,the consonant ya,C24.jpg,consonants,V13,3,Basic,ಯ,ಯಂತ್ರ,,,
+C25,kn,ರ,,ra,ra,the consonant ra,C25.jpg,consonants,V13,3,Basic,ರ,ರೈಲು,,,
+C26,kn,ಲ,,la,la,the consonant la,C26.jpg,consonants,V13,3,Basic,ಲ,ಲಿಂಬೆ,,,
+C27,kn,ವ,,va,va,the consonant va,C27.jpg,consonants,V13,3,Basic,ವ,ವಿಮಾನ,,,
+C28,kn,ಶ,,śa,śa,the consonant śa,C28.jpg,consonants,V13,3,Basic,ಶ,ಶಾಲೆ,,,
+C29,kn,ಷ,,ṣa,ṣa,the consonant ṣa,C29.jpg,consonants,V13,3,Basic,ಷ,ಪುಷ್ಪ,,,
+C30,kn,ಸ,,sa,sa,the consonant sa,C30.jpg,consonants,V13,3,Basic,ಸ,ಸೂರ್ಯ,,,
+C31,kn,ಹ,,ha,ha,the consonant ha,C31.jpg,consonants,V13,2,Basic,ಹ,ಹಸು,,,
+C32,kn,ಳ,,ḷa,ḷa,the consonant ḷa,C32.jpg,consonants,V13,3,Basic,ಳ,ಮಳೆ,,,
+W001,kn,ಅಮ್ಮ,ಅಪ್ಪೆ,amma,amma,mother,W001.jpg,family,V01,4,Intermediate,ಅಮ್ಮ,,,indian mother baby,mother
+W002,kn,ಅಪ್ಪ,ಅಮ್ಮೆ,appa,appa,father,W002.jpg,family,V01,4,Intermediate,ಅಪ್ಪ,,,father child playing,father
+W003,kn,ಅಣ್ಣ,ಪಳಯೆ,aṇṇa,aṇṇa,elder brother,W003.jpg,family,V01,4,Intermediate,ಅಣ್ಣ,,,indian school boys,brother
+W004,kn,ಅಕ್ಕ,ಪಳ್ದಿ,akka,akka,elder sister,W004.jpg,family,V01,4,Intermediate,ಅಕ್ಕ,,,indian school girls,sister
+W005,kn,ತಮ್ಮ,ಮೆಗ್ಯೆ,tamma,tamma,younger brother,W005.jpg,family,C14,5,Intermediate,ತಮ್ಮ,,,boy portrait child,brother
+W006,kn,ತಂಗಿ,ಮೆಗ್ದಿ,taṁgi,taṁgi,younger sister,W006.jpg,family,C14,5,Intermediate,ತಂಗಿ,,,girl portrait child,sister
+W007,kn,ಮಗು,ಬಾಲೆ,magu,magu,child,W007.jpg,family,C23,4,Intermediate,ಮಗು,,,smiling baby infant,child
+W008,kn,ಅಜ್ಜ,ಅಜ್ಜೆ,ajja,ajja,grandfather,W008.jpg,family,V01,5,Intermediate,ಅಜ್ಜ,,,elderly indian man portrait,grandfather
+W009,kn,ಅಜ್ಜಿ,ಅಜ್ಜಿ,ajji,ajji,grandmother,W009.jpg,family,V01,5,Intermediate,ಅಜ್ಜಿ,,,elderly indian woman portrait,grandmother
+W010,kn,ಸ್ನೇಹಿತ,ಗೆಳೆಯೆ,snēhita,snēhita,friend,W010.jpg,family,C30,5,Intermediate,ಸ್ನೇಹಿತ,,,children playing together,friend
+W011,kn,ಹಸು,ಪೆತ್ತ,hasu,hasu,cow,W011.jpg,animals,C31,4,Intermediate,ಹಸು,,,cow,cow
+W012,kn,ನಾಯಿ,ನಾಯಿ,nāyi,nāyi,dog,W012.jpg,animals,C18,4,Intermediate,ನಾಯಿ,,,dog,dog
+W013,kn,ಬೆಕ್ಕು,ಪುಚ್ಚೆ,bekku,bekku,cat,W013.jpg,animals,C21,4,Intermediate,ಬೆಕ್ಕು,,,cat,cat
+W014,kn,ಆನೆ,ಆನೆ,āne,āne,elephant,W014.jpg,animals,V02,4,Intermediate,ಆನೆ,,,Indian elephant,elephant
+W015,kn,ಕುದುರೆ,ಕುದುರೆ,kudure,kudure,horse,W015.jpg,animals,C01,5,Intermediate,ಕುದುರೆ,,,horse,horse
+W016,kn,ಎಮ್ಮೆ,ಎರ್ಮೆ,emme,emme,buffalo,W016.jpg,animals,V08,5,Intermediate,ಎಮ್ಮೆ,,,indian buffalo,buffalo
+W017,kn,ಕುರಿ,ಕುರಿ,kuri,kuri,sheep,W017.jpg,animals,C01,5,Intermediate,ಕುರಿ,,,sheep,sheep
+W018,kn,ಇಲಿ,ಇಲಿ,ili,ili,mouse,W018.jpg,animals,V03,5,Intermediate,ಇಲಿ,,,house mouse,mouse
+W019,kn,ಮೀನು,ಮೀನ್,mīnu,mīnu,fish,W019.jpg,animals,C23,4,Intermediate,ಮೀನು,,,fish,fish
+W020,kn,ಹಕ್ಕಿ,ಪಕ್ಕಿ,hakki,hakki,bird,W020.jpg,animals,C31,4,Intermediate,ಹಕ್ಕಿ,,,bird,bird
+W021,kn,ಕೋಳಿ,ಕೋರಿ,kōḷi,kōḷi,hen,W021.jpg,animals,C01,5,Intermediate,ಕೋಳಿ,,,hen,hen
+W022,kn,ಹುಲಿ,ಪಿಲಿ,huli,huli,tiger,W022.jpg,animals,C31,5,Intermediate,ಹುಲಿ,,,tiger,tiger
+W023,kn,ನೀರು,ನೀರ್,nīru,nīru,water,W023.jpg,nature,C18,4,Intermediate,ನೀರು,,,glass of water,water
+W024,kn,ಗಾಳಿ,ಗಾಳಿ,gāḷi,gāḷi,wind,W024.jpg,nature,C03,5,Intermediate,ಗಾಳಿ,,,windmill wind,wind
+W025,kn,ಬೆಂಕಿ,ತೂ,beṁki,beṁki,fire,W025.jpg,nature,C21,5,Intermediate,ಬೆಂಕಿ,,,fire,fire
+W026,kn,ಮಳೆ,ಬರ್ಸ,maḷe,maḷe,rain,W026.jpg,nature,C23,4,Intermediate,ಮಳೆ,,,rain,rain
+W027,kn,ಸೂರ್ಯ,ಸೂರ್ಯೆ,sūrya,sūrya,sun,W027.jpg,nature,C30,4,Intermediate,ಸೂರ್ಯ,,,sun,sun
+W028,kn,ಚಂದ್ರ,ಚಂದ್ರೆ,caṁdra,caṁdra,moon,W028.jpg,nature,C05,4,Intermediate,ಚಂದ್ರ,,,moon,moon
+W029,kn,ನಕ್ಷತ್ರ,ಬೊಳ್ಳಿ,nakṣatra,nakṣatra,star,W029.jpg,nature,C18,5,Intermediate,ನಕ್ಷತ್ರ,,,star night sky,star
+W030,kn,ಮರ,ಮರ,mara,mara,tree,W030.jpg,nature,C23,4,Intermediate,ಮರ,,,tree,tree
+W031,kn,ಹೂವು,ಪೂ,hūvu,hūvu,flower,W031.jpg,nature,C31,4,Intermediate,ಹೂವು,,,flower,flower
+W032,kn,ಎಲೆ,ಎಲೆ,ele,marada ele,leaf,W032.jpg,nature,V08,5,Intermediate,ಮರದ ಎಲೆ,,the leaf of a tree,leaf,leaf
+W033,kn,ಬೆಟ್ಟ,ಬೆಟ್ಟು,beṭṭa,beṭṭa,hill,W033.jpg,nature,C21,5,Intermediate,ಬೆಟ್ಟ,,,hill,hill
+W034,kn,ಕಡಲು,ಕಡಲ್,kaḍalu,kaḍalu,sea,W034.jpg,nature,C01,5,Intermediate,ಕಡಲು,,,sea,sea
+W035,kn,ಅನ್ನ,ಅನ್ನ,anna,anna,cooked rice,W035.jpg,food,V01,4,Intermediate,ಅನ್ನ,,,cooked rice,rice
+W036,kn,ಹಾಲು,ಪೇರ್,hālu,hālu,milk,W036.jpg,food,C31,4,Intermediate,ಹಾಲು,,,glass of milk,milk
+W037,kn,ಉಪ್ಪು,ಉಪ್ಪು,uppu,uppu,salt,W037.jpg,food,V05,5,Intermediate,ಉಪ್ಪು,,,salt,salt
+W038,kn,ಹಣ್ಣು,ಪರ್ಂದ್,haṇṇu,haṇṇu,fruit,W038.jpg,food,C31,4,Intermediate,ಹಣ್ಣು,,,assorted fruit,fruit
+W039,kn,ಬಾಳೆಹಣ್ಣು,,bāḷehaṇṇu,bāḷehaṇṇu,banana,W039.jpg,food,C21,5,Intermediate,ಬಾಳೆಹಣ್ಣು,,,banana,banana
+W040,kn,ಮೊಸರು,ಮೊಸರು,mosaru,mosaru,curd,W040.jpg,food,C23,5,Intermediate,ಮೊಸರು,,,curd yogurt,curd
+W041,kn,ಸಕ್ಕರೆ,,sakkare,sakkare,sugar,W041.jpg,food,C30,5,Intermediate,ಸಕ್ಕರೆ,,,sugar,sugar
+W042,kn,ರೊಟ್ಟಿ,,roṭṭi,roṭṭi,flatbread,W042.jpg,food,C25,5,Intermediate,ರೊಟ್ಟಿ,,,roti flatbread,roti
+W043,kn,ತಲೆ,ತರೆ,tale,nanna tale,head,W043.jpg,body,C14,4,Intermediate,ನನ್ನ ತಲೆ,,my head,child face portrait,head
+W044,kn,ಕಣ್ಣು,ಕಣ್ಣ್,kaṇṇu,kaṇṇu,eye,W044.jpg,body,C01,4,Intermediate,ಕಣ್ಣು,,,human eye closeup,eye
+W045,kn,ಕಿವಿ,ಕೆಬಿ,kivi,kivi,ear,W045.jpg,body,C01,4,Intermediate,ಕಿವಿ,,,human ear closeup,ear
+W046,kn,ಮೂಗು,ಮೂಕು,mūgu,mūgu,nose,W046.jpg,body,C23,4,Intermediate,ಮೂಗು,,,human nose closeup,nose
+W047,kn,ಬಾಯಿ,ಬಾಯಿ,bāyi,bāyi,mouth,W047.jpg,body,C21,5,Intermediate,ಬಾಯಿ,,,human lips closeup,mouth
+W048,kn,ಕೈ,ಕೈ,kai,nanna kai,hand,W048.jpg,body,C01,4,Intermediate,ನನ್ನ ಕೈ,,my hand,open human hand,hand
+W049,kn,ಕಾಲು,ಕಾರ್,kālu,kālu,leg,W049.jpg,body,C01,5,Intermediate,ಕಾಲು,,,human legs walking,leg
+W050,kn,ಹಲ್ಲು,ಪಲ್ಲ್,hallu,hallu,tooth,W050.jpg,body,C31,5,Intermediate,ಹಲ್ಲು,,,tooth,tooth
+W051,kn,ಕೆಂಪು,ಕೆಂಪು,keṁpu,keṁpu,red,W051.jpg,colours,C01,4,Intermediate,ಕೆಂಪು,,,red colour,red
+W052,kn,ಹಸಿರು,ಪಚ್ಚೆ,hasiru,hasiru,green,W052.jpg,colours,C31,4,Intermediate,ಹಸಿರು,,,green colour,green
+W053,kn,ಹಳದಿ,ಮಂಜಲ್,haḷadi,haḷadi,yellow,W053.jpg,colours,C31,4,Intermediate,ಹಳದಿ,,,yellow colour,yellow
+W054,kn,ನೀಲಿ,ನೀಲಿ,nīli,nīli,blue,W054.jpg,colours,C18,4,Intermediate,ನೀಲಿ,,,blue colour,blue
+W055,kn,ಕಪ್ಪು,ಕಪ್ಪು,kappu,kappu,black,W055.jpg,colours,C01,5,Intermediate,ಕಪ್ಪು,,,black colour,black
+W056,kn,ಬಿಳಿ,ಬೊಲ್ದು,biḷi,biḷi,white,W056.jpg,colours,C21,5,Intermediate,ಬಿಳಿ,,,white colour,white
+W057,kn,ಒಂದು,ಒಂಜಿ,oṁdu,oṁdu,one,W057.jpg,numbers,V11,4,Numbers,ಒಂದು,,,number one,count:1
+W058,kn,ಎರಡು,ರಡ್ಡ್,eraḍu,eraḍu,two,W058.jpg,numbers,V08,4,Numbers,ಎರಡು,,,number two,count:2
+W059,kn,ಮೂರು,ಮೂಜಿ,mūru,mūru,three,W059.jpg,numbers,C23,4,Numbers,ಮೂರು,,,number three,count:3
+W060,kn,ನಾಲ್ಕು,ನಾಲ್,nālku,nālku,four,W060.jpg,numbers,C18,4,Numbers,ನಾಲ್ಕು,,,number four,count:4
+W061,kn,ಐದು,ಐನ್,aidu,aidu,five,W061.jpg,numbers,V10,4,Numbers,ಐದು,,,number five,count:5
+W062,kn,ಆರು,ಆಜಿ,āru,āru,six,W062.jpg,numbers,V02,5,Numbers,ಆರು,,,number six,count:6
+W063,kn,ಏಳು,ಏಳ್,ēḷu,ēḷu,seven,W063.jpg,numbers,V09,5,Numbers,ಏಳು,,,number seven,count:7
+W064,kn,ಎಂಟು,ಎಣ್ಮ,eṁṭu,eṁṭu,eight,W064.jpg,numbers,V08,5,Numbers,ಎಂಟು,,,number eight,count:8
+W065,kn,ಒಂಬತ್ತು,ಒರ್ಂಬ,oṁbattu,oṁbattu,nine,W065.jpg,numbers,V11,5,Numbers,ಒಂಬತ್ತು,,,number nine,count:9
+W066,kn,ಹತ್ತು,ಪತ್ತ್,hattu,hattu,ten,W066.jpg,numbers,C31,5,Numbers,ಹತ್ತು,,,number ten,count:10
+W067,kn,ಮನೆ,ಇಲ್ಲ್,mane,mane,house,W067.jpg,home,C23,4,Intermediate,ಮನೆ,,,village house,house
+W068,kn,ಬಾಗಿಲು,ಬಾಕಿಲ್,bāgilu,bāgilu,door,W068.jpg,home,C21,5,Intermediate,ಬಾಗಿಲು,,,wooden door,door
+W069,kn,ಕುರ್ಚಿ,ಕುರ್ಚಿ,kurci,kurci,chair,W069.jpg,home,C01,5,Intermediate,ಕುರ್ಚಿ,,,chair,chair
+W070,kn,ದೀಪ,,dīpa,dīpa,lamp,W070.jpg,home,C16,5,Intermediate,ದೀಪ,,,oil lamp diya,lamp
+W071,kn,ಪುಸ್ತಕ,ಪುಸ್ತಕ,pustaka,pustaka,book,W071.jpg,school,C19,4,Intermediate,ಪುಸ್ತಕ,,,book,book
+W072,kn,ಶಾಲೆ,ಶಾಲೆ,śāle,śāle,school,W072.jpg,school,C28,4,Intermediate,ಶಾಲೆ,,,school building,school
+W073,kn,ಪೆನ್ಸಿಲ್,,pensil,pensil,pencil,W073.jpg,school,C19,5,Intermediate,ಪೆನ್ಸಿಲ್,,,pencil,pen
+W074,kn,ರೈಲು,,railu,railu,train,W074.jpg,travel,C25,5,Intermediate,ರೈಲು,,,train,train
+W075,kn,ಬಸ್ಸು,,bassu,bassu,bus,W075.jpg,travel,C21,5,Intermediate,ಬಸ್ಸು,,,bus,bus
+W076,kn,ವಿಮಾನ,,vimāna,vimāna,aeroplane,W076.jpg,travel,C27,5,Intermediate,ವಿಮಾನ,,,airplane,aeroplane
+W077,kn,ಮಾವು,,māvu,māvu,mango,W077.jpg,fruits,C23,4,Intermediate,ಮಾವು,,,mango fruit,mango
+W078,kn,ಸೇಬು,,sēbu,sēbu,apple,W078.jpg,fruits,C30,4,Intermediate,ಸೇಬು,,,red apple,apple
+W079,kn,ಕಿತ್ತಳೆ,,kittaḷe,kittaḷe,orange,W079.jpg,fruits,C01,4,Intermediate,ಕಿತ್ತಳೆ,,,orange fruit,orange
+W080,kn,ದ್ರಾಕ್ಷಿ,,drākṣi,drākṣi,grapes,W080.jpg,fruits,C16,5,Intermediate,ದ್ರಾಕ್ಷಿ,,,bunch of grapes,grapes
+W081,kn,ಕಲ್ಲಂಗಡಿ,,kallaṁgaḍi,kallaṁgaḍi,watermelon,W081.jpg,fruits,C01,5,Intermediate,ಕಲ್ಲಂಗಡಿ,,,watermelon,watermelon
+W082,kn,ಆಲೂಗಡ್ಡೆ,,ālūgaḍḍe,ālūgaḍḍe,potato,W082.jpg,vegetables,V02,4,Intermediate,ಆಲೂಗಡ್ಡೆ,,,potato,potato
+W083,kn,ಬದನೆಕಾಯಿ,,badanekāyi,badanekāyi,brinjal,W083.jpg,vegetables,C21,5,Intermediate,ಬದನೆಕಾಯಿ,,,brinjal eggplant,brinjal
+W084,kn,ಬೆಂಡೆಕಾಯಿ,,beṁḍekāyi,beṁḍekāyi,okra,W084.jpg,vegetables,C21,5,Intermediate,ಬೆಂಡೆಕಾಯಿ,,,okra ladyfinger,okra
+W085,kn,ದೋಸೆ,,dōse,dōse,dosa,W085.jpg,food,C16,4,Intermediate,ದೋಸೆ,,,dosa south indian,dosa
+W086,kn,ಇಡ್ಲಿ,,iḍli,iḍli,idli,W086.jpg,food,V03,4,Intermediate,ಇಡ್ಲಿ,,,idli steamed cake,rice
+W087,kn,ಜೇನು,,jēnu,jēnu,honey,W087.jpg,food,C07,5,Intermediate,ಜೇನು,,,honey jar,honey
+W088,kn,ಬೆಣ್ಣೆ,,beṇṇe,beṇṇe,butter,W088.jpg,food,C21,5,Intermediate,ಬೆಣ್ಣೆ,,,butter block,ghee
+W089,kn,ಕೋತಿ,,kōti,kōti,monkey,W089.jpg,animals,C01,4,Intermediate,ಕೋತಿ,,,monkey,monkey
+W090,kn,ಗಿಳಿ,,giḷi,giḷi,parrot,W090.jpg,animals,C03,4,Intermediate,ಗಿಳಿ,,,green parrot,parrot
+W091,kn,ಕಾಗೆ,,kāge,kāge,crow,W091.jpg,animals,C01,5,Intermediate,ಕಾಗೆ,,,crow bird,crow
+W092,kn,ನವಿಲು,,navilu,navilu,peacock,W092.jpg,animals,C18,4,Intermediate,ನವಿಲು,,,peacock,peacock
+W093,kn,ಮೊಲ,,mola,mola,rabbit,W093.jpg,animals,C23,5,Intermediate,ಮೊಲ,,,rabbit,rabbit
+W094,kn,ಅಳಿಲು,,aḷilu,aḷilu,squirrel,W094.jpg,animals,V01,5,Intermediate,ಅಳಿಲು,,,squirrel,squirrel
+W095,kn,ಮುಖ,,mukha,mukha,face,W095.jpg,body,C23,4,Intermediate,ಮುಖ,,,child smiling face,face
+W096,kn,ಕೂದಲು,,kūdalu,kūdalu,hair,W096.jpg,body,C01,4,Intermediate,ಕೂದಲು,,,hair,hair
+W097,kn,ಬೆರಳು,,beraḷu,beraḷu,finger,W097.jpg,body,C21,5,Intermediate,ಬೆರಳು,,,finger pointing,finger
+W098,kn,ಮೋಡ,,mōḍa,mōḍa,cloud,W098.jpg,nature,C23,4,Intermediate,ಮೋಡ,,,white cloud sky,cloud
+W099,kn,ನದಿ,,nadi,nadi,river,W099.jpg,nature,C18,4,Intermediate,ನದಿ,,,river,river
+W100,kn,ಆಕಾಶ,,ākāśa,ākāśa,sky,W100.jpg,nature,V02,4,Intermediate,ಆಕಾಶ,,,blue sky,sky
+W101,kn,ಕಲ್ಲು,,kallu,kallu,stone,W101.jpg,nature,C01,5,Intermediate,ಕಲ್ಲು,,,stone rock,stone
+W102,kn,ಹಾಸಿಗೆ,,hāsige,hāsige,bed,W102.jpg,home,C31,4,Intermediate,ಹಾಸಿಗೆ,,,bed,bed
+W103,kn,ಕಿಟಕಿ,,kiṭaki,kiṭaki,window,W103.jpg,home,C01,5,Intermediate,ಕಿಟಕಿ,,,window,window
+W104,kn,ಗಡಿಯಾರ,,gaḍiyāra,gaḍiyāra,clock,W104.jpg,home,C03,5,Intermediate,ಗಡಿಯಾರ,,,wall clock,clock
+W105,kn,ಚೆಂಡು,,ceṁḍu,ceṁḍu,ball,W105.jpg,home,C05,4,Intermediate,ಚೆಂಡು,,,colourful ball,ball
+W106,kn,ಅಂಗಿ,,aṁgi,aṁgi,shirt,W106.jpg,clothes,V01,4,Intermediate,ಅಂಗಿ,,,shirt,shirt
+W107,kn,ಸೀರೆ,,sīre,sīre,saree,W107.jpg,clothes,C30,5,Intermediate,ಸೀರೆ,,,indian saree,saree
+W108,kn,ಕಾರು,,kāru,kāru,car,W108.jpg,travel,C01,4,Intermediate,ಕಾರು,,,car,car
+P001,kn,ನನ್ನ ಅಮ್ಮ,,nanna amma,nanna amma,my mother,W001.jpg,phrases,W001,6,Advanced,ನನ್ನ ಅಮ್ಮ,,my mother,,mother
+P002,kn,ನನ್ನ ಮನೆ,,nanna mane,nanna mane,my house,W067.jpg,phrases,W067,6,Advanced,ನನ್ನ ಮನೆ,,my house,,house
+P003,kn,ನನ್ನ ಶಾಲೆ,,nanna śāle,nanna śāle,my school,W072.jpg,phrases,W072,6,Advanced,ನನ್ನ ಶಾಲೆ,,my school,,school
+P004,kn,ಒಂದು ಹಸು,,oṁdu hasu,oṁdu hasu,one cow,W011.jpg,phrases,W011,6,Advanced,ಒಂದು ಹಸು,,one cow,,cow
+P005,kn,ಎರಡು ಕಣ್ಣು,,eraḍu kaṇṇu,eraḍu kaṇṇu,two eyes,W044.jpg,phrases,W044,6,Advanced,ಎರಡು ಕಣ್ಣು,,two eyes,,eye
+P006,kn,ಮೂರು ಮೀನು,,mūru mīnu,mūru mīnu,three fish,W019.jpg,phrases,W019,6,Advanced,ಮೂರು ಮೀನು,,three fish,,fish
+P007,kn,ಕೆಂಪು ಹೂವು,,keṁpu hūvu,keṁpu hūvu,a red flower,W031.jpg,phrases,W031,6,Advanced,ಕೆಂಪು ಹೂವು,,a red flower,,flower
+P008,kn,ಹಸಿರು ಎಲೆ,,hasiru ele,hasiru ele,a green leaf,W032.jpg,phrases,W032,6,Advanced,ಹಸಿರು ಎಲೆ,,a green leaf,,leaf
+P009,kn,ಬಿಳಿ ಹಾಲು,,biḷi hālu,biḷi hālu,white milk,W036.jpg,phrases,W036,6,Advanced,ಬಿಳಿ ಹಾಲು,,white milk,,milk
+P010,kn,ನೀಲಿ ಆಕಾಶ,,nīli ākāśa,nīli ākāśa,the blue sky,W100.jpg,phrases,W100,6,Advanced,ನೀಲಿ ಆಕಾಶ,,the blue sky,,sky
+P011,kn,ದೊಡ್ಡ ಆನೆ,,doḍḍa āne,doḍḍa āne,a big elephant,W014.jpg,phrases,W014,6,Advanced,ದೊಡ್ಡ ಆನೆ,,a big elephant,,elephant
+P012,kn,ಪುಟ್ಟ ಮಗು,,puṭṭa magu,puṭṭa magu,a little child,W007.jpg,phrases,W007,6,Advanced,ಪುಟ್ಟ ಮಗು,,a little child,,child
+P013,kn,ಸಿಹಿ ಹಣ್ಣು,,sihi haṇṇu,sihi haṇṇu,a sweet fruit,W038.jpg,phrases,W038,6,Advanced,ಸಿಹಿ ಹಣ್ಣು,,a sweet fruit,,fruit
+P014,kn,ಒಳ್ಳೆಯ ಸ್ನೇಹಿತ,,oḷḷeya snēhita,oḷḷeya snēhita,a good friend,W010.jpg,phrases,W010,6,Advanced,ಒಳ್ಳೆಯ ಸ್ನೇಹಿತ,,a good friend,,friend
+S001,kn,ಇದು ನನ್ನ ಮನೆ,,idu nanna mane,idu nanna mane,This is my house,W067.jpg,sentences,W067,7,Sentences,ಇದು ನನ್ನ ಮನೆ,,This is my house,,house
+S002,kn,ಇದು ನನ್ನ ಪುಸ್ತಕ,,idu nanna pustaka,idu nanna pustaka,This is my book,W071.jpg,sentences,W071,7,Sentences,ಇದು ನನ್ನ ಪುಸ್ತಕ,,This is my book,,book
+S003,kn,ಇದು ನನ್ನ ಸ್ನೇಹಿತ,,idu nanna snēhita,idu nanna snēhita,This is my friend,W010.jpg,sentences,W010,7,Sentences,ಇದು ನನ್ನ ಸ್ನೇಹಿತ,,This is my friend,,friend
+S004,kn,ನನ್ನ ಶಾಲೆ ದೊಡ್ಡದು,,nanna śāle doḍḍadu,nanna śāle doḍḍadu,My school is big,W072.jpg,sentences,W072,7,Sentences,ನನ್ನ ಶಾಲೆ ದೊಡ್ಡದು,,My school is big,,school
+S005,kn,ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ,,nānu śālege hōguttēne,nānu śālege hōguttēne,I go to school,W072.jpg,sentences,W072,7,Sentences,ನಾನು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇನೆ,,I go to school,,school
+S006,kn,ನಾನು ಪುಸ್ತಕ ಓದುತ್ತೇನೆ,,nānu pustaka ōduttēne,nānu pustaka ōduttēne,I read a book,W071.jpg,sentences,W071,7,Sentences,ನಾನು ಪುಸ್ತಕ ಓದುತ್ತೇನೆ,,I read a book,,book
+S007,kn,ನಾನು ಹಾಲು ಕುಡಿಯುತ್ತೇನೆ,,nānu hālu kuḍiyuttēne,nānu hālu kuḍiyuttēne,I drink milk,W036.jpg,sentences,W036,7,Sentences,ನಾನು ಹಾಲು ಕುಡಿಯುತ್ತೇನೆ,,I drink milk,,milk
+S008,kn,ನಾನು ನೀರು ಕುಡಿಯುತ್ತೇನೆ,,nānu nīru kuḍiyuttēne,nānu nīru kuḍiyuttēne,I drink water,W023.jpg,sentences,W023,7,Sentences,ನಾನು ನೀರು ಕುಡಿಯುತ್ತೇನೆ,,I drink water,,water
+S009,kn,ನಾನು ಅನ್ನ ತಿನ್ನುತ್ತೇನೆ,,nānu anna tinnuttēne,nānu anna tinnuttēne,I eat rice,W035.jpg,sentences,W035,7,Sentences,ನಾನು ಅನ್ನ ತಿನ್ನುತ್ತೇನೆ,,I eat rice,,rice
+S010,kn,ನಾನು ಚೆಂಡು ಆಡುತ್ತೇನೆ,,nānu ceṁḍu āḍuttēne,nānu ceṁḍu āḍuttēne,I play with the ball,W105.jpg,sentences,W105,7,Sentences,ನಾನು ಚೆಂಡು ಆಡುತ್ತೇನೆ,,I play with the ball,,ball
+S011,kn,ನಾವು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇವೆ,,nāvu śālege hōguttēve,nāvu śālege hōguttēve,We go to school,W072.jpg,sentences,W072,7,Sentences,ನಾವು ಶಾಲೆಗೆ ಹೋಗುತ್ತೇವೆ,,We go to school,,school
+S012,kn,ಅಮ್ಮ ಮನೆಯಲ್ಲಿ ಇದ್ದಾರೆ,,amma maneyalli iddāre,amma maneyalli iddāre,Mother is at home,W001.jpg,sentences,W001,7,Sentences,ಅಮ್ಮ ಮನೆಯಲ್ಲಿ ಇದ್ದಾರೆ,,Mother is at home,,mother
+S013,kn,ಅಪ್ಪ ಕೆಲಸಕ್ಕೆ ಹೋಗುತ್ತಾರೆ,,appa kelasakke hōguttāre,appa kelasakke hōguttāre,Father goes to work,W002.jpg,sentences,W002,7,Sentences,ಅಪ್ಪ ಕೆಲಸಕ್ಕೆ ಹೋಗುತ್ತಾರೆ,,Father goes to work,,father
+S014,kn,ಅಜ್ಜಿ ಕಥೆ ಹೇಳುತ್ತಾರೆ,,ajji kathe hēḷuttāre,ajji kathe hēḷuttāre,Grandmother tells a story,W009.jpg,sentences,W009,7,Sentences,ಅಜ್ಜಿ ಕಥೆ ಹೇಳುತ್ತಾರೆ,,Grandmother tells a story,,grandmother
+S015,kn,ನನ್ನ ಅಣ್ಣ ಶಾಲೆಗೆ ಹೋಗುತ್ತಾರೆ,,nanna aṇṇa śālege hōguttāre,nanna aṇṇa śālege hōguttāre,My elder brother goes to school,W003.jpg,sentences,W003,7,Sentences,ನನ್ನ ಅಣ್ಣ ಶಾಲೆಗೆ ಹೋಗುತ್ತಾರೆ,,My elder brother goes to school,,brother
+S016,kn,ಮಗು ಆಟ ಆಡುತ್ತದೆ,,magu āṭa āḍuttade,magu āṭa āḍuttade,The child plays,W007.jpg,sentences,W007,7,Sentences,ಮಗು ಆಟ ಆಡುತ್ತದೆ,,The child plays,,child
+S017,kn,ಹಸು ಹಾಲು ಕೊಡುತ್ತದೆ,,hasu hālu koḍuttade,hasu hālu koḍuttade,The cow gives milk,W011.jpg,sentences,W011,7,Sentences,ಹಸು ಹಾಲು ಕೊಡುತ್ತದೆ,,The cow gives milk,,cow
+S018,kn,ನಾಯಿ ಮನೆಯಲ್ಲಿ ಇದೆ,,nāyi maneyalli ide,nāyi maneyalli ide,The dog is in the house,W012.jpg,sentences,W012,7,Sentences,ನಾಯಿ ಮನೆಯಲ್ಲಿ ಇದೆ,,The dog is in the house,,dog
+S019,kn,ಬೆಕ್ಕು ಹಾಲು ಕುಡಿಯುತ್ತದೆ,,bekku hālu kuḍiyuttade,bekku hālu kuḍiyuttade,The cat drinks milk,W013.jpg,sentences,W013,7,Sentences,ಬೆಕ್ಕು ಹಾಲು ಕುಡಿಯುತ್ತದೆ,,The cat drinks milk,,cat
+S020,kn,ಮೀನು ನೀರಿನಲ್ಲಿ ಇದೆ,,mīnu nīrinalli ide,mīnu nīrinalli ide,The fish is in the water,W019.jpg,sentences,W019,7,Sentences,ಮೀನು ನೀರಿನಲ್ಲಿ ಇದೆ,,The fish is in the water,,fish
+S021,kn,ಹಕ್ಕಿ ಆಕಾಶದಲ್ಲಿ ಹಾರುತ್ತದೆ,,hakki ākāśadalli hāruttade,hakki ākāśadalli hāruttade,The bird flies in the sky,W020.jpg,sentences,W020,7,Sentences,ಹಕ್ಕಿ ಆಕಾಶದಲ್ಲಿ ಹಾರುತ್ತದೆ,,The bird flies in the sky,,bird
+S022,kn,ಆನೆ ತುಂಬಾ ದೊಡ್ಡದು,,āne tuṁbā doḍḍadu,āne tuṁbā doḍḍadu,The elephant is very big,W014.jpg,sentences,W014,7,Sentences,ಆನೆ ತುಂಬಾ ದೊಡ್ಡದು,,The elephant is very big,,elephant
+S023,kn,ಕೋತಿ ಮರ ಹತ್ತುತ್ತದೆ,,kōti mara hattuttade,kōti mara hattuttade,The monkey climbs the tree,W089.jpg,sentences,W089,7,Sentences,ಕೋತಿ ಮರ ಹತ್ತುತ್ತದೆ,,The monkey climbs the tree,,monkey
+S024,kn,ನವಿಲು ಚೆನ್ನಾಗಿ ಕುಣಿಯುತ್ತದೆ,,navilu cennāgi kuṇiyuttade,navilu cennāgi kuṇiyuttade,The peacock dances beautifully,W092.jpg,sentences,W092,7,Sentences,ನವಿಲು ಚೆನ್ನಾಗಿ ಕುಣಿಯುತ್ತದೆ,,The peacock dances beautifully,,peacock
+S025,kn,ಸೂರ್ಯ ಆಕಾಶದಲ್ಲಿ ಇದ್ದಾನೆ,,sūrya ākāśadalli iddāne,sūrya ākāśadalli iddāne,The sun is in the sky,W027.jpg,sentences,W027,7,Sentences,ಸೂರ್ಯ ಆಕಾಶದಲ್ಲಿ ಇದ್ದಾನೆ,,The sun is in the sky,,sun
+S026,kn,ಚಂದ್ರ ರಾತ್ರಿ ಕಾಣುತ್ತಾನೆ,,caṁdra rātri kāṇuttāne,caṁdra rātri kāṇuttāne,The moon is seen at night,W028.jpg,sentences,W028,7,Sentences,ಚಂದ್ರ ರಾತ್ರಿ ಕಾಣುತ್ತಾನೆ,,The moon is seen at night,,moon
+S027,kn,ಇವತ್ತು ಮಳೆ ಬರುತ್ತಿದೆ,,ivattu maḷe baruttide,ivattu maḷe baruttide,It is raining today,W026.jpg,sentences,W026,7,Sentences,ಇವತ್ತು ಮಳೆ ಬರುತ್ತಿದೆ,,It is raining today,,rain
+S028,kn,ಮರದಲ್ಲಿ ಹಣ್ಣು ಇದೆ,,maradalli haṇṇu ide,maradalli haṇṇu ide,There is fruit on the tree,W030.jpg,sentences,W030,7,Sentences,ಮರದಲ್ಲಿ ಹಣ್ಣು ಇದೆ,,There is fruit on the tree,,fruit
+S029,kn,ಈ ಹೂವು ಕೆಂಪಾಗಿದೆ,,ī hūvu keṁpāgide,ī hūvu keṁpāgide,This flower is red,W031.jpg,sentences,W031,7,Sentences,ಈ ಹೂವು ಕೆಂಪಾಗಿದೆ,,This flower is red,,flower
+S030,kn,ನನಗೆ ಎರಡು ಕಣ್ಣು ಇವೆ,,nanage eraḍu kaṇṇu ive,nanage eraḍu kaṇṇu ive,I have two eyes,W044.jpg,sentences,W044,7,Sentences,ನನಗೆ ಎರಡು ಕಣ್ಣು ಇವೆ,,I have two eyes,,eye
+TW001,tu,ಅಮ್ಮ,ಅಪ್ಪೆ,appe,appe batter,mother,W001.jpg,family,TV01,4,Intermediate,ಅಪ್ಪೆ ಬತ್ತೆರ್,,mother came,indian mother baby,mother
+TW002,tu,ಅಪ್ಪ,ಅಮ್ಮೆ,amme,amme,father,W002.jpg,family,TV01,4,Intermediate,ಅಮ್ಮೆ,,,father child playing,father
+TW003,tu,ಅಣ್ಣ,ಪಳಯೆ,paḷaye,paḷaye,elder brother,W003.jpg,family,TC19,4,Intermediate,ಪಳಯೆ,,,indian school boys,brother
+TW004,tu,ಅಕ್ಕ,ಪಳ್ದಿ,paḷdi,enna paḷdi,elder sister,W004.jpg,family,TC19,4,Intermediate,ಎನ್ನ ಪಳ್ದಿ,,my elder sister,indian school girls,sister
+TW005,tu,ತಮ್ಮ,ಮೆಗ್ಯೆ,megye,megye,younger brother,W005.jpg,family,TC23,5,Intermediate,ಮೆಗ್ಯೆ,,,boy portrait child,brother
+TW006,tu,ತಂಗಿ,ಮೆಗ್ದಿ,megdi,megdi,younger sister,W006.jpg,family,TC23,5,Intermediate,ಮೆಗ್ದಿ,,,girl portrait child,sister
+TW007,tu,ಮಗು,ಬಾಲೆ,bāle,bāle,child,W007.jpg,family,TC21,4,Intermediate,ಬಾಲೆ,,,smiling baby infant,child
+TW008,tu,ಅಜ್ಜ,ಅಜ್ಜೆ,ajje,ajje,grandfather,W008.jpg,family,TV01,5,Intermediate,ಅಜ್ಜೆ,,,elderly indian man portrait,grandfather
+TW009,tu,ಅಜ್ಜಿ,ಅಜ್ಜಿ,ajji,ajji,grandmother,W009.jpg,family,TV01,5,Intermediate,ಅಜ್ಜಿ,,,elderly indian woman portrait,grandmother
+TW010,tu,ಸ್ನೇಹಿತ,ಗೆಳೆಯೆ,geḷeye,geḷeye,friend,W010.jpg,family,TC03,5,Intermediate,ಗೆಳೆಯೆ,,,two children friends,friend
+TW011,tu,ಹಸು,ಪೆತ್ತ,petta,enna petta,cow,W011.jpg,animals,TC19,6,Intermediate,ಎನ್ನ ಪೆತ್ತ,,my cow,cow,cow
+TW012,tu,ನಾಯಿ,ನಾಯಿ,nāyi,nāyi,dog,W012.jpg,animals,TC18,6,Intermediate,ನಾಯಿ,,,dog,dog
+TW013,tu,ಬೆಕ್ಕು,ಪುಚ್ಚೆ,pucce,pucce,cat,W013.jpg,animals,TC19,6,Intermediate,ಪುಚ್ಚೆ,,,cat,cat
+TW014,tu,ಆನೆ,ಆನೆ,āne,āne,elephant,W014.jpg,animals,TV02,6,Intermediate,ಆನೆ,,,Indian elephant,elephant
+TW015,tu,ಕುದುರೆ,ಕುದುರೆ,kudure,kudure,horse,W015.jpg,animals,TC01,7,Intermediate,ಕುದುರೆ,,,horse,horse
+TW016,tu,ಎಮ್ಮೆ,ಎರ್ಮೆ,erme,erme,buffalo,W016.jpg,animals,TV08,7,Intermediate,ಎರ್ಮೆ,,,indian buffalo,buffalo
+TW017,tu,ಕುರಿ,ಕುರಿ,kuri,kuri,sheep,W017.jpg,animals,TC01,7,Intermediate,ಕುರಿ,,,sheep,sheep
+TW018,tu,ಇಲಿ,ಇಲಿ,ili,ili,mouse,W018.jpg,animals,TV03,7,Intermediate,ಇಲಿ,,,house mouse,mouse
+TW019,tu,ಮೀನು,ಮೀನ್,mīn,mīn,fish,W019.jpg,animals,TC23,6,Intermediate,ಮೀನ್,,,fish,fish
+TW020,tu,ಹಕ್ಕಿ,ಪಕ್ಕಿ,pakki,enna pakki,bird,W020.jpg,animals,TC19,6,Intermediate,ಎನ್ನ ಪಕ್ಕಿ,,my bird,bird,bird
+TW021,tu,ಕೋಳಿ,ಕೋರಿ,kōri,kōri,hen,W021.jpg,animals,TC01,7,Intermediate,ಕೋರಿ,,,hen,hen
+TW022,tu,ಹುಲಿ,ಪಿಲಿ,pili,pili,tiger,W022.jpg,animals,TC19,7,Intermediate,ಪಿಲಿ,,,tiger,tiger
+TW023,tu,ತಲೆ,ತರೆ,tare,tare,head,W043.jpg,body,TC14,8,Intermediate,ತರೆ,,,child face portrait,head
+TW024,tu,ಕಣ್ಣು,ಕಣ್ಣ್,kaṇṇ,enna kaṇṇ,eye,W044.jpg,body,TC01,8,Intermediate,ಎನ್ನ ಕಣ್ಣ್,,my eye,human eye closeup,eye
+TW025,tu,ಕಿವಿ,ಕೆಬಿ,kebi,kebi,ear,W045.jpg,body,TC01,8,Intermediate,ಕೆಬಿ,,,human ear closeup,ear
+TW026,tu,ಮೂಗು,ಮೂಕು,mūku,mūku,nose,W046.jpg,body,TC23,8,Intermediate,ಮೂಕು,,,human nose closeup,nose
+TW027,tu,ಬಾಯಿ,ಬಾಯಿ,bāyi,bāyi,mouth,W047.jpg,body,TC21,9,Intermediate,ಬಾಯಿ,,,human lips closeup,mouth
+TW028,tu,ಕೈ,ಕೈ,kai,enna kai,hand,W048.jpg,body,TC01,8,Intermediate,ಎನ್ನ ಕೈ,,my hand,open human hand,hand
+TW029,tu,ಕಾಲು,ಕಾರ್,kār,kār,leg,W049.jpg,body,TC01,9,Intermediate,ಕಾರ್,,,human legs walking,leg
+TW030,tu,ಹಲ್ಲು,ಪಲ್ಲ್,pall,pall,tooth,W050.jpg,body,TC19,9,Intermediate,ಪಲ್ಲ್,,,tooth,tooth
+TW031,tu,ಅನ್ನ,ಅನ್ನ,anna,anna,cooked rice,W035.jpg,food,TV01,10,Intermediate,ಅನ್ನ,,,cooked rice,rice
+TW032,tu,ಹಾಲು,ಪೇರ್,pēr,pēr,milk,W036.jpg,food,TC19,10,Intermediate,ಪೇರ್,,,glass of milk,milk
+TW033,tu,ಉಪ್ಪು,ಉಪ್ಪು,uppu,uppu,salt,W037.jpg,food,TV05,11,Intermediate,ಉಪ್ಪು,,,salt,salt
+TW034,tu,ಹಣ್ಣು,ಪರ್ಂದ್,parṁd,parṁd,fruit,W038.jpg,food,TC19,10,Intermediate,ಪರ್ಂದ್,,,assorted fruit,fruit
+TW035,tu,ಮೊಸರು,ಮೊಸರು,mosaru,mosaru,curd,W040.jpg,food,TC23,11,Intermediate,ಮೊಸರು,,,curd yogurt,curd
+TW036,tu,ನೀರು,ನೀರ್,nīr,nīr,water,W023.jpg,nature,TC18,12,Intermediate,ನೀರ್,,,glass of water,water
+TW037,tu,ಗಾಳಿ,ಗಾಳಿ,gāḷi,gāḷi,wind,W024.jpg,nature,TC03,13,Intermediate,ಗಾಳಿ,,,windmill wind,wind
+TW038,tu,ಬೆಂಕಿ,ತೂ,tū,tū uṁḍu,fire,W025.jpg,nature,TC14,13,Intermediate,ತೂ ಉಂಡು,,there is fire,fire,fire
+TW039,tu,ಮಳೆ,ಬರ್ಸ,barsa,barsa,rain,W026.jpg,nature,TC21,12,Intermediate,ಬರ್ಸ,,,rain,rain
+TW040,tu,ಸೂರ್ಯ,ಸೂರ್ಯೆ,sūrye,sūrye,sun,W027.jpg,nature,TC30,12,Intermediate,ಸೂರ್ಯೆ,,,sun,sun
+TW041,tu,ಚಂದ್ರ,ಚಂದ್ರೆ,caṁdre,caṁdre,moon,W028.jpg,nature,TC05,12,Intermediate,ಚಂದ್ರೆ,,,moon,moon
+TW042,tu,ನಕ್ಷತ್ರ,ಬೊಳ್ಳಿ,boḷḷi,boḷḷi,star,W029.jpg,nature,TC21,13,Intermediate,ಬೊಳ್ಳಿ,,,star night sky,star
+TW043,tu,ಮರ,ಮರ,mara,mara,tree,W030.jpg,nature,TC23,12,Intermediate,ಮರ,,,tree,tree
+TW044,tu,ಬೆಟ್ಟ,ಬೆಟ್ಟು,beṭṭu,beṭṭu,hill,W033.jpg,nature,TC21,13,Intermediate,ಬೆಟ್ಟು,,,hill,hill
+TW045,tu,ಕಡಲು,ಕಡಲ್,kaḍal,kaḍal,sea,W034.jpg,nature,TC01,13,Intermediate,ಕಡಲ್,,,sea,sea
+TW046,tu,ಒಂದು,ಒಂಜಿ,oṁji,oṁji,one,W057.jpg,numbers,TV11,14,Numbers,ಒಂಜಿ,,,number one,count:1
+TW047,tu,ಎರಡು,ರಡ್ಡ್,raḍḍ,oṁji raḍḍ mūji,two,W058.jpg,numbers,TW046,14,Numbers,ಒಂಜಿ ರಡ್ಡ್ ಮೂಜಿ,,"one, two, three",number two,count:2
+TW048,tu,ಮೂರು,ಮೂಜಿ,mūji,mūji,three,W059.jpg,numbers,TW047,14,Numbers,ಮೂಜಿ,,,number three,count:3
+TW049,tu,ನಾಲ್ಕು,ನಾಲ್,nāl,nāl,four,W060.jpg,numbers,TW048,14,Numbers,ನಾಲ್,,,number four,count:4
+TW050,tu,ಆರು,ಆಜಿ,āji,āji,six,W062.jpg,numbers,TN005,15,Numbers,ಆಜಿ,,,number six,count:6
+TW051,tu,ಎಂಟು,ಎಣ್ಮ,eṇma,eṇma,eight,W064.jpg,numbers,TN007,15,Numbers,ಎಣ್ಮ,,,number eight,count:8
+TW052,tu,ಒಂಬತ್ತು,ಒರ್ಂಬ,orṁba,orṁba,nine,W065.jpg,numbers,TW051,15,Numbers,ಒರ್ಂಬ,,,number nine,count:9
+TW053,tu,ಹತ್ತು,ಪತ್ತ್,patt,patt,ten,W066.jpg,numbers,TW052,15,Numbers,ಪತ್ತ್,,,number ten,count:10
+TW054,tu,ಕೆಂಪು,ಕೆಂಪು,keṁpu,keṁpu,red,W051.jpg,colours,TC01,16,Intermediate,ಕೆಂಪು,,,red colour,red
+TW055,tu,ಹಸಿರು,ಪಚ್ಚೆ,pacce,pacce,green,W052.jpg,colours,TC19,16,Intermediate,ಪಚ್ಚೆ,,,green colour,green
+TW056,tu,ಹಳದಿ,ಮಂಜಲ್,maṁjal,maṁjal,yellow,W053.jpg,colours,TC23,16,Intermediate,ಮಂಜಲ್,,,yellow colour,yellow
+TW057,tu,ನೀಲಿ,ನೀಲಿ,nīli,nīli,blue,W054.jpg,colours,TC18,16,Intermediate,ನೀಲಿ,,,blue colour,blue
+TW058,tu,ಕಪ್ಪು,ಕಪ್ಪು,kappu,kappu,black,W055.jpg,colours,TC01,17,Intermediate,ಕಪ್ಪು,,,black colour,black
+TW059,tu,ಬಿಳಿ,ಬೊಲ್ದು,boldu,boldu,white,W056.jpg,colours,TC21,17,Intermediate,ಬೊಲ್ದು,,,white colour,white
+TW060,tu,ಮನೆ,ಇಲ್ಲ್,ill,ill,house,W067.jpg,home,TV03,18,Intermediate,ಇಲ್ಲ್,,,village house,house
+TW061,tu,ಬಾಗಿಲು,ಬಾಕಿಲ್,bākil,bākil,door,W068.jpg,home,TC21,19,Intermediate,ಬಾಕಿಲ್,,,wooden door,door
+TW062,tu,ಕುರ್ಚಿ,ಕುರ್ಚಿ,kurci,kurci,chair,W069.jpg,home,TC01,19,Intermediate,ಕುರ್ಚಿ,,,chair,chair
+TW063,tu,ಪುಸ್ತಕ,ಪುಸ್ತಕ,pustaka,pustaka,book,W071.jpg,school,TC19,20,Intermediate,ಪುಸ್ತಕ,,,book,book
+TW064,tu,ಶಾಲೆ,ಶಾಲೆ,śāle,śāle,school,W072.jpg,school,TC28,20,Intermediate,ಶಾಲೆ,,,school building,school
+TP001,tu,,ಎನ್ನ ಇಲ್ಲ್,enna ill,uṁdu enna ill,my house,W067.jpg,phrases,TW060,22,Advanced,ಉಂದು ಎನ್ನ ಇಲ್ಲ್,,my house,,house
+TP002,tu,,ಎನ್ನ ಶಾಲೆ,enna śāle,enna śāle,my school,W072.jpg,phrases,TW064,22,Advanced,ಎನ್ನ ಶಾಲೆ,,my school,,school
+TP003,tu,,ಒಂಜಿ ಪೆತ್ತ,oṁji petta,oṁji petta,one cow,W011.jpg,phrases,TW011,22,Advanced,ಒಂಜಿ ಪೆತ್ತ,,one cow,,cow
+TP004,tu,,ರಡ್ಡ್ ಕಣ್ಣ್,raḍḍ kaṇṇ,raḍḍ kaṇṇ uṁḍu,two eyes,W044.jpg,phrases,TW024,22,Advanced,ರಡ್ಡ್ ಕಣ್ಣ್ ಉಂಡು,,two eyes,,eye
+TP005,tu,,ಮೂಜಿ ಮೀನ್,mūji mīn,mūji mīn,three fish,W019.jpg,phrases,TW019,22,Advanced,ಮೂಜಿ ಮೀನ್,,three fish,,fish
+TP006,tu,,ಬೊಲ್ದು ಪೇರ್,boldu pēr,boldu pēr,white milk,W036.jpg,phrases,TW032,22,Advanced,ಬೊಲ್ದು ಪೇರ್,,white milk,,milk
+TN005,tu,ಐನ್,ಐನ್,ain,ain,five,,numbers,TW049,15,Numbers,ಐನ್,,,number five,count:5
+TN007,tu,ಏಳ್,ಏಳ್,ēḷ,ēḷ,seven,,numbers,TW050,15,Numbers,ಏಳ್,,,number seven,count:7
+N011,kn,ಹನ್ನೊಂದು,ಪದಿನೊಂಜಿ,hannoṁdu,hannoṁdu,eleven,,numbers,W066,5,Numbers,ಹನ್ನೊಂದು,,,number eleven,count:11
+N012,kn,ಹನ್ನೆರಡು,ಪದ್ರಡ್ಡ್,hanneraḍu,hanneraḍu,twelve,,numbers,N011,5,Numbers,ಹನ್ನೆರಡು,,,number twelve,count:12
+N013,kn,ಹದಿಮೂರು,ಪದಿಮೂಜಿ,hadimūru,hadimūru,thirteen,,numbers,N012,5,Numbers,ಹದಿಮೂರು,,,number thirteen,count:13
+N014,kn,ಹದಿನಾಲ್ಕು,ಪದಿನಾಲ್,hadinālku,hadinālku,fourteen,,numbers,N013,5,Numbers,ಹದಿನಾಲ್ಕು,,,number fourteen,count:14
+N015,kn,ಹದಿನೈದು,ಪದಿನೈನ್,hadinaidu,hadinaidu,fifteen,,numbers,N014,5,Numbers,ಹದಿನೈದು,,,number fifteen,count:15
+N016,kn,ಹದಿನಾರು,ಪದಿನಾಜಿ,hadināru,hadināru,sixteen,,numbers,N015,5,Numbers,ಹದಿನಾರು,,,number sixteen,count:16
+N017,kn,ಹದಿನೇಳು,ಪದಿನೇಳ್,hadinēḷu,hadinēḷu,seventeen,,numbers,N016,5,Numbers,ಹದಿನೇಳು,,,number seventeen,count:17
+N018,kn,ಹದಿನೆಂಟು,ಪದಿನೆಣ್ಮ,hadineṁṭu,hadineṁṭu,eighteen,,numbers,N017,5,Numbers,ಹದಿನೆಂಟು,,,number eighteen,count:18
+N019,kn,ಹತ್ತೊಂಬತ್ತು,ಪದಿನೊರ್ಂಬ,hattoṁbattu,hattoṁbattu,nineteen,,numbers,N018,5,Numbers,ಹತ್ತೊಂಬತ್ತು,,,number nineteen,count:19
+N020,kn,ಇಪ್ಪತ್ತು,ಇರ್ವ,ippattu,ippattu,twenty,,numbers,N019,5,Numbers,ಇಪ್ಪತ್ತು,,,number twenty,count:20
+N021,kn,ಇಪ್ಪತ್ತೊಂದು,ಇರ್ವತ್ತ್ ಒಂಜಿ,ippattoṁdu,ippattoṁdu,twenty-one,,numbers,N020,6,Numbers,ಇಪ್ಪತ್ತೊಂದು,,,number twenty-one,count:21
+N022,kn,ಇಪ್ಪತ್ತೆರಡು,ಇರ್ವತ್ತ್ ರಡ್ಡ್,ippatteraḍu,ippatteraḍu,twenty-two,,numbers,N021,6,Numbers,ಇಪ್ಪತ್ತೆರಡು,,,number twenty-two,count:22
+N023,kn,ಇಪ್ಪತ್ತಮೂರು,ಇರ್ವತ್ತ್ ಮೂಜಿ,ippattamūru,ippattamūru,twenty-three,,numbers,N022,6,Numbers,ಇಪ್ಪತ್ತಮೂರು,,,number twenty-three,count:23
+N024,kn,ಇಪ್ಪತ್ತನಾಲ್ಕು,ಇರ್ವತ್ತ್ ನಾಲ್,ippattanālku,ippattanālku,twenty-four,,numbers,N023,6,Numbers,ಇಪ್ಪತ್ತನಾಲ್ಕು,,,number twenty-four,count:24
+N025,kn,ಇಪ್ಪತ್ತೈದು,ಇರ್ವತ್ತ್ ಐನ್,ippattaidu,ippattaidu,twenty-five,,numbers,N024,6,Numbers,ಇಪ್ಪತ್ತೈದು,,,number twenty-five,count:25
+N026,kn,ಇಪ್ಪತ್ತಾರು,ಇರ್ವತ್ತ್ ಆಜಿ,ippattāru,ippattāru,twenty-six,,numbers,N025,6,Numbers,ಇಪ್ಪತ್ತಾರು,,,number twenty-six,count:26
+N027,kn,ಇಪ್ಪತ್ತೇಳು,ಇರ್ವತ್ತ್ ಏಳ್,ippattēḷu,ippattēḷu,twenty-seven,,numbers,N026,6,Numbers,ಇಪ್ಪತ್ತೇಳು,,,number twenty-seven,count:27
+N028,kn,ಇಪ್ಪತ್ತೆಂಟು,ಇರ್ವತ್ತ್ ಎಣ್ಮ,ippatteṁṭu,ippatteṁṭu,twenty-eight,,numbers,N027,6,Numbers,ಇಪ್ಪತ್ತೆಂಟು,,,number twenty-eight,count:28
+N029,kn,ಇಪ್ಪತ್ತೊಂಬತ್ತು,ಇರ್ವತ್ತ್ ಒರ್ಂಬ,ippattoṁbattu,ippattoṁbattu,twenty-nine,,numbers,N028,6,Numbers,ಇಪ್ಪತ್ತೊಂಬತ್ತು,,,number twenty-nine,count:29
+N030,kn,ಮೂವತ್ತು,ಮುಪ್ಪ,mūvattu,mūvattu,thirty,,numbers,N029,6,Numbers,ಮೂವತ್ತು,,,number thirty,count:30
+N031,kn,ಮೂವತ್ತೊಂದು,ಮುಪ್ಪತ್ತ್ ಒಂಜಿ,mūvattoṁdu,mūvattoṁdu,thirty-one,,numbers,N030,6,Numbers,ಮೂವತ್ತೊಂದು,,,number thirty-one,count:31
+N032,kn,ಮೂವತ್ತೆರಡು,ಮುಪ್ಪತ್ತ್ ರಡ್ಡ್,mūvatteraḍu,mūvatteraḍu,thirty-two,,numbers,N031,6,Numbers,ಮೂವತ್ತೆರಡು,,,number thirty-two,count:32
+N033,kn,ಮೂವತ್ತಮೂರು,ಮುಪ್ಪತ್ತ್ ಮೂಜಿ,mūvattamūru,mūvattamūru,thirty-three,,numbers,N032,6,Numbers,ಮೂವತ್ತಮೂರು,,,number thirty-three,count:33
+N034,kn,ಮೂವತ್ತನಾಲ್ಕು,ಮುಪ್ಪತ್ತ್ ನಾಲ್,mūvattanālku,mūvattanālku,thirty-four,,numbers,N033,6,Numbers,ಮೂವತ್ತನಾಲ್ಕು,,,number thirty-four,count:34
+N035,kn,ಮೂವತ್ತೈದು,ಮುಪ್ಪತ್ತ್ ಐನ್,mūvattaidu,mūvattaidu,thirty-five,,numbers,N034,6,Numbers,ಮೂವತ್ತೈದು,,,number thirty-five,count:35
+N036,kn,ಮೂವತ್ತಾರು,ಮುಪ್ಪತ್ತ್ ಆಜಿ,mūvattāru,mūvattāru,thirty-six,,numbers,N035,6,Numbers,ಮೂವತ್ತಾರು,,,number thirty-six,count:36
+N037,kn,ಮೂವತ್ತೇಳು,ಮುಪ್ಪತ್ತ್ ಏಳ್,mūvattēḷu,mūvattēḷu,thirty-seven,,numbers,N036,6,Numbers,ಮೂವತ್ತೇಳು,,,number thirty-seven,count:37
+N038,kn,ಮೂವತ್ತೆಂಟು,ಮುಪ್ಪತ್ತ್ ಎಣ್ಮ,mūvatteṁṭu,mūvatteṁṭu,thirty-eight,,numbers,N037,6,Numbers,ಮೂವತ್ತೆಂಟು,,,number thirty-eight,count:38
+N039,kn,ಮೂವತ್ತೊಂಬತ್ತು,ಮುಪ್ಪತ್ತ್ ಒರ್ಂಬ,mūvattoṁbattu,mūvattoṁbattu,thirty-nine,,numbers,N038,6,Numbers,ಮೂವತ್ತೊಂಬತ್ತು,,,number thirty-nine,count:39
+N040,kn,ನಲವತ್ತು,ನಲ್ಪ,nalavattu,nalavattu,forty,,numbers,N039,6,Numbers,ನಲವತ್ತು,,,number forty,count:40
+N041,kn,ನಲವತ್ತೊಂದು,ನಲ್ಪತ್ತ್ ಒಂಜಿ,nalavattoṁdu,nalavattoṁdu,forty-one,,numbers,N040,6,Numbers,ನಲವತ್ತೊಂದು,,,number forty-one,count:41
+N042,kn,ನಲವತ್ತೆರಡು,ನಲ್ಪತ್ತ್ ರಡ್ಡ್,nalavatteraḍu,nalavatteraḍu,forty-two,,numbers,N041,6,Numbers,ನಲವತ್ತೆರಡು,,,number forty-two,count:42
+N043,kn,ನಲವತ್ತಮೂರು,ನಲ್ಪತ್ತ್ ಮೂಜಿ,nalavattamūru,nalavattamūru,forty-three,,numbers,N042,6,Numbers,ನಲವತ್ತಮೂರು,,,number forty-three,count:43
+N044,kn,ನಲವತ್ತನಾಲ್ಕು,ನಲ್ಪತ್ತ್ ನಾಲ್,nalavattanālku,nalavattanālku,forty-four,,numbers,N043,6,Numbers,ನಲವತ್ತನಾಲ್ಕು,,,number forty-four,count:44
+N045,kn,ನಲವತ್ತೈದು,ನಲ್ಪತ್ತ್ ಐನ್,nalavattaidu,nalavattaidu,forty-five,,numbers,N044,6,Numbers,ನಲವತ್ತೈದು,,,number forty-five,count:45
+N046,kn,ನಲವತ್ತಾರು,ನಲ್ಪತ್ತ್ ಆಜಿ,nalavattāru,nalavattāru,forty-six,,numbers,N045,6,Numbers,ನಲವತ್ತಾರು,,,number forty-six,count:46
+N047,kn,ನಲವತ್ತೇಳು,ನಲ್ಪತ್ತ್ ಏಳ್,nalavattēḷu,nalavattēḷu,forty-seven,,numbers,N046,6,Numbers,ನಲವತ್ತೇಳು,,,number forty-seven,count:47
+N048,kn,ನಲವತ್ತೆಂಟು,ನಲ್ಪತ್ತ್ ಎಣ್ಮ,nalavatteṁṭu,nalavatteṁṭu,forty-eight,,numbers,N047,6,Numbers,ನಲವತ್ತೆಂಟು,,,number forty-eight,count:48
+N049,kn,ನಲವತ್ತೊಂಬತ್ತು,ನಲ್ಪತ್ತ್ ಒರ್ಂಬ,nalavattoṁbattu,nalavattoṁbattu,forty-nine,,numbers,N048,6,Numbers,ನಲವತ್ತೊಂಬತ್ತು,,,number forty-nine,count:49
+N050,kn,ಐವತ್ತು,ಐವ,aivattu,aivattu,fifty,,numbers,N049,6,Numbers,ಐವತ್ತು,,,number fifty,count:50
+TN011,tu,ಹನ್ನೊಂದು,ಪದಿನೊಂಜಿ,padinoṁji,padinoṁji,eleven,,numbers,TW053,16,Numbers,ಪದಿನೊಂಜಿ,,,number eleven,count:11
+TN012,tu,ಹನ್ನೆರಡು,ಪದ್ರಡ್ಡ್,padraḍḍ,padraḍḍ,twelve,,numbers,TN011,16,Numbers,ಪದ್ರಡ್ಡ್,,,number twelve,count:12
+TN013,tu,ಹದಿಮೂರು,ಪದಿಮೂಜಿ,padimūji,padimūji,thirteen,,numbers,TN012,16,Numbers,ಪದಿಮೂಜಿ,,,number thirteen,count:13
+TN014,tu,ಹದಿನಾಲ್ಕು,ಪದಿನಾಲ್,padināl,padināl,fourteen,,numbers,TN013,16,Numbers,ಪದಿನಾಲ್,,,number fourteen,count:14
+TN015,tu,ಹದಿನೈದು,ಪದಿನೈನ್,padinain,padinain,fifteen,,numbers,TN014,16,Numbers,ಪದಿನೈನ್,,,number fifteen,count:15
+TN016,tu,ಹದಿನಾರು,ಪದಿನಾಜಿ,padināji,padināji,sixteen,,numbers,TN015,16,Numbers,ಪದಿನಾಜಿ,,,number sixteen,count:16
+TN017,tu,ಹದಿನೇಳು,ಪದಿನೇಳ್,padinēḷ,padinēḷ,seventeen,,numbers,TN016,16,Numbers,ಪದಿನೇಳ್,,,number seventeen,count:17
+TN018,tu,ಹದಿನೆಂಟು,ಪದಿನೆಣ್ಮ,padineṇma,padineṇma,eighteen,,numbers,TN017,16,Numbers,ಪದಿನೆಣ್ಮ,,,number eighteen,count:18
+TN019,tu,ಹತ್ತೊಂಬತ್ತು,ಪದಿನೊರ್ಂಬ,padinorṁba,padinorṁba,nineteen,,numbers,TN018,16,Numbers,ಪದಿನೊರ್ಂಬ,,,number nineteen,count:19
+TN020,tu,ಇಪ್ಪತ್ತು,ಇರ್ವ,irva,irva,twenty,,numbers,TN019,16,Numbers,ಇರ್ವ,,,number twenty,count:20
+TN021,tu,ಇಪ್ಪತ್ತೊಂದು,ಇರ್ವತ್ತ್ ಒಂಜಿ,irvatt oṁji,irvatt oṁji,twenty-one,,numbers,TN020,17,Numbers,ಇರ್ವತ್ತ್ ಒಂಜಿ,,,number twenty-one,count:21
+TN022,tu,ಇಪ್ಪತ್ತೆರಡು,ಇರ್ವತ್ತ್ ರಡ್ಡ್,irvatt raḍḍ,irvatt raḍḍ,twenty-two,,numbers,TN021,17,Numbers,ಇರ್ವತ್ತ್ ರಡ್ಡ್,,,number twenty-two,count:22
+TN023,tu,ಇಪ್ಪತ್ತಮೂರು,ಇರ್ವತ್ತ್ ಮೂಜಿ,irvatt mūji,irvatt mūji,twenty-three,,numbers,TN022,17,Numbers,ಇರ್ವತ್ತ್ ಮೂಜಿ,,,number twenty-three,count:23
+TN024,tu,ಇಪ್ಪತ್ತನಾಲ್ಕು,ಇರ್ವತ್ತ್ ನಾಲ್,irvatt nāl,irvatt nāl,twenty-four,,numbers,TN023,17,Numbers,ಇರ್ವತ್ತ್ ನಾಲ್,,,number twenty-four,count:24
+TN025,tu,ಇಪ್ಪತ್ತೈದು,ಇರ್ವತ್ತ್ ಐನ್,irvatt ain,irvatt ain,twenty-five,,numbers,TN024,17,Numbers,ಇರ್ವತ್ತ್ ಐನ್,,,number twenty-five,count:25
+TN026,tu,ಇಪ್ಪತ್ತಾರು,ಇರ್ವತ್ತ್ ಆಜಿ,irvatt āji,irvatt āji,twenty-six,,numbers,TN025,17,Numbers,ಇರ್ವತ್ತ್ ಆಜಿ,,,number twenty-six,count:26
+TN027,tu,ಇಪ್ಪತ್ತೇಳು,ಇರ್ವತ್ತ್ ಏಳ್,irvatt ēḷ,irvatt ēḷ,twenty-seven,,numbers,TN026,17,Numbers,ಇರ್ವತ್ತ್ ಏಳ್,,,number twenty-seven,count:27
+TN028,tu,ಇಪ್ಪತ್ತೆಂಟು,ಇರ್ವತ್ತ್ ಎಣ್ಮ,irvatt eṇma,irvatt eṇma,twenty-eight,,numbers,TN027,17,Numbers,ಇರ್ವತ್ತ್ ಎಣ್ಮ,,,number twenty-eight,count:28
+TN029,tu,ಇಪ್ಪತ್ತೊಂಬತ್ತು,ಇರ್ವತ್ತ್ ಒರ್ಂಬ,irvatt orṁba,irvatt orṁba,twenty-nine,,numbers,TN028,17,Numbers,ಇರ್ವತ್ತ್ ಒರ್ಂಬ,,,number twenty-nine,count:29
+TN030,tu,ಮೂವತ್ತು,ಮುಪ್ಪ,muppa,muppa,thirty,,numbers,TN029,17,Numbers,ಮುಪ್ಪ,,,number thirty,count:30
+TN031,tu,ಮೂವತ್ತೊಂದು,ಮುಪ್ಪತ್ತ್ ಒಂಜಿ,muppatt oṁji,muppatt oṁji,thirty-one,,numbers,TN030,17,Numbers,ಮುಪ್ಪತ್ತ್ ಒಂಜಿ,,,number thirty-one,count:31
+TN032,tu,ಮೂವತ್ತೆರಡು,ಮುಪ್ಪತ್ತ್ ರಡ್ಡ್,muppatt raḍḍ,muppatt raḍḍ,thirty-two,,numbers,TN031,17,Numbers,ಮುಪ್ಪತ್ತ್ ರಡ್ಡ್,,,number thirty-two,count:32
+TN033,tu,ಮೂವತ್ತಮೂರು,ಮುಪ್ಪತ್ತ್ ಮೂಜಿ,muppatt mūji,muppatt mūji,thirty-three,,numbers,TN032,17,Numbers,ಮುಪ್ಪತ್ತ್ ಮೂಜಿ,,,number thirty-three,count:33
+TN034,tu,ಮೂವತ್ತನಾಲ್ಕು,ಮುಪ್ಪತ್ತ್ ನಾಲ್,muppatt nāl,muppatt nāl,thirty-four,,numbers,TN033,17,Numbers,ಮುಪ್ಪತ್ತ್ ನಾಲ್,,,number thirty-four,count:34
+TN035,tu,ಮೂವತ್ತೈದು,ಮುಪ್ಪತ್ತ್ ಐನ್,muppatt ain,muppatt ain,thirty-five,,numbers,TN034,17,Numbers,ಮುಪ್ಪತ್ತ್ ಐನ್,,,number thirty-five,count:35
+TN036,tu,ಮೂವತ್ತಾರು,ಮುಪ್ಪತ್ತ್ ಆಜಿ,muppatt āji,muppatt āji,thirty-six,,numbers,TN035,17,Numbers,ಮುಪ್ಪತ್ತ್ ಆಜಿ,,,number thirty-six,count:36
+TN037,tu,ಮೂವತ್ತೇಳು,ಮುಪ್ಪತ್ತ್ ಏಳ್,muppatt ēḷ,muppatt ēḷ,thirty-seven,,numbers,TN036,17,Numbers,ಮುಪ್ಪತ್ತ್ ಏಳ್,,,number thirty-seven,count:37
+TN038,tu,ಮೂವತ್ತೆಂಟು,ಮುಪ್ಪತ್ತ್ ಎಣ್ಮ,muppatt eṇma,muppatt eṇma,thirty-eight,,numbers,TN037,17,Numbers,ಮುಪ್ಪತ್ತ್ ಎಣ್ಮ,,,number thirty-eight,count:38
+TN039,tu,ಮೂವತ್ತೊಂಬತ್ತು,ಮುಪ್ಪತ್ತ್ ಒರ್ಂಬ,muppatt orṁba,muppatt orṁba,thirty-nine,,numbers,TN038,17,Numbers,ಮುಪ್ಪತ್ತ್ ಒರ್ಂಬ,,,number thirty-nine,count:39
+TN040,tu,ನಲವತ್ತು,ನಲ್ಪ,nalpa,nalpa,forty,,numbers,TN039,17,Numbers,ನಲ್ಪ,,,number forty,count:40
+TN041,tu,ನಲವತ್ತೊಂದು,ನಲ್ಪತ್ತ್ ಒಂಜಿ,nalpatt oṁji,nalpatt oṁji,forty-one,,numbers,TN040,17,Numbers,ನಲ್ಪತ್ತ್ ಒಂಜಿ,,,number forty-one,count:41
+TN042,tu,ನಲವತ್ತೆರಡು,ನಲ್ಪತ್ತ್ ರಡ್ಡ್,nalpatt raḍḍ,nalpatt raḍḍ,forty-two,,numbers,TN041,17,Numbers,ನಲ್ಪತ್ತ್ ರಡ್ಡ್,,,number forty-two,count:42
+TN043,tu,ನಲವತ್ತಮೂರು,ನಲ್ಪತ್ತ್ ಮೂಜಿ,nalpatt mūji,nalpatt mūji,forty-three,,numbers,TN042,17,Numbers,ನಲ್ಪತ್ತ್ ಮೂಜಿ,,,number forty-three,count:43
+TN044,tu,ನಲವತ್ತನಾಲ್ಕು,ನಲ್ಪತ್ತ್ ನಾಲ್,nalpatt nāl,nalpatt nāl,forty-four,,numbers,TN043,17,Numbers,ನಲ್ಪತ್ತ್ ನಾಲ್,,,number forty-four,count:44
+TN045,tu,ನಲವತ್ತೈದು,ನಲ್ಪತ್ತ್ ಐನ್,nalpatt ain,nalpatt ain,forty-five,,numbers,TN044,17,Numbers,ನಲ್ಪತ್ತ್ ಐನ್,,,number forty-five,count:45
+TN046,tu,ನಲವತ್ತಾರು,ನಲ್ಪತ್ತ್ ಆಜಿ,nalpatt āji,nalpatt āji,forty-six,,numbers,TN045,17,Numbers,ನಲ್ಪತ್ತ್ ಆಜಿ,,,number forty-six,count:46
+TN047,tu,ನಲವತ್ತೇಳು,ನಲ್ಪತ್ತ್ ಏಳ್,nalpatt ēḷ,nalpatt ēḷ,forty-seven,,numbers,TN046,17,Numbers,ನಲ್ಪತ್ತ್ ಏಳ್,,,number forty-seven,count:47
+TN048,tu,ನಲವತ್ತೆಂಟು,ನಲ್ಪತ್ತ್ ಎಣ್ಮ,nalpatt eṇma,nalpatt eṇma,forty-eight,,numbers,TN047,17,Numbers,ನಲ್ಪತ್ತ್ ಎಣ್ಮ,,,number forty-eight,count:48
+TN049,tu,ನಲವತ್ತೊಂಬತ್ತು,ನಲ್ಪತ್ತ್ ಒರ್ಂಬ,nalpatt orṁba,nalpatt orṁba,forty-nine,,numbers,TN048,17,Numbers,ನಲ್ಪತ್ತ್ ಒರ್ಂಬ,,,number forty-nine,count:49
+TN050,tu,ಐವತ್ತು,ಐವ,aiva,aiva,fifty,,numbers,TN049,17,Numbers,ಐವ,,,number fifty,count:50
+R001,kn,ನಮಸ್ಕಾರ,,namaskāra,namaskāra,respectful greetings,,courtesy,C18,5,Intermediate,ನಮಸ್ಕಾರ,,,respectful greetings,namaskara
+R002,kn,ದಯವಿಟ್ಟು,,dayaviṭṭu,dayaviṭṭu,please,,courtesy,C16,5,Intermediate,ದಯವಿಟ್ಟು,,,please,please
+R003,kn,ಧನ್ಯವಾದ,,dhanyavāda,dhanyavāda,thank you,,courtesy,C17,5,Intermediate,ಧನ್ಯವಾದ,,,thank you,thanks
+R004,kn,ಕ್ಷಮಿಸಿ,,kṣamisi,kṣamisi,please forgive me,,courtesy,C01,5,Intermediate,ಕ್ಷಮಿಸಿ,,,please forgive me,sorry
+R005,kn,ದಯೆ,,daye,daye,kindness,,courtesy,C16,5,Intermediate,ದಯೆ,,,kindness,heart
+R006,kn,ಗೌರವ,,gaurava,gaurava,respect,,courtesy,C03,5,Intermediate,ಗೌರವ,,,respect,namaskara
+TR001,tu,ನಮಸ್ಕಾರ,ಸೊಲ್ಮೆಲು,solmelu,solmelu,respectful greetings,,courtesy,TC30,16,Intermediate,ಸೊಲ್ಮೆಲು,,,respectful greetings,namaskara
+TR002,tu,ನಮಸ್ಕಾರ,ನಮಸ್ಕಾರ,namaskāra,namaskāra,greetings,,courtesy,TC18,16,Intermediate,ನಮಸ್ಕಾರ,,,greetings,namaskara
+TR003,tu,ದಯೆ,ದಯೆ,daye,daye,kindness,,courtesy,TC16,16,Intermediate,ದಯೆ,,,kindness,heart
+TR004,tu,ಗೌರವ,ಗೌರವ,gaurava,gaurava,respect,,courtesy,TC03,16,Intermediate,ಗೌರವ,,,respect,namaskara
+TV01,tu,ಅ,ಅ,a,a,the vowel a,,vowels,,1,Basic,ಅ,,,,
+TV02,tu,ಆ,ಆ,ā,ā,the vowel ā,,vowels,TV01,1,Basic,ಆ,,,,
+TV03,tu,ಇ,ಇ,i,i,the vowel i,,vowels,TV02,1,Basic,ಇ,,,,
+TV04,tu,ಈ,ಈ,ī,ī,the vowel ī,,vowels,TV03,1,Basic,ಈ,,,,
+TV05,tu,ಉ,ಉ,u,u,the vowel u,,vowels,TV04,1,Basic,ಉ,,,,
+TV06,tu,ಊ,ಊ,ū,ū,the vowel ū,,vowels,TV05,1,Basic,ಊ,,,,
+TV07,tu,ಋ,ಋ,r̥,r̥,the vowel r̥,,vowels,TV06,1,Basic,ಋ,,,,
+TV08,tu,ಎ,ಎ,e,e,the vowel e,,vowels,TV07,1,Basic,ಎ,,,,
+TV09,tu,ಏ,ಏ,ē,ē,the vowel ē,,vowels,TV08,1,Basic,ಏ,,,,
+TV10,tu,ಐ,ಐ,ai,ai,the vowel ai,,vowels,TV09,1,Basic,ಐ,,,,
+TV11,tu,ಒ,ಒ,o,o,the vowel o,,vowels,TV10,1,Basic,ಒ,,,,
+TV12,tu,ಓ,ಓ,ō,ō,the vowel ō,,vowels,TV11,1,Basic,ಓ,,,,
+TV13,tu,ಔ,ಔ,au,au,the vowel au,,vowels,TV12,1,Basic,ಔ,,,,
+TC01,tu,ಕ,ಕ,ka,ka,the consonant ka,,consonants,TV13,2,Basic,ಕ,,,,
+TC02,tu,ಖ,ಖ,kha,kha,the consonant kha,,consonants,TV13,3,Basic,ಖ,,,,
+TC03,tu,ಗ,ಗ,ga,ga,the consonant ga,,consonants,TV13,2,Basic,ಗ,,,,
+TC04,tu,ಘ,ಘ,gha,gha,the consonant gha,,consonants,TV13,3,Basic,ಘ,,,,
+TC05,tu,ಚ,ಚ,ca,ca,the consonant ca,,consonants,TV13,2,Basic,ಚ,,,,
+TC06,tu,ಛ,ಛ,cha,cha,the consonant cha,,consonants,TV13,3,Basic,ಛ,,,,
+TC07,tu,ಜ,ಜ,ja,ja,the consonant ja,,consonants,TV13,2,Basic,ಜ,,,,
+TC08,tu,ಝ,ಝ,jha,jha,the consonant jha,,consonants,TV13,3,Basic,ಝ,,,,
+TC09,tu,ಟ,ಟ,ṭa,ṭa,the consonant ṭa,,consonants,TV13,3,Basic,ಟ,,,,
+TC10,tu,ಠ,ಠ,ṭha,ṭha,the consonant ṭha,,consonants,TV13,3,Basic,ಠ,,,,
+TC11,tu,ಡ,ಡ,ḍa,ḍa,the consonant ḍa,,consonants,TV13,3,Basic,ಡ,,,,
+TC12,tu,ಢ,ಢ,ḍha,ḍha,the consonant ḍha,,consonants,TV13,3,Basic,ಢ,,,,
+TC13,tu,ಣ,ಣ,ṇa,ṇa,the consonant ṇa,,consonants,TV13,3,Basic,ಣ,,,,
+TC14,tu,ತ,ತ,ta,ta,the consonant ta,,consonants,TV13,2,Basic,ತ,,,,
+TC15,tu,ಥ,ಥ,tha,tha,the consonant tha,,consonants,TV13,3,Basic,ಥ,,,,
+TC16,tu,ದ,ದ,da,da,the consonant da,,consonants,TV13,2,Basic,ದ,,,,
+TC17,tu,ಧ,ಧ,dha,dha,the consonant dha,,consonants,TV13,3,Basic,ಧ,,,,
+TC18,tu,ನ,ನ,na,na,the consonant na,,consonants,TV13,2,Basic,ನ,,,,
+TC19,tu,ಪ,ಪ,pa,pa,the consonant pa,,consonants,TV13,2,Basic,ಪ,,,,
+TC20,tu,ಫ,ಫ,pha,pha,the consonant pha,,consonants,TV13,3,Basic,ಫ,,,,
+TC21,tu,ಬ,ಬ,ba,ba,the consonant ba,,consonants,TV13,3,Basic,ಬ,,,,
+TC22,tu,ಭ,ಭ,bha,bha,the consonant bha,,consonants,TV13,3,Basic,ಭ,,,,
+TC23,tu,ಮ,ಮ,ma,ma,the consonant ma,,consonants,TV13,2,Basic,ಮ,,,,
+TC24,tu,ಯ,ಯ,ya,ya,the consonant ya,,consonants,TV13,3,Basic,ಯ,,,,
+TC25,tu,ರ,ರ,ra,ra,the consonant ra,,consonants,TV13,3,Basic,ರ,,,,
+TC26,tu,ಲ,ಲ,la,la,the consonant la,,consonants,TV13,3,Basic,ಲ,,,,
+TC27,tu,ವ,ವ,va,va,the consonant va,,consonants,TV13,3,Basic,ವ,,,,
+TC28,tu,ಶ,ಶ,śa,śa,the consonant śa,,consonants,TV13,3,Basic,ಶ,,,,
+TC29,tu,ಷ,ಷ,ṣa,ṣa,the consonant ṣa,,consonants,TV13,3,Basic,ಷ,,,,
+TC30,tu,ಸ,ಸ,sa,sa,the consonant sa,,consonants,TV13,3,Basic,ಸ,,,,
+TC31,tu,ಹ,ಹ,ha,ha,the consonant ha,,consonants,TV13,2,Basic,ಹ,,,,
+TC32,tu,ಳ,ಳ,ḷa,ḷa,the consonant ḷa,,consonants,TV13,3,Basic,ಳ,,,,

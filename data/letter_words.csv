@@ -1,0 +1,445 @@
+language,letter_id,letter,letter_translit,word,word_translit,english_meaning,icon
+kn,V01,ಅ,a,ಅಮ್ಮ,amma,mother,mother
+kn,V01,ಅ,a,ಅಪ್ಪ,appa,father,father
+kn,V01,ಅ,a,ಅಕ್ಕ,akka,elder sister,sister
+kn,V01,ಅ,a,ಅಣ್ಣ,aṇṇa,elder brother,brother
+kn,V01,ಅ,a,ಅಜ್ಜ,ajja,grandfather,grandfather
+kn,V01,ಅ,a,ಅಜ್ಜಿ,ajji,grandmother,grandmother
+kn,V01,ಅ,a,ಅನ್ನ,anna,cooked rice,rice
+kn,V01,ಅ,a,ಅಳಿಲು,aḷilu,squirrel,squirrel
+kn,V01,ಅ,a,ಅಂಗಿ,aṁgi,shirt,shirt
+kn,V01,ಅ,a,ಅರಳಿ,araḷi,peepal tree,tree
+kn,V02,ಆ,ā,ಆನೆ,āne,elephant,elephant
+kn,V02,ಆ,ā,ಆಕಾಶ,ākāśa,sky,sky
+kn,V02,ಆ,ā,ಆಟ,āṭa,game,ball
+kn,V02,ಆ,ā,ಆಡು,āḍu,goat,goat
+kn,V02,ಆ,ā,ಆಮೆ,āme,tortoise,tortoise
+kn,V02,ಆ,ā,ಆರು,āru,six,six
+kn,V02,ಆ,ā,ಆಲೂಗಡ್ಡೆ,ālūgaḍḍe,potato,potato
+kn,V02,ಆ,ā,ಆಕಳು,ākaḷu,cow,cow
+kn,V02,ಆ,ā,ಆಸ್ಪತ್ರೆ,āspatre,hospital,hospital
+kn,V02,ಆ,ā,ಆಹಾರ,āhāra,food,meal
+kn,V03,ಇ,i,ಇಲಿ,ili,mouse,mouse
+kn,V03,ಇ,i,ಇರುವೆ,iruve,ant,ant
+kn,V03,ಇ,i,ಇಟ್ಟಿಗೆ,iṭṭige,brick,brick
+kn,V03,ಇ,i,ಇದ್ದಿಲು,iddilu,charcoal,charcoal
+kn,V03,ಇ,i,ಇಬ್ಬನಿ,ibbani,dew,dew
+kn,V03,ಇ,i,ಇಂದು,iṁdu,today,calendar
+kn,V03,ಇ,i,ಇಂಗು,iṁgu,asafoetida,spice
+kn,V03,ಇ,i,ಇಕ್ಕಳ,ikkaḷa,tongs,tongs
+kn,V03,ಇ,i,ಇಳೆ,iḷe,the earth,earth
+kn,V03,ಇ,i,ಇಂಚು,iṁcu,inch,ruler
+kn,V04,ಈ,ī,ಈರುಳ್ಳಿ,īruḷḷi,onion,onion
+kn,V04,ಈ,ī,ಈಜು,īju,swimming,swimming
+kn,V04,ಈ,ī,ಈಟಿ,īṭi,spear,spear
+kn,V04,ಈ,ī,ಈಚಲು,īcalu,date palm,palm
+kn,V04,ಈ,ī,ಈಗ,īga,now,clock
+kn,V04,ಈ,ī,ಈಶ್ವರ,īśvara,God Shiva,temple
+kn,V04,ಈ,ī,ಈಜುಕೊಳ,ījukoḷa,swimming pool,pool
+kn,V04,ಈ,ī,ಈಶಾನ್ಯ,īśānya,north-east,compass
+kn,V04,ಈ,ī,ಈಸು,īsu,to swim,swimming
+kn,V04,ಈ,ī,ಈಡು,īḍu,an aim,target
+kn,V05,ಉ,u,ಉಪ್ಪು,uppu,salt,salt
+kn,V05,ಉ,u,ಉಂಗುರ,uṁgura,ring,ring
+kn,V05,ಉ,u,ಉಡುಪು,uḍupu,clothes,shirt
+kn,V05,ಉ,u,ಉಗುರು,uguru,fingernail,hand
+kn,V05,ಉ,u,ಉದ್ಯಾನ,udyāna,garden,garden
+kn,V05,ಉ,u,ಉಸಿರು,usiru,breath,breath
+kn,V05,ಉ,u,ಉಪ್ಪಿಟ್ಟು,uppiṭṭu,upma,meal
+kn,V05,ಉ,u,ಉಂಡೆ,uṁḍe,sweet ball,sweet
+kn,V05,ಉ,u,ಉಣ್ಣೆ,uṇṇe,wool,wool
+kn,V05,ಉ,u,ಉಪಾಧ್ಯಾಯ,upādhyāya,teacher,teacher
+kn,V06,ಊ,ū,ಊಟ,ūṭa,meal,meal
+kn,V06,ಊ,ū,ಊರು,ūru,village,village
+kn,V06,ಊ,ū,ಊದು,ūdu,to blow,breath
+kn,V06,ಊ,ū,ಊರುಗೋಲು,ūrugōlu,walking stick,stick
+kn,V06,ಊ,ū,ಊಸರವಳ್ಳಿ,ūsaravaḷḷi,chameleon,chameleon
+kn,V06,ಊ,ū,ಊದುಬತ್ತಿ,ūdubatti,incense stick,incense
+kn,V06,ಊ,ū,ಊಹೆ,ūhe,a guess,think
+kn,V06,ಊ,ū,ಊಡು,ūḍu,to feed,meal
+kn,V06,ಊ,ū,ಊರ್ಧ್ವ,ūrdhva,upward,arrow_up
+kn,V06,ಊ,ū,ಊಟದ ಮನೆ,ūṭada mane,dining room,house
+kn,V07,ಋ,r̥,ಋಷಿ,r̥ṣi,sage,sage
+kn,V07,ಋ,r̥,ಋತು,r̥tu,season,season
+kn,V07,ಋ,r̥,ಋಣ,r̥ṇa,a debt,coin
+kn,V07,ಋ,r̥,ಋಜು,r̥ju,straight,line
+kn,V07,ಋ,r̥,ಋಗ್ವೇದ,r̥gvēda,the Rigveda,book
+kn,V07,ಋ,r̥,ಋಷಿಮುನಿ,r̥ṣimuni,holy sage,sage
+kn,V07,ಋ,r̥,ಋಣಾತ್ಮಕ,r̥ṇātmaka,negative,line
+kn,V07,ಋ,r̥,ಋತ್ವಿಜ,r̥tvija,a priest,sage
+kn,V08,ಎ,e,ಎಲೆ,ele,leaf,leaf
+kn,V08,ಎ,e,ಎಮ್ಮೆ,emme,buffalo,buffalo
+kn,V08,ಎ,e,ಎರಡು,eraḍu,two,two
+kn,V08,ಎ,e,ಎಣ್ಣೆ,eṇṇe,oil,oil
+kn,V08,ಎ,e,ಎದೆ,ede,chest,chest
+kn,V08,ಎ,e,ಎಲುಬು,elubu,bone,bone
+kn,V08,ಎ,e,ಎತ್ತು,ettu,ox,ox
+kn,V08,ಎ,e,ಎಚ್ಚರ,eccara,alertness,alert
+kn,V08,ಎ,e,ಎಸಳು,esaḷu,petal,flower
+kn,V08,ಎ,e,ಎಂಟು,eṁṭu,eight,eight
+kn,V09,ಏ,ē,ಏಣಿ,ēṇi,ladder,ladder
+kn,V09,ಏ,ē,ಏಳು,ēḷu,seven,seven
+kn,V09,ಏ,ē,ಏಡಿ,ēḍi,crab,crab
+kn,V09,ಏ,ē,ಏಲಕ್ಕಿ,ēlakki,cardamom,spice
+kn,V09,ಏ,ē,ಏಕತೆ,ēkate,unity,unity
+kn,V09,ಏ,ē,ಏರು,ēru,to climb,ladder
+kn,V09,ಏ,ē,ಏತ,ēta,water lift,well
+kn,V09,ಏ,ē,ಏಕಾಗ್ರತೆ,ēkāgrate,concentration,think
+kn,V09,ಏ,ē,ಏನು,ēnu,what,question
+kn,V09,ಏ,ē,ಏಪ್ರಿಲ್,ēpril,April,calendar
+kn,V10,ಐ,ai,ಐದು,aidu,five,five
+kn,V10,ಐ,ai,ಐರಾವತ,airāvata,white elephant,elephant
+kn,V10,ಐ,ai,ಐಸ್,ais,ice,ice
+kn,V10,ಐ,ai,ಐಕ್ಯ,aikya,unity,unity
+kn,V10,ಐ,ai,ಐಶ್ವರ್ಯ,aiśvarya,prosperity,coin
+kn,V10,ಐ,ai,ಐತಿಹ್ಯ,aitihya,legend,book
+kn,V10,ಐ,ai,ಐವತ್ತು,aivattu,fifty,fifty
+kn,V10,ಐ,ai,ಐನೂರು,ainūru,five hundred,coin
+kn,V10,ಐ,ai,ಐಕಮತ್ಯ,aikamatya,consensus,unity
+kn,V10,ಐ,ai,ಐದನೆಯ,aidaneya,fifth,five
+kn,V11,ಒ,o,ಒಂಟೆ,oṁṭe,camel,camel
+kn,V11,ಒ,o,ಒಂದು,oṁdu,one,one
+kn,V11,ಒ,o,ಒಲೆ,ole,stove,stove
+kn,V11,ಒ,o,ಒಗಟು,ogaṭu,riddle,question
+kn,V11,ಒ,o,ಒಡವೆ,oḍave,jewellery,ring
+kn,V11,ಒ,o,ಒಣಗು,oṇagu,to dry,sun
+kn,V11,ಒ,o,ಒಳ್ಳೆಯದು,oḷḷeyadu,a good thing,heart
+kn,V11,ಒ,o,ಒಗ್ಗರಣೆ,oggaraṇe,tempering,spice
+kn,V11,ಒ,o,ಒಡೆಯ,oḍeya,master,person
+kn,V11,ಒ,o,ಒಬ್ಬಟ್ಟು,obbaṭṭu,sweet flatbread,sweet
+kn,V12,ಓ,ō,ಓದು,ōdu,to read,book
+kn,V12,ಓ,ō,ಓಲೆ,ōle,earring,ring
+kn,V12,ಓ,ō,ಓಡು,ōḍu,to run,run
+kn,V12,ಓ,ō,ಓಣಿ,ōṇi,lane,road
+kn,V12,ಓ,ō,ಓಟ,ōṭa,a race,run
+kn,V12,ಓ,ō,ಓಕುಳಿ,ōkuḷi,colour water,colours
+kn,V12,ಓ,ō,ಓವನ್,ōvan,oven,stove
+kn,V12,ಓ,ō,ಓಂಕಾರ,ōṁkāra,the sound Om,om
+kn,V12,ಓ,ō,ಓಲೆಕಾರ,ōlekāra,postman,letter
+kn,V12,ಓ,ō,ಓಡಾಟ,ōḍāṭa,moving about,run
+kn,V13,ಔ,au,ಔಷಧಿ,auṣadhi,medicine,medicine
+kn,V13,ಔ,au,ಔತಣ,autaṇa,a feast,meal
+kn,V13,ಔ,au,ಔದಾರ್ಯ,audārya,generosity,heart
+kn,V13,ಔ,au,ಔನ್ನತ್ಯ,aunnatya,greatness,mountain
+kn,V13,ಔ,au,ಔಷಧಾಲಯ,auṣadhālaya,pharmacy,medicine
+kn,V13,ಔ,au,ಔಪಚಾರಿಕ,aupacārika,formal,letter
+kn,V13,ಔ,au,ಔಚಿತ್ಯ,aucitya,propriety,check
+kn,V13,ಔ,au,ಔತಣಕೂಟ,autaṇakūṭa,a banquet,meal
+kn,V13,ಔ,au,ಔಷಧ,auṣadha,a medicine,medicine
+kn,V13,ಔ,au,ಔದ್ಯೋಗಿಕ,audyōgika,occupational,gear
+kn,C01,ಕ,ka,ಕಮಲ,kamala,lotus,lotus
+kn,C01,ಕ,ka,ಕಣ್ಣು,kaṇṇu,eye,eye
+kn,C01,ಕ,ka,ಕಾಗೆ,kāge,crow,crow
+kn,C01,ಕ,ka,ಕಪ್ಪು,kappu,black,black
+kn,C01,ಕ,ka,ಕುದುರೆ,kudure,horse,horse
+kn,C01,ಕ,ka,ಕೈ,kai,hand,hand
+kn,C01,ಕ,ka,ಕಿವಿ,kivi,ear,ear
+kn,C01,ಕ,ka,ಕೋಳಿ,kōḷi,hen,hen
+kn,C01,ಕ,ka,ಕಲ್ಲು,kallu,stone,stone
+kn,C01,ಕ,ka,ಕುರಿ,kuri,sheep,sheep
+kn,C02,ಖ,kha,ಖರ್ಜೂರ,kharjūra,dates,dates
+kn,C02,ಖ,kha,ಖಗ,khaga,bird,bird
+kn,C02,ಖ,kha,ಖಾರ,khāra,spicy,chilli
+kn,C02,ಖ,kha,ಖನಿಜ,khanija,mineral,stone
+kn,C02,ಖ,kha,ಖಂಡ,khaṁḍa,continent,earth
+kn,C02,ಖ,kha,ಖಜಾನೆ,khajāne,treasury,coin
+kn,C02,ಖ,kha,ಖುಷಿ,khuṣi,happiness,smile
+kn,C02,ಖ,kha,ಖಗೋಳ,khagōḷa,the sky sphere,star
+kn,C02,ಖ,kha,ಖಚಿತ,khacita,certain,check
+kn,C02,ಖ,kha,ಖಾಲಿ,khāli,empty,box
+kn,C03,ಗ,ga,ಗಿಡ,giḍa,plant,plant
+kn,C03,ಗ,ga,ಗಾಳಿ,gāḷi,wind,wind
+kn,C03,ಗ,ga,ಗಂಟೆ,gaṁṭe,bell,bell
+kn,C03,ಗ,ga,ಗುಡ್ಡ,guḍḍa,hill,hill
+kn,C03,ಗ,ga,ಗಿಳಿ,giḷi,parrot,parrot
+kn,C03,ಗ,ga,ಗಡಿಯಾರ,gaḍiyāra,clock,clock
+kn,C03,ಗ,ga,ಗೂಡು,gūḍu,nest,nest
+kn,C03,ಗ,ga,ಗುಲಾಬಿ,gulābi,rose,rose
+kn,C03,ಗ,ga,ಗೋಡೆ,gōḍe,wall,wall
+kn,C03,ಗ,ga,ಗೆಳೆಯ,geḷeya,friend,friend
+kn,C04,ಘ,gha,ಘಂಟೆ,ghaṁṭe,bell,bell
+kn,C04,ಘ,gha,ಘನ,ghana,a solid cube,cube
+kn,C04,ಘ,gha,ಘಟ,ghaṭa,a pot,pot
+kn,C04,ಘ,gha,ಘಮ,ghama,fragrance,flower
+kn,C04,ಘ,gha,ಘರ್ಷಣೆ,gharṣaṇe,friction,gear
+kn,C04,ಘ,gha,ಘಟನೆ,ghaṭane,an event,calendar
+kn,C04,ಘ,gha,ಘನತೆ,ghanate,dignity,heart
+kn,C04,ಘ,gha,ಘೋಷಣೆ,ghōṣaṇe,announcement,speak
+kn,C04,ಘ,gha,ಘೃತ,ghr̥ta,ghee,ghee
+kn,C04,ಘ,gha,ಘಳಿಗೆ,ghaḷige,a moment,clock
+kn,C05,ಚ,ca,ಚಂದ್ರ,caṁdra,moon,moon
+kn,C05,ಚ,ca,ಚಿಟ್ಟೆ,ciṭṭe,butterfly,butterfly
+kn,C05,ಚ,ca,ಚೆಂಡು,ceṁḍu,ball,ball
+kn,C05,ಚ,ca,ಚಮಚ,camaca,spoon,spoon
+kn,C05,ಚ,ca,ಚಕ್ರ,cakra,wheel,wheel
+kn,C05,ಚ,ca,ಚಿತ್ರ,citra,picture,picture
+kn,C05,ಚ,ca,ಚಾಪೆ,cāpe,mat,mat
+kn,C05,ಚ,ca,ಚಳಿ,caḷi,cold,cold
+kn,C05,ಚ,ca,ಚಿಪ್ಪು,cippu,shell,shell
+kn,C05,ಚ,ca,ಚಿನ್ನ,cinna,gold,gold
+kn,C06,ಛ,cha,ಛತ್ರಿ,chatri,umbrella,umbrella
+kn,C06,ಛ,cha,ಛಾವಣಿ,chāvaṇi,roof,house
+kn,C06,ಛ,cha,ಛಾಯೆ,chāye,shadow,shadow
+kn,C06,ಛ,cha,ಛಂದಸ್ಸು,chaṁdassu,metre in poetry,book
+kn,C06,ಛ,cha,ಛಲ,chala,determination,heart
+kn,C06,ಛ,cha,ಛಾಪು,chāpu,a stamp,stamp
+kn,C06,ಛ,cha,ಛೇದ,chēda,a section,line
+kn,C06,ಛ,cha,ಛತ್ರ,chatra,a canopy,umbrella
+kn,C06,ಛ,cha,ಛಾಯಾಚಿತ್ರ,chāyācitra,a photograph,picture
+kn,C06,ಛ,cha,ಛಂದ,chaṁda,pleasing,smile
+kn,C07,ಜ,ja,ಜಿಂಕೆ,jiṁke,deer,deer
+kn,C07,ಜ,ja,ಜೇನು,jēnu,honey,honey
+kn,C07,ಜ,ja,ಜಲ,jala,water,water
+kn,C07,ಜ,ja,ಜಗ್ಗು,jaggu,to pull,rope
+kn,C07,ಜ,ja,ಜನ,jana,people,people
+kn,C07,ಜ,ja,ಜಡೆ,jaḍe,plaited hair,hair
+kn,C07,ಜ,ja,ಜೋಳ,jōḷa,maize,maize
+kn,C07,ಜ,ja,ಜಾತ್ರೆ,jātre,a fair,fair
+kn,C07,ಜ,ja,ಜೀವ,jīva,life,heart
+kn,C07,ಜ,ja,ಜಾಣ,jāṇa,clever one,smile
+kn,C08,ಝ,jha,ಝರಿ,jhari,stream,stream
+kn,C08,ಝ,jha,ಝೇಂಕಾರ,jhēṁkāra,humming,bee
+kn,C08,ಝ,jha,ಝಳ,jhaḷa,heat haze,sun
+kn,C08,ಝ,jha,ಝಂಡಾ,jhaṁḍā,flag,flag
+kn,C08,ಝ,jha,ಝಗಝಗ,jhagajhaga,sparkling,star
+kn,C08,ಝ,jha,ಝರ,jhara,a waterfall,waterfall
+kn,C08,ಝ,jha,ಝಂಕಾರ,jhaṁkāra,a twang,music
+kn,C08,ಝ,jha,ಝಗ,jhaga,a long gown,cloth
+kn,C08,ಝ,jha,ಝಳಪಿಸು,jhaḷapisu,to flash,star
+kn,C08,ಝ,jha,ಝುಮ್ಮೆನ್ನು,jhummennu,to tingle,star
+kn,C09,ಟ,ṭa,ಟೋಪಿ,ṭōpi,cap,cap
+kn,C09,ಟ,ṭa,ಟೊಮೆಟೊ,ṭomeṭo,tomato,tomato
+kn,C09,ಟ,ṭa,ಟಪಾಲು,ṭapālu,post,letter
+kn,C09,ಟ,ṭa,ಟಿಕೇಟು,ṭikēṭu,ticket,ticket
+kn,C09,ಟ,ṭa,ಟೊಂಗೆ,ṭoṁge,a branch,tree
+kn,C09,ಟ,ṭa,ಟವೆಲ್,ṭavel,towel,towel
+kn,C09,ಟ,ṭa,ಟೇಬಲ್,ṭēbal,table,table
+kn,C09,ಟ,ṭa,ಟಂಕಸಾಲೆ,ṭaṁkasāle,mint,coin
+kn,C09,ಟ,ṭa,ಟಗರು,ṭagaru,a ram,sheep
+kn,C09,ಟ,ṭa,ಟೊಪ್ಪಿಗೆ,ṭoppige,a cap,cap
+kn,C10,ಠ,ṭha,ಠಾಣೆ,ṭhāṇe,police station,station
+kn,C10,ಠ,ṭha,ಠಸ್ಸೆ,ṭhasse,a seal,stamp
+kn,C10,ಠ,ṭha,ಠೇವಣಿ,ṭhēvaṇi,a deposit,coin
+kn,C10,ಠ,ṭha,ಠಿಕಾಣಿ,ṭhikāṇi,a halting place,house
+kn,C10,ಠ,ṭha,ಠಕ್ಕು,ṭhakku,a trick,question
+kn,C10,ಠ,ṭha,ಠೀವಿ,ṭhīvi,dignified bearing,person
+kn,C10,ಠ,ṭha,ಠಾವು,ṭhāvu,a place,house
+kn,C10,ಠ,ṭha,ಠಣಠಣ,ṭhaṇaṭhaṇa,a clanging sound,bell
+kn,C11,ಡ,ḍa,ಡಬ್ಬಿ,ḍabbi,a tin box,box
+kn,C11,ಡ,ḍa,ಡೋಲು,ḍōlu,drum,drum
+kn,C11,ಡ,ḍa,ಡೇರೆ,ḍēre,tent,tent
+kn,C11,ಡ,ḍa,ಡಾಲಿಯಾ,ḍāliyā,dahlia flower,flower
+kn,C11,ಡ,ḍa,ಡಾಕ್ಟರ್,ḍākṭar,doctor,doctor
+kn,C11,ಡ,ḍa,ಡೊಂಕು,ḍoṁku,a bend,line
+kn,C11,ಡ,ḍa,ಡಿಬ್ಬಿ,ḍibbi,a small tin,box
+kn,C11,ಡ,ḍa,ಡಂಗುರ,ḍaṁgura,a public drum call,drum
+kn,C11,ಡ,ḍa,ಡೊಳ್ಳು,ḍoḷḷu,a big drum,drum
+kn,C11,ಡ,ḍa,ಡಿಸೆಂಬರ್,ḍiseṁbar,December,calendar
+kn,C12,ಢ,ḍha,ಢಮರು,ḍhamaru,damaru drum,damaru
+kn,C12,ಢ,ḍha,ಢಾಳ,ḍhāḷa,bright,sun
+kn,C12,ಢ,ḍha,ಢಾಲು,ḍhālu,a shield,shield
+kn,C12,ಢ,ḍha,ಢಗೆ,ḍhage,scorching heat,sun
+kn,C12,ಢ,ḍha,ಢೋಲಕ್,ḍhōlak,dholak drum,drum
+kn,C12,ಢ,ḍha,ಢಕ್ಕೆ,ḍhakke,a drum,drum
+kn,C12,ಢ,ḍha,ಢಣಢಣ,ḍhaṇaḍhaṇa,a clanging sound,bell
+kn,C12,ಢ,ḍha,ಢಾಳಾಗಿ,ḍhāḷāgi,brightly,sun
+kn,C13,ಣ,ṇa,ಬಾಣ,bāṇa,arrow,arrow
+kn,C13,ಣ,ṇa,ಹೆಣ್ಣು,heṇṇu,girl,girl
+kn,C13,ಣ,ṇa,ಕಣ್ಣು,kaṇṇu,eye,eye
+kn,C13,ಣ,ṇa,ಮಣ್ಣು,maṇṇu,soil,soil
+kn,C13,ಣ,ṇa,ಬಣ್ಣ,baṇṇa,colour,colours
+kn,C13,ಣ,ṇa,ಹಣ,haṇa,money,coin
+kn,C13,ಣ,ṇa,ಗಣಿತ,gaṇita,mathematics,numbers
+kn,C13,ಣ,ṇa,ಉಣ್ಣೆ,uṇṇe,wool,wool
+kn,C13,ಣ,ṇa,ಕಿವುಡುಗಣ್ಣು,kivuḍugaṇṇu,blind spot,eye
+kn,C13,ಣ,ṇa,ಗಣೇಶ,gaṇēśa,Ganesha,temple
+kn,C14,ತ,ta,ತಲೆ,tale,head,head
+kn,C14,ತ,ta,ತಾಯಿ,tāyi,mother,mother
+kn,C14,ತ,ta,ತಂದೆ,taṁde,father,father
+kn,C14,ತ,ta,ತಟ್ಟೆ,taṭṭe,plate,plate
+kn,C14,ತ,ta,ತೆಂಗು,teṁgu,coconut,coconut
+kn,C14,ತ,ta,ತರಕಾರಿ,tarakāri,vegetable,vegetable
+kn,C14,ತ,ta,ತುಪ್ಪ,tuppa,ghee,ghee
+kn,C14,ತ,ta,ತೋಟ,tōṭa,garden,garden
+kn,C14,ತ,ta,ತಂಗಿ,taṁgi,younger sister,sister
+kn,C14,ತ,ta,ತಾವರೆ,tāvare,lotus,lotus
+kn,C15,ಥ,tha,ಗ್ರಂಥ,graṁtha,a book,book
+kn,C15,ಥ,tha,ಥಳಥಳ,thaḷathaḷa,shining,star
+kn,C15,ಥ,tha,ಕಥೆ,kathe,a story,book
+kn,C15,ಥ,tha,ರಥ,ratha,chariot,chariot
+kn,C15,ಥ,tha,ಪಥ,patha,a path,road
+kn,C15,ಥ,tha,ಥಂಡಿ,thaṁḍi,cold,cold
+kn,C15,ಥ,tha,ಮಿಥುನ,mithuna,the twins,people
+kn,C15,ಥ,tha,ಅರ್ಥ,artha,meaning,book
+kn,C15,ಥ,tha,ಪಥಿಕ,pathika,a traveller,road
+kn,C15,ಥ,tha,ಸಾರಥಿ,sārathi,a charioteer,chariot
+kn,C16,ದ,da,ದೀಪ,dīpa,lamp,lamp
+kn,C16,ದ,da,ದೋಸೆ,dōse,dosa,dosa
+kn,C16,ದ,da,ದನ,dana,cattle,cow
+kn,C16,ದ,da,ದಾರ,dāra,thread,thread
+kn,C16,ದ,da,ದಿನ,dina,a day,calendar
+kn,C16,ದ,da,ದಾಳಿಂಬೆ,dāḷiṁbe,pomegranate,pomegranate
+kn,C16,ದ,da,ದೇವರು,dēvaru,God,temple
+kn,C16,ದ,da,ದಂಡ,daṁḍa,a staff,stick
+kn,C16,ದ,da,ದಾರಿ,dāri,a road,road
+kn,C16,ದ,da,ದಯೆ,daye,kindness,heart
+kn,C17,ಧ,dha,ಧ್ವಜ,dhvaja,flag,flag
+kn,C17,ಧ,dha,ಧಾನ್ಯ,dhānya,grain,grain
+kn,C17,ಧ,dha,ಧನು,dhanu,a bow,bow
+kn,C17,ಧ,dha,ಧೂಳು,dhūḷu,dust,dust
+kn,C17,ಧ,dha,ಧರೆ,dhare,the earth,earth
+kn,C17,ಧ,dha,ಧೈರ್ಯ,dhairya,courage,heart
+kn,C17,ಧ,dha,ಧರ್ಮ,dharma,righteousness,heart
+kn,C17,ಧ,dha,ಧ್ಯಾನ,dhyāna,meditation,sage
+kn,C17,ಧ,dha,ಧಾರೆ,dhāre,a stream,stream
+kn,C17,ಧ,dha,ಧನ್ಯವಾದ,dhanyavāda,thank you,thanks
+kn,C18,ನ,na,ನಾಯಿ,nāyi,dog,dog
+kn,C18,ನ,na,ನೀರು,nīru,water,water
+kn,C18,ನ,na,ನದಿ,nadi,river,river
+kn,C18,ನ,na,ನವಿಲು,navilu,peacock,peacock
+kn,C18,ನ,na,ನಕ್ಷತ್ರ,nakṣatra,star,star
+kn,C18,ನ,na,ನೆಲ,nela,the ground,earth
+kn,C18,ನ,na,ನಗು,nagu,a smile,smile
+kn,C18,ನ,na,ನಾಳೆ,nāḷe,tomorrow,calendar
+kn,C18,ನ,na,ನಮಸ್ಕಾರ,namaskāra,greetings,namaskara
+kn,C18,ನ,na,ನೇಗಿಲು,nēgilu,a plough,plough
+kn,C19,ಪ,pa,ಪುಸ್ತಕ,pustaka,book,book
+kn,C19,ಪ,pa,ಪಕ್ಷಿ,pakṣi,bird,bird
+kn,C19,ಪ,pa,ಪಟ,paṭa,a kite,kite
+kn,C19,ಪ,pa,ಪೆನ್ನು,pennu,pen,pen
+kn,C19,ಪ,pa,ಪಾಠ,pāṭha,a lesson,book
+kn,C19,ಪ,pa,ಪಾದ,pāda,a foot,foot
+kn,C19,ಪ,pa,ಪಾತ್ರೆ,pātre,a vessel,pot
+kn,C19,ಪ,pa,ಪರ್ವತ,parvata,mountain,mountain
+kn,C19,ಪ,pa,ಪಾವಟಿಗೆ,pāvaṭige,a step,ladder
+kn,C19,ಪ,pa,ಪಾಯಸ,pāyasa,sweet pudding,sweet
+kn,C20,ಫ,pha,ಫಲ,phala,fruit,fruit
+kn,C20,ಫ,pha,ಫಲಕ,phalaka,a board,board
+kn,C20,ಫ,pha,ಫೆಬ್ರವರಿ,phebravari,February,calendar
+kn,C20,ಫ,pha,ಫಣಿ,phaṇi,a serpent,snake
+kn,C20,ಫ,pha,ಫಲವತ್ತು,phalavattu,fertile,plant
+kn,C20,ಫ,pha,ಫಳಫಳ,phaḷaphaḷa,glittering,star
+kn,C20,ಫ,pha,ಫೋಟೊ,phōṭo,a photograph,picture
+kn,C20,ಫ,pha,ಫೋನ್,phōn,a telephone,phone
+kn,C20,ಫ,pha,ಫ್ಯಾನ್,phyān,a fan,fan
+kn,C20,ಫ,pha,ಫಲಾಹಾರ,phalāhāra,a light meal,meal
+kn,C21,ಬ,ba,ಬಾಗಿಲು,bāgilu,door,door
+kn,C21,ಬ,ba,ಬೆಕ್ಕು,bekku,cat,cat
+kn,C21,ಬ,ba,ಬಾಳೆಹಣ್ಣು,bāḷehaṇṇu,banana,banana
+kn,C21,ಬ,ba,ಬಸ್ಸು,bassu,bus,bus
+kn,C21,ಬ,ba,ಬಟ್ಟೆ,baṭṭe,cloth,cloth
+kn,C21,ಬ,ba,ಬೆಟ್ಟ,beṭṭa,hill,hill
+kn,C21,ಬ,ba,ಬೆಂಕಿ,beṁki,fire,fire
+kn,C21,ಬ,ba,ಬಾವಿ,bāvi,a well,well
+kn,C21,ಬ,ba,ಬುಟ್ಟಿ,buṭṭi,a basket,basket
+kn,C21,ಬ,ba,ಬೆಳಕು,beḷaku,light,lamp
+kn,C22,ಭ,bha,ಭೂಮಿ,bhūmi,the earth,earth
+kn,C22,ಭ,bha,ಭಾಷೆ,bhāṣe,language,speak
+kn,C22,ಭ,bha,ಭತ್ತ,bhatta,paddy,grain
+kn,C22,ಭ,bha,ಭಾರ,bhāra,weight,weight
+kn,C22,ಭ,bha,ಭಜನೆ,bhajane,devotional song,music
+kn,C22,ಭ,bha,ಭಾವನೆ,bhāvane,a feeling,heart
+kn,C22,ಭ,bha,ಭವನ,bhavana,a building,building
+kn,C22,ಭ,bha,ಭಕ್ತಿ,bhakti,devotion,temple
+kn,C22,ಭ,bha,ಭಾನುವಾರ,bhānuvāra,Sunday,calendar
+kn,C22,ಭ,bha,ಭರವಸೆ,bharavase,hope,heart
+kn,C23,ಮ,ma,ಮನೆ,mane,house,house
+kn,C23,ಮ,ma,ಮರ,mara,tree,tree
+kn,C23,ಮ,ma,ಮಳೆ,maḷe,rain,rain
+kn,C23,ಮ,ma,ಮೀನು,mīnu,fish,fish
+kn,C23,ಮ,ma,ಮಗು,magu,child,child
+kn,C23,ಮ,ma,ಮಾವು,māvu,mango,mango
+kn,C23,ಮ,ma,ಮೊಸರು,mosaru,curd,curd
+kn,C23,ಮ,ma,ಮೂಗು,mūgu,nose,nose
+kn,C23,ಮ,ma,ಮೋಡ,mōḍa,cloud,cloud
+kn,C23,ಮ,ma,ಮಂಚ,maṁca,a cot,bed
+kn,C24,ಯ,ya,ಯಂತ್ರ,yaṁtra,a machine,gear
+kn,C24,ಯ,ya,ಯಜ್ಞ,yajña,a sacred fire rite,fire
+kn,C24,ಯ,ya,ಯಾತ್ರೆ,yātre,a pilgrimage,road
+kn,C24,ಯ,ya,ಯುದ್ಧ,yuddha,a battle,shield
+kn,C24,ಯ,ya,ಯೋಗ,yōga,yoga,yoga
+kn,C24,ಯ,ya,ಯಶಸ್ಸು,yaśassu,success,star
+kn,C24,ಯ,ya,ಯುವಕ,yuvaka,a young man,person
+kn,C24,ಯ,ya,ಯಾರು,yāru,who,question
+kn,C24,ಯ,ya,ಯೋಚನೆ,yōcane,a thought,think
+kn,C24,ಯ,ya,ಯೋಗ್ಯ,yōgya,worthy,check
+kn,C25,ರ,ra,ರೈಲು,railu,train,train
+kn,C25,ರ,ra,ರೊಟ್ಟಿ,roṭṭi,flatbread,roti
+kn,C25,ರ,ra,ರವಿ,ravi,the sun,sun
+kn,C25,ರ,ra,ರಸ್ತೆ,raste,a road,road
+kn,C25,ರ,ra,ರಾತ್ರಿ,rātri,night,night
+kn,C25,ರ,ra,ರಂಗೋಲಿ,raṁgōli,rangoli,rangoli
+kn,C25,ರ,ra,ರುಚಿ,ruci,taste,meal
+kn,C25,ರ,ra,ರಾಜ,rāja,a king,crown
+kn,C25,ರ,ra,ರಥ,ratha,a chariot,chariot
+kn,C25,ರ,ra,ರಕ್ಷಣೆ,rakṣaṇe,protection,shield
+kn,C26,ಲ,la,ಲಿಂಬೆ,liṁbe,lemon,lemon
+kn,C26,ಲ,la,ಲತೆ,late,a creeper,plant
+kn,C26,ಲ,la,ಲಾಳ,lāḷa,a horseshoe,horse
+kn,C26,ಲ,la,ಲೇಖನಿ,lēkhani,a pen,pen
+kn,C26,ಲ,la,ಲಡ್ಡು,laḍḍu,laddu,sweet
+kn,C26,ಲ,la,ಲವಂಗ,lavaṁga,clove,spice
+kn,C26,ಲ,la,ಲಗ್ಗೆ,lagge,a ladder,ladder
+kn,C26,ಲ,la,ಲೆಕ್ಕ,lekka,a sum,numbers
+kn,C26,ಲ,la,ಲೋಕ,lōka,the world,earth
+kn,C26,ಲ,la,ಲಯ,laya,rhythm,music
+kn,C27,ವ,va,ವಿಮಾನ,vimāna,aeroplane,aeroplane
+kn,C27,ವ,va,ವನ,vana,a forest,forest
+kn,C27,ವ,va,ವರ್ಣ,varṇa,a colour,colours
+kn,C27,ವ,va,ವಸ್ತ್ರ,vastra,cloth,cloth
+kn,C27,ವ,va,ವೀಣೆ,vīṇe,veena,veena
+kn,C27,ವ,va,ವಾರ,vāra,a week,calendar
+kn,C27,ವ,va,ವೈದ್ಯ,vaidya,a doctor,doctor
+kn,C27,ವ,va,ವಿದ್ಯೆ,vidye,learning,book
+kn,C27,ವ,va,ವಂದನೆ,vaṁdane,respectful greetings,namaskara
+kn,C27,ವ,va,ವಾಹನ,vāhana,a vehicle,car
+kn,C28,ಶ,śa,ಶಾಲೆ,śāle,school,school
+kn,C28,ಶ,śa,ಶಿಕ್ಷಕ,śikṣaka,a teacher,teacher
+kn,C28,ಶ,śa,ಶಂಖ,śaṁkha,a conch,conch
+kn,C28,ಶ,śa,ಶಬ್ದ,śabda,a sound,speak
+kn,C28,ಶ,śa,ಶರೀರ,śarīra,the body,person
+kn,C28,ಶ,śa,ಶಾಂತಿ,śāṁti,peace,peace
+kn,C28,ಶ,śa,ಶಕ್ತಿ,śakti,strength,strong
+kn,C28,ಶ,śa,ಶನಿವಾರ,śanivāra,Saturday,calendar
+kn,C28,ಶ,śa,ಶುಚಿ,śuci,cleanliness,water
+kn,C28,ಶ,śa,ಶ್ರದ್ಧೆ,śraddhe,sincere effort,heart
+kn,C29,ಷ,ṣa,ಪುಷ್ಪ,puṣpa,a flower,flower
+kn,C29,ಷ,ṣa,ಷಟ್ಪದಿ,ṣaṭpadi,a six-line verse,book
+kn,C29,ಷ,ṣa,ಔಷಧಿ,auṣadhi,medicine,medicine
+kn,C29,ಷ,ṣa,ಭಾಷೆ,bhāṣe,language,speak
+kn,C29,ಷ,ṣa,ವಿಷಯ,viṣaya,a subject,book
+kn,C29,ಷ,ṣa,ಷೋಡಶ,ṣōḍaśa,sixteen,numbers
+kn,C29,ಷ,ṣa,ಮನುಷ್ಯ,manuṣya,a human being,person
+kn,C29,ಷ,ṣa,ಸಂತೋಷ,saṁtōṣa,happiness,smile
+kn,C29,ಷ,ṣa,ಶೇಷ,śēṣa,the remainder,numbers
+kn,C29,ಷ,ṣa,ಘೋಷ,ghōṣa,a sound,speak
+kn,C30,ಸ,sa,ಸೂರ್ಯ,sūrya,the sun,sun
+kn,C30,ಸ,sa,ಸೇಬು,sēbu,apple,apple
+kn,C30,ಸ,sa,ಸಕ್ಕರೆ,sakkare,sugar,sugar
+kn,C30,ಸ,sa,ಸಮುದ್ರ,samudra,the sea,sea
+kn,C30,ಸ,sa,ಸಿಂಹ,siṁha,a lion,lion
+kn,C30,ಸ,sa,ಸ್ನೇಹಿತ,snēhita,a friend,friend
+kn,C30,ಸ,sa,ಸೀರೆ,sīre,saree,saree
+kn,C30,ಸ,sa,ಸತ್ಯ,satya,truth,heart
+kn,C30,ಸ,sa,ಸೌಟು,sauṭu,a ladle,spoon
+kn,C30,ಸ,sa,ಸಂಜೆ,saṁje,evening,evening
+kn,C31,ಹ,ha,ಹಸು,hasu,cow,cow
+kn,C31,ಹ,ha,ಹಣ್ಣು,haṇṇu,fruit,fruit
+kn,C31,ಹ,ha,ಹೂವು,hūvu,a flower,flower
+kn,C31,ಹ,ha,ಹಾಲು,hālu,milk,milk
+kn,C31,ಹ,ha,ಹಕ್ಕಿ,hakki,a bird,bird
+kn,C31,ಹ,ha,ಹುಲಿ,huli,a tiger,tiger
+kn,C31,ಹ,ha,ಹಲ್ಲು,hallu,a tooth,tooth
+kn,C31,ಹ,ha,ಹಗ್ಗ,hagga,a rope,rope
+kn,C31,ಹ,ha,ಹಾಡು,hāḍu,a song,music
+kn,C31,ಹ,ha,ಹಸಿರು,hasiru,green,green
+kn,C32,ಳ,ḷa,ಮಳೆ,maḷe,rain,rain
+kn,C32,ಳ,ḷa,ಬಾಳೆ,bāḷe,banana plant,banana
+kn,C32,ಳ,ḷa,ಆಳ,āḷa,depth,well
+kn,C32,ಳ,ḷa,ಕೋಳಿ,kōḷi,a hen,hen
+kn,C32,ಳ,ḷa,ಹಳದಿ,haḷadi,yellow,yellow
+kn,C32,ಳ,ḷa,ಬಳೆ,baḷe,a bangle,bangle
+kn,C32,ಳ,ḷa,ಎಳನೀರು,eḷanīru,tender coconut water,coconut
+kn,C32,ಳ,ḷa,ಗಾಳಿ,gāḷi,wind,wind
+kn,C32,ಳ,ḷa,ಬೆಳೆ,beḷe,a crop,grain
+kn,C32,ಳ,ḷa,ಮೆಳೆ,meḷe,a thicket,forest

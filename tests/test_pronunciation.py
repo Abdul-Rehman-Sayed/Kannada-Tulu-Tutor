@@ -45,19 +45,35 @@ def scorer_tests():
     score, correct = pronunciation.score_pronunciation("ಅಮ್ಮ", "ಅಮ್ಮಾ")
     ok &= _check("ಅಮ್ಮಾ (extra vowel sign) accepted", correct, True)
 
-    print("\nLetter cards accept the anchor word alone:")
-    letter = {"spoken_form": "ಆ ಆನೆ", "anchor_word": "ಆನೆ", "kannada_word": "ಆ"}
+    print("\nLetter cards take the letter, said once or repeated:")
+    letter = {"spoken_form": "ಆ", "anchor_word": "ಆನೆ", "kannada_word": "ಆ",
+              "category": "vowels"}
     expected, alternates = pronunciation.accepted_forms(letter)
-    for heard, label in [("ಆ ಆನೆ", "full form"), ("ಆನೆ", "anchor only"), ("ನೆ", "clipped anchor")]:
+    for heard, label in [("ಆ", "said once"), ("ಆ ಆ", "said twice")]:
         _, correct = pronunciation.score_pronunciation(expected, heard, alternates)
         ok &= _check(f"{label}: {heard!r} accepted for ಆ", correct, True)
-    _, correct = pronunciation.score_pronunciation(expected, "ಹಸು", alternates)
-    ok &= _check("saying ಹಸು on the ಆ card is rejected", correct, False)
+    for heard, label in [("ಆನೆ", "its example word"), ("ಹಸು", "a different word")]:
+        _, correct = pronunciation.score_pronunciation(expected, heard, alternates)
+        ok &= _check(f"{label}: {heard!r} rejected on the ಆ card", correct, False)
 
     print("\nA word card has no anchor (nothing extra is accepted):")
-    word = {"spoken_form": "ಹಸು", "anchor_word": "", "kannada_word": "ಹಸು"}
+    word = {"spoken_form": "ಹಸು", "anchor_word": "", "kannada_word": "ಹಸು",
+            "category": "animals"}
     expected, alternates = pronunciation.accepted_forms(word)
     ok &= _check("no alternates for a word", alternates, [])
+
+    print("\nThe letters the recogniser cannot hear alone are named, not guessed:")
+    for glyph in sorted(pronunciation.UNSCOREABLE_ALONE):
+        ok &= _check(f"{glyph} is not scoreable on its own",
+                     pronunciation.is_scoreable(
+                         {"category": "consonants", "kannada_word": glyph}),
+                     False)
+    ok &= _check("ಕ, which the recogniser hears cleanly, is scoreable",
+                 pronunciation.is_scoreable(
+                     {"category": "consonants", "kannada_word": "ಕ"}), True)
+    ok &= _check("a word is always scoreable, whatever letter it starts with",
+                 pronunciation.is_scoreable(
+                     {"category": "animals", "kannada_word": "ಧನ"}), True)
 
     print("\nEmpty / silent input never crashes and never passes:")
     score, correct = pronunciation.score_pronunciation("ಅಮ್ಮ", "")
@@ -217,6 +233,19 @@ def grace_tests():
     ok &= _check("a persistently wrong child still produces WRONG marks (parking survives)",
                  pronunciation.classify_attempt(False, healthy_snr, confident, 99),
                  pronunciation.OUTCOME_WRONG)
+
+    ok &= _check("a letter the app cannot score is a free RETRY, not a soft miss",
+                 pronunciation.classify_attempt(False, healthy_snr, confident, 0,
+                                                scoreable=False),
+                 pronunciation.OUTCOME_RETRY)
+    ok &= _check("...and it is still a RETRY long past the grace window",
+                 pronunciation.classify_attempt(False, healthy_snr, confident, 99,
+                                                scoreable=False),
+                 pronunciation.OUTCOME_RETRY)
+    ok &= _check("...but saying it right is still CORRECT",
+                 pronunciation.classify_attempt(True, healthy_snr, confident, 99,
+                                                scoreable=False),
+                 pronunciation.OUTCOME_CORRECT)
     return ok
 
 

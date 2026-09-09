@@ -141,6 +141,147 @@ h1,h2,h3,h4,.serif{{
 }}
 .facts b{{ color:var(--ink); font-weight:600; }}
 
+/* The flashcard drawing. */
+.pic{{
+  max-width:420px; margin:0 auto 14px; border:1px solid var(--rule);
+  border-radius:var(--r-sm); overflow:hidden; background:var(--surface);
+}}
+.pic svg{{ display:block; width:100%; height:auto; }}
+
+/* The family of words that grows out of the letter, beside the word card. */
+.lw{{
+  background:var(--surface); border:1px solid var(--rule);
+  border-radius:var(--r-sm); overflow:hidden; position:sticky; top:12px;
+}}
+.lw-hd{{
+  display:flex; align-items:center; gap:10px; padding:13px 16px;
+  border-bottom:1px solid var(--rule); background:var(--wash);
+  font-size:13.5px; font-weight:600; color:var(--ink);
+}}
+.lw-hd .kn{{ font-size:24px; line-height:1; font-weight:500; }}
+.lw-hd .n{{
+  margin-left:auto; font-size:11px; font-weight:700; letter-spacing:.08em;
+  color:var(--muted); background:var(--paper); border:1px solid var(--rule);
+  border-radius:999px; padding:3px 9px;
+}}
+.lw-list{{
+  list-style:none; margin:0; padding:0; max-height:60vh; overflow-y:auto;
+}}
+.lw-item{{
+  display:grid; grid-template-columns:1fr auto; gap:2px 14px;
+  align-items:baseline; padding:11px 16px 11px 44px; position:relative;
+  border-top:1px solid var(--rule);
+}}
+.lw-item:first-child{{ border-top:none; }}
+.lw-n{{
+  position:absolute; left:16px; top:12px;
+  font-family:var(--serif); font-size:12px; color:var(--faint);
+}}
+.lw-list .w{{ font-size:23px; line-height:1.4; color:var(--ink); font-weight:500; }}
+.lw-list .t{{ font-size:12.5px; color:var(--body); font-weight:600; text-align:right; }}
+.lw-list .m{{ grid-column:1/-1; font-size:12.5px; color:var(--muted); }}
+
+/* The word the child is on right now. */
+.lw-now{{ background:var(--wash); }}
+.lw-now::before{{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  background:var(--ink);
+}}
+.lw-now .w{{ font-weight:600; }}
+.lw-mark{{
+  margin-left:8px; font-size:10px; font-weight:700; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink);
+}}
+
+/* Where the words they will be asked for end and the reading words begin. */
+.lw-split{{
+  padding:8px 16px; border-top:1px solid var(--rule);
+  background:var(--paper); font-size:10.5px; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--faint);
+}}
+.lw-ft{{
+  margin:0; padding:9px 16px; border-top:1px solid var(--rule);
+  background:var(--wash); font-size:11.5px; color:var(--muted);
+}}
+
+/* A letter card carries the letter itself and no picture of a word. */
+.letter-tile{{
+  max-width:260px; margin:0 auto 16px; padding:22px 16px;
+  border:1px solid var(--rule-strong); border-radius:var(--r-sm);
+  background:var(--wash);
+}}
+.letter-tile .kn{{
+  display:block; font-size:clamp(84px,18vw,132px); line-height:1;
+  font-weight:500; color:var(--ink);
+}}
+
+/* The stages of the syllabus, and where the learner has got to. */
+.stages{{
+  display:flex; gap:0; background:var(--surface); border:1px solid var(--rule);
+  border-radius:var(--r); overflow:hidden; margin-bottom:14px;
+}}
+.stg{{
+  flex:1 1 0; min-width:0; padding:11px 12px 12px;
+  border-left:1px solid var(--rule); position:relative;
+}}
+.stg:first-child{{ border-left:none; }}
+.stg .n{{
+  font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--faint);
+}}
+.stg .t{{
+  font-family:var(--serif); font-size:15px; font-weight:600; color:var(--faint);
+  margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}}
+.stg .c{{ font-size:11.5px; color:var(--faint); margin-top:2px; }}
+.stg-done .t,.stg-done .n{{ color:var(--muted); }}
+.stg-done .c{{ color:var(--ok); font-weight:600; }}
+.stg-done .m > i{{ background:var(--ok); }}
+.stg-now{{ background:var(--wash); }}
+.stg-now::before{{
+  content:""; position:absolute; left:0; right:0; top:0; height:2px;
+  background:var(--ink);
+}}
+.stg-now .n{{ color:var(--ink); }}
+.stg-now .t{{ color:var(--ink); }}
+.stg-now .c{{ color:var(--body); }}
+.stg .m{{ height:3px; background:#E8E4DA; margin-top:7px; border-radius:2px;
+  overflow:hidden; }}
+.stg .m > i{{ display:block; height:100%; background:var(--ink); }}
+.stg-locked .m{{ visibility:hidden; }}
+@media (max-width:640px){{
+  .stg{{ padding:8px 7px 9px; }}
+  .stg .t{{ font-size:12.5px; }}
+  .stg .c{{ font-size:10.5px; }}
+  .stg .n{{ font-size:9px; }}
+}}
+
+.stage-now{{ padding:14px 18px; }}
+.stage-now h4{{ font-family:var(--serif); font-size:16px; margin:0 0 3px;
+  color:var(--ink); font-weight:600; }}
+.stage-now p{{ margin:0; font-size:13px; color:var(--muted); line-height:1.55; }}
+
+/* "a is for amma" - on a word card, the letter that word grew out of.  On a
+   letter card it holds the letter alone: what the child is asked to say. */
+.isfor{{
+  margin-top:16px; padding:14px 18px; border-radius:var(--r-sm);
+  background:var(--wash); border:1px solid var(--rule); text-align:center;
+}}
+.isfor .lead{{ font-size:12px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); margin:0 0 9px; }}
+.isfor .line{{ font-size:clamp(20px,4.2vw,27px); color:var(--ink);
+  line-height:1.35; }}
+.isfor .line .l{{ font-family:var(--kannada); font-weight:600; }}
+.isfor .line .j{{ font-family:var(--serif); font-size:.66em; color:var(--muted);
+  margin:0 .34em; }}
+.isfor .line .a{{ font-family:var(--kannada); font-weight:500; }}
+.isfor .gloss{{ font-size:13px; color:var(--muted); margin-top:6px; }}
+.isfor .both{{
+  font-size:13px; color:var(--body); margin-top:11px; padding-top:10px;
+  border-top:1px solid var(--rule);
+}}
+.isfor .both b{{ color:var(--ink); font-weight:600; font-size:1.22em; }}
+
 .word-card{{ padding:clamp(20px,3.4vw,34px); text-align:center; }}
 .word{{
   font-size:clamp(54px,13vw,100px); font-weight:500; line-height:1.16;
@@ -149,6 +290,11 @@ h1,h2,h3,h4,.serif{{
 }}
 
 .word.long{{ font-size:clamp(28px,7vw,50px); line-height:1.4; }}
+
+/* A lone letter has no vowel sign hanging below it, but the Kannada font
+   still reserves the room, which left a hand's width of dead space under the
+   biggest thing on the screen.  Crop it back. */
+.word.solo{{ line-height:.88; margin-bottom:2px; }}
 .translit{{
   font-size:clamp(15px,2.6vw,19px); color:var(--body); font-weight:600;
   margin:0; letter-spacing:.01em;
@@ -326,6 +472,11 @@ div[data-baseweb="input"] button{{
 .cell-try .g{{ color:var(--warn); }}
 .cell-stuck{{ background:var(--no-bg); border-color:var(--no-brd); }}
 .cell-stuck .g{{ color:var(--no); }}
+/* A letter the recogniser cannot hear on its own: not the child's doing,
+   so it is greyed rather than marked. */
+.cell-mute{{ background:var(--wash); border-style:dashed;
+  border-color:var(--rule-strong); }}
+.cell-mute .g{{ color:var(--faint); }}
 @media (max-width:640px){{
   .cell{{ min-width:44px; padding:7px 4px 5px; }}
   .cell .g{{ font-size:20px; }}
@@ -347,6 +498,8 @@ div[data-baseweb="input"] button{{
 .legend i.cell-ok{{ background:var(--ok); border-color:var(--ok); }}
 .legend i.cell-try{{ background:var(--warn); border-color:var(--warn); }}
 .legend i.cell-stuck{{ background:var(--no); border-color:var(--no); }}
+.legend i.cell-mute{{ background:var(--wash); border-style:dashed;
+  border-color:var(--rule-strong); }}
 
 .bars{{ padding:clamp(14px,2vw,20px); }}
 .bar-row{{ padding:11px 0; border-top:1px solid var(--rule); }}

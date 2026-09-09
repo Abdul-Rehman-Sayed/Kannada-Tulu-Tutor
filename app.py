@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import hashlib
 import html
@@ -8,12 +9,12 @@ import pandas as pd
 import streamlit as st
 
 from tutor import (
-    auth, cogmap, config, db, graph_engine, insight, media,
+    auth, cogmap, config, db, graph_engine, illustrations, insight, media,
     pronunciation, ui,
 )
 
 _SESSION_KEYS = ("user", "concept", "last_result", "listen_audio", "scored_sig",
-                 "confident_misses", "language")
+                 "confident_misses", "language", "last_level")
 
 st.set_page_config(
     page_title="Kannada & Tulu Literacy Tutor",
@@ -111,14 +112,18 @@ def score_recording(sid, concept, wav_bytes):
     cid = concept["concept_id"]
     misses = st.session_state.setdefault("confident_misses", {})
     outcome = pronunciation.classify_attempt(
-        correct, stats.get("snr", 99), confidence, misses.get(cid, 0)
+        correct, stats.get("snr", 99), confidence, misses.get(cid, 0),
+        scoreable=pronunciation.is_scoreable(concept),
     )
 
     if outcome == pronunciation.OUTCOME_RETRY:
-        reason = (pronunciation.TOO_QUIET
-                  if (stats.get("snr", 99) < pronunciation.MIN_SNR
-                      and stats.get("peak", 0.0) < pronunciation.LOUD_ENOUGH)
-                  else pronunciation.NOT_RECOGNISED)
+        if not pronunciation.is_scoreable(concept):
+            reason = pronunciation.UNSCOREABLE
+        elif (stats.get("snr", 99) < pronunciation.MIN_SNR
+                and stats.get("peak", 0.0) < pronunciation.LOUD_ENOUGH):
+            reason = pronunciation.TOO_QUIET
+        else:
+            reason = pronunciation.NOT_RECOGNISED
         st.session_state.last_result = {"retry": reason, "stats": stats}
         return
 
@@ -500,46 +505,223 @@ _RETRY_TEXT = {
         "That recording didn't come through.",
         "Tap the microphone and try again.",
     ),
+    pronunciation.UNSCOREABLE: (
+        "This letter is one the app cannot hear on its own.",
+        "Say it for your teacher instead — you will move on after a few tries.",
+    ),
 }
 
 
-def render_word_card(concept):
-    img_path = media.get_image(concept["image_file"],
-                               label=graph_engine.display_word(concept))
-    _left, mid, _right = st.columns([1, 3, 1])
-    with mid:
-        st.image(img_path, width="stretch")
+def render_stages(stages):
+    """The strip across the top saying which stage the learner is in.
+
+    Letters, then words, then phrases, then sentences - and the learner can
+    see at a glance which one they are on and what is still shut.
+    """
+    if not stages:
+        return
+    cells = []
+    for s in stages:
+        cls = {"done": "stg stg-done", "current": "stg stg-now"}.get(
+            s["state"], "stg stg-locked")
+        pct = (s["mastered"] / s["total"] * 100) if s["total"] else 0
+        caption = {"locked": "locked",
+                   "done": f"all {s['total']} done"}.get(
+            s["state"], f"{s['mastered']} of {s['total']}")
+        cells.append(
+            f'<div class="{cls}"><div class="n">Stage {s["position"]}</div>'
+            f'<div class="t">{_esc(s["title"])}</div>'
+            f'<div class="c">{_esc(caption)}</div>'
+            f'<div class="m"><i style="width:{pct:.0f}%"></i></div></div>')
+    st.markdown(f'<div class="stages">{"".join(cells)}</div>',
+                unsafe_allow_html=True)
+
+    now = next((s for s in stages if s["state"] == "current"), None)
+    if now:
+        ui.card(
+            f'<div class="stage-now"><h4>Stage {now["position"]} of {now["of"]} '
+            f'&mdash; {_esc(now["title"])}</h4>'
+            f'<p>{_esc(now["blurb"])}</p></div>')
+        ui.spacer(10)
+
+
+def render_stage_change(stages, concept):
+    """Mark the moment a learner crosses from one stage into the next.
+
+    Finishing the alphabet is the biggest thing that happens in this app, and
+    it used to pass without a word: the card simply stopped being a letter and
+    started being a word.
+    """
+    level = concept.get("level")
+    previous = st.session_state.get("last_level")
+    st.session_state.last_level = level
+    if previous is None or previous == level:
+        return
+
+    done = next((s for s in stages if s["level"] == previous), None)
+    now = next((s for s in stages if s["level"] == level), None)
+    if not done or not now or done["state"] != "done":
+        return
+
+    st.markdown(
+        f'<div class="fb fb-ok"><div class="hd">Stage {done["position"]} '
+        f'finished &mdash; {_esc(done["title"].lower())} done</div>'
+        f'<div class="sub">{_esc(now["blurb"])}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_picture(concept):
+    """The drawing above the word.
+
+    Always a drawing from our own library, never a photograph.  The cards used
+    to fall back to photographs fetched off the web for anything not drawn yet,
+    and what came back was not fit to put in front of a child - the bell
+    arrived as a labelled engineering diagram on a black ground.  Nothing
+    reaches a card now that has not been drawn here on purpose; where there is
+    no drawing the library sets the word itself, which is plain but safe.
+
+    A letter never gets here at all: a letter is taught on its own, and the
+    picture it used to show was borrowed from an example word.
+    """
+    if graph_engine.is_letter(concept):
+        return
+    word = graph_engine.display_word(concept)
+    icon = concept.get("icon") or concept.get("english_meaning", "")
+    st.markdown(
+        f'<div class="pic">{illustrations.render(icon, label=word)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_letter_family(concept, language):
+    """The words that grow out of this word's letter, beside the card.
+
+    A child working through ka meets kamala, then kannu, then kage, and the
+    whole family stays on screen the whole time - so the sound is seen opening
+    word after word, not met once and gone.  The list scrolls, so a long
+    family never pushes the microphone off the screen.
+    """
+    letter = graph_engine.letter_of(concept["concept_id"], language)
+    if not letter:
+        return
+
+    rows = graph_engine.words_for_letter(letter["concept_id"], language)
+    if not rows:
+        return
+
+    here = concept["concept_id"]
+    taught = [r for r in rows if r["in_syllabus"]]
+    reading = [r for r in rows if not r["in_syllabus"]]
+
+    def item(row, number):
+        classes = "lw-item"
+        mark = ""
+        if row["concept_id"] == here:
+            classes += " lw-now"
+            mark = '<span class="lw-mark">you are here</span>'
+        return (
+            f'<li class="{classes}"><span class="lw-n">{number}</span>'
+            f'<span class="w kn">{_esc(row["word"])}</span>'
+            f'<span class="t">{_esc(row["transliteration"])}</span>'
+            f'<span class="m">{_esc(row["english_meaning"])}{mark}</span></li>'
+        )
+
+    body = "".join(item(r, i) for i, r in enumerate(taught, 1))
+    if reading:
+        body += ('<li class="lw-split">more words with this letter, to read '
+                 "only</li>")
+        body += "".join(item(r, i) for i, r in enumerate(reading, len(taught) + 1))
+
+    foot = (f"You are asked for the first {len(taught)}; the rest are to read."
+            if reading else
+            f"All {len(taught)} are yours to say, one after another.")
+
+    st.markdown(
+        f'<div class="lw"><div class="lw-hd">'
+        f'<span class="kn">{_esc(letter["kannada_word"])}</span> '
+        f'words from this letter'
+        f'<span class="n">{len(rows)}</span></div>'
+        f'<ul class="lw-list">{body}</ul>'
+        f'<p class="lw-ft">{foot}</p>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_letter_card(concept):
+    """A letter, on its own.
+
+    The card used to read "a is for amma" and ask the child to say both, which
+    put whole words in front of a child who could not yet read one letter.  A
+    letter card now carries the letter, the sound it makes, and nothing else -
+    no example word, and no picture borrowed from one.  The words come later,
+    once the whole alphabet is done.
+    """
+    letter = graph_engine.display_word(concept)
+    kind = "vowel" if concept["category"] == "vowels" else "consonant"
+
+    ui.card(
+        f'<div class="letter-tile"><span class="kn">{_esc(letter)}</span></div>'
+        f'<div class="translit">{_esc(concept["transliteration"])}</div>'
+        f'<div class="meaning">A single {kind} &mdash; learn the sound it '
+        f"makes.</div>"
+        f'<div class="tags"><span>{_esc(concept["category"])}</span>'
+        f'<span>Stage 1 &middot; Letters</span></div>'
+        f'<div class="isfor"><p class="lead">Say this</p>'
+        f'<div class="line"><span class="l">{_esc(letter)}</span></div>'
+        f'<div class="gloss">Just the letter, on its own &mdash; '
+        f'<b>{_esc(concept["transliteration"])}</b></div></div>',
+        extra="word-card",
+    )
+
+
+def render_word_card(concept, language=None, stage=None):
+    """A word, a phrase or a sentence, with the letter it grew out of."""
+    if graph_engine.is_letter(concept):
+        render_letter_card(concept)
+        return
+
+    render_picture(concept)
 
     word = graph_engine.display_word(concept)
-    tier = graph_engine.LEVEL_MEANING.get(concept.get("level"), concept.get("level")
-                                          or "Basic")
-    is_letter = concept["category"] in ("vowels", "consonants")
-
+    stage_info = stage or graph_engine.stage_of(concept)
     long_form = len(word) > 12 or " " in word.strip()
 
     spoken = concept["spoken_form"]
     say_html = ""
     if spoken.strip() != word.strip():
-        if is_letter:
-            hint = ("the letter, then a word that starts with it &mdash; "
-                    f'<span class="kn">{_esc(concept.get("anchor_word", ""))}</span>')
-        else:
-            gloss = concept.get("phrase_gloss", "")
-            hint = (f"say the whole phrase &mdash; &ldquo;{_esc(gloss)}&rdquo;"
-                    if gloss else "say the whole phrase")
+        gloss = concept.get("phrase_gloss", "")
+        hint = (f"say the whole line &mdash; &ldquo;{_esc(gloss)}&rdquo;"
+                if gloss else "say the whole line")
         say_html = (
             f'<div class="say"><p class="lbl">Say this</p>'
             f'<div class="val">{_esc(spoken)}</div>'
             f'<div class="hint">{hint}</div></div>'
         )
 
+    grew_html = ""
+    if language:
+        parent = graph_engine.letter_of(concept["concept_id"], language)
+        if parent and word.startswith(parent["kannada_word"]):
+            grew_html = (
+                f'<div class="isfor"><p class="lead">The letter it grew from'
+                f'</p><div class="line">'
+                f'<span class="l">{_esc(parent["kannada_word"])}</span>'
+                f'<span class="j">is for</span>'
+                f'<span class="a">{_esc(word)}</span></div>'
+                f'<div class="gloss">You have already learned '
+                f'<b>{_esc(parent["transliteration"])}</b>.</div></div>'
+            )
+
     ui.card(
         f'<div class="word{" long" if long_form else ""}">{_esc(word)}</div>'
         f'<div class="translit">{_esc(concept["transliteration"])}</div>'
         f'<div class="meaning">{_esc(concept["english_meaning"])}</div>'
         f'<div class="tags"><span>{_esc(concept["category"])}</span>'
-        f"<span>{_esc(tier)}</span></div>"
-        f"{say_html}",
+        f'<span>Stage {stage_info.get("position") or stage_info["number"]} '
+        f'&middot; {_esc(stage_info["title"])}</span></div>'
+        f"{say_html}{grew_html}",
         extra="word-card",
     )
 
@@ -635,10 +817,13 @@ def app_sidebar(user, language=None, mastered=None, total=None, by_level=None):
         st.sidebar.caption(f"{mastered} of {total} learned  ·  {pct}%")
 
     if by_level:
-        for lv, (m, t) in by_level.items():
-            if t:
-                st.sidebar.caption(
-                    f"{graph_engine.LEVEL_MEANING.get(lv, lv)} · {m}/{t}")
+        for stage in by_level:
+            tail = {"locked": "locked",
+                    "done": f"{stage['total']}/{stage['total']} done"}.get(
+                stage["state"],
+                f"{stage['mastered']}/{stage['total']} · now")
+            st.sidebar.caption(
+                f"Stage {stage['position']} · {stage['title']} · {tail}")
 
     if language and len(graph_engine.available_languages()) > 1:
         st.sidebar.write("")
@@ -657,13 +842,16 @@ def app_sidebar(user, language=None, mastered=None, total=None, by_level=None):
 def student_view(user, language):
     sid = user["student_id"]
     mastered, total = graph_engine.mastery_summary(sid, language)
-    app_sidebar(user, language, mastered, total,
-                graph_engine.mastery_by_level(sid, language))
-    ui.narrow(720)
-
-    render_feedback()
+    stages = graph_engine.stage_progress(sid, language)
+    app_sidebar(user, language, mastered, total, stages)
 
     concept = current_concept(sid, language)
+    beside = bool(concept) and concept.get("level") == graph_engine.WORDS_LEVEL
+    ui.narrow(1080 if beside else 720)
+
+    render_stages(stages)
+    render_feedback()
+
     if concept is None:
         name = graph_engine.language_name(language)
         ui.card(
@@ -689,13 +877,31 @@ def student_view(user, language):
             st.rerun()
         return
 
-    render_word_card(concept)
-    ui.spacer()
+    render_stage_change(stages, concept)
+    stage = next((s for s in stages if s["level"] == concept.get("level")), None)
 
-    if st.button("Listen to the word", width="stretch", icon=":material/volume_up:"):
+    if beside:
+        left, right = st.columns([1.5, 1], gap="medium")
+        with right:
+            render_letter_family(concept, language)
+        target = left
+    else:
+        target = contextlib.nullcontext()
+
+    with target:
+        render_word_card(concept, language=language, stage=stage)
+        ui.spacer()
+        render_lesson_controls(sid, concept, language)
+
+
+def render_lesson_controls(sid, concept, language):
+    """Listen, then say it - the part of the card the child actually works."""
+    label = ("Listen to the letter" if graph_engine.is_letter(concept)
+             else "Listen to the word")
+    if st.button(label, width="stretch", icon=":material/volume_up:"):
         try:
             audio_path = media.get_audio(
-                concept["concept_id"], concept["spoken_form"],
+                concept["concept_id"], graph_engine.listen_form(concept),
                 lang=graph_engine.language_info(language)["asr"])
             st.session_state.listen_audio = (concept["concept_id"], audio_path)
         except Exception as e:
