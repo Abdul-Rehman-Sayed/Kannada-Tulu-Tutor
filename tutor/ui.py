@@ -249,6 +249,50 @@ h1,h2,h3,h4,.serif{{
   overflow:hidden; }}
 .stg .m > i{{ display:block; height:100%; background:var(--ink); }}
 .stg-locked .m{{ visibility:hidden; }}
+
+/* TESTING: with the prerequisite lock off a stage is neither shut nor the one
+   being worked - it is simply open, and reads in plain ink rather than grey. */
+.stg-open .t{{ color:var(--muted); }}
+.stg-open .c{{ color:var(--muted); }}
+.stg-open .m > i{{ background:var(--rule-strong); }}
+
+/* The teacher's class code, and the class a learner is in. */
+.classcode{{ padding:20px 24px 18px; }}
+.classcode .lbl{{
+  font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:8px;
+}}
+.classcode .code{{
+  font-family:var(--serif); font-size:clamp(34px,6.4vw,52px); font-weight:700;
+  letter-spacing:.08em; color:var(--ink); line-height:1.1; margin-bottom:10px;
+}}
+.classcode p{{ margin:0 0 6px; font-size:13px; color:var(--muted);
+  line-height:1.6; max-width:60ch; }}
+.classcode .tiny{{ font-size:11.5px; color:var(--faint); }}
+
+.sb-class{{
+  margin:0 0 14px; padding:10px 12px; border-radius:var(--r-sm);
+  background:var(--wash); border:1px solid var(--rule);
+}}
+.sb-class .lbl{{
+  font-size:10px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+  color:var(--faint);
+}}
+.sb-class .nm{{ font-size:14px; font-weight:600; color:var(--ink); margin-top:2px; }}
+
+/* TESTING: the strip that says the lock is off.  Goes with UNLOCK_ALL. */
+.testbar{{
+  display:flex; align-items:center; gap:11px; flex-wrap:wrap;
+  padding:9px 14px; margin-bottom:10px; border-radius:var(--r-sm);
+  background:var(--warn-bg); border:1px solid var(--warn-brd);
+  font-size:12.5px; color:var(--body); line-height:1.5;
+}}
+.testbar .tag{{
+  flex:none; font-size:10px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--warn);
+  border:1px solid var(--warn-brd); border-radius:999px; padding:2px 8px;
+}}
+.testbar b{{ color:var(--ink); font-weight:600; }}
 @media (max-width:640px){{
   .stg{{ padding:8px 7px 9px; }}
   .stg .t{{ font-size:12.5px; }}
@@ -540,6 +584,23 @@ div[data-baseweb="input"] button{{
 
 def inject():
     st.markdown(_CSS, unsafe_allow_html=True)
+
+
+def loading(message="Loading…"):
+    """A spinner for anything that can keep the page waiting.
+
+    Streamlit blocks the whole page while a callback runs, and a page that is
+    blocked looks exactly like a page that has crashed.  So every boundary
+    that can take a visible moment - building the curriculum on first boot,
+    fetching a word to listen to, adding a class up, checking a password -
+    says so while it happens.
+
+    `show_time` is the point of it: a spinner with no counter is
+    indistinguishable from a frozen tab after about two seconds, and the
+    slowest things here (a word fetched over the network, the speech model
+    waking) are well past that.
+    """
+    return st.spinner(message, show_time=True)
 
 
 def esc(value):

@@ -47,6 +47,13 @@ def init_auth():
                 FOREIGN KEY (student_id) REFERENCES students(id)
             )"""
         )
+        have = {r["name"] for r in conn.execute("PRAGMA table_info(users)")}
+        if "join_code" not in have:
+            conn.execute("ALTER TABLE users ADD COLUMN join_code TEXT")
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_join_code "
+            "ON users(join_code) WHERE join_code IS NOT NULL"
+        )
 
 
 def _hash(password, salt):
@@ -89,7 +96,8 @@ def _check_password(password):
     return password
 
 
-def register(username, password, display_name=None, role=STUDENT, teacher_pin=None):
+def register(username, password, display_name=None, role=STUDENT,
+             teacher_pin=None, join_code=None):
     init_auth()
     username = _clean_username(username)
     _check_password(password)
@@ -110,7 +118,18 @@ def register(username, password, display_name=None, role=STUDENT, teacher_pin=No
     salt = secrets.token_bytes(16)
     digest, kdf = _hash(password, salt)
 
+    teacher = None
+    if role == STUDENT and (join_code or "").strip():
+        teacher = teacher_by_join_code(join_code)
+        if teacher is None:
+            raise AuthError(
+                "No class has that code. Check it with your teacher, or leave "
+                "it blank and join later."
+            )
+
     student_id = db.create_student(display_name, hint=username) if role == STUDENT else None
+    if student_id is not None and teacher is not None:
+        db.set_student_teacher(student_id, teacher["id"])
 
     with closing(db.get_connection()) as conn, conn:
         try:
@@ -122,6 +141,9 @@ def register(username, password, display_name=None, role=STUDENT, teacher_pin=No
         except sqlite3.IntegrityError:
             raise AuthError("That username is already taken.") from None
         new_id = cur.lastrowid
+
+    if role == TEACHER:
+        ensure_join_code(new_id)
 
     return get_user(new_id)
 
@@ -181,6 +203,7 @@ def _row_to_user(row):
         "display_name": row["display_name"],
         "role": row["role"],
         "student_id": row["student_id"],
+        "join_code": (row["join_code"] if "join_code" in row.keys() else None),
     }
 
 
@@ -203,3 +226,89 @@ def teacher_exists():
         return conn.execute(
             "SELECT 1 FROM users WHERE role = ? LIMIT 1", (TEACHER,)
         ).fetchone() is not None
+
+
+
+CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+CODE_LENGTH = 6
+
+
+def normalize_join_code(raw):
+    """A typed code, as it is stored: upper case, letters and digits only.
+
+    Children type the separator, or a space, or neither, so none of that is
+    kept - CODE-123, code123 and 'Code 123' are all the same class.
+    """
+    return "".join(c for c in (raw or "").upper() if c.isalnum())
+
+
+def format_join_code(code):
+    """The code as it is shown and read out: three, a dash, three."""
+    code = normalize_join_code(code)
+    half = CODE_LENGTH // 2
+    return f"{code[:half]}-{code[half:]}" if len(code) == CODE_LENGTH else code
+
+
+def _mint_code():
+    return "".join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
+
+
+def ensure_join_code(user_id):
+    """This teacher's class code, minting one the first time it is asked for.
+
+    Teachers made before class codes existed have no code on their row; they
+    get one the first time they open the dashboard, rather than having to make
+    a new account.
+    """
+    init_auth()
+    with closing(db.get_connection()) as conn, conn:
+        row = conn.execute(
+            "SELECT role, join_code FROM users WHERE id=?", (user_id,)
+        ).fetchone()
+        if row is None or row["role"] != TEACHER:
+            return None
+        if row["join_code"]:
+            return row["join_code"]
+
+        for _ in range(40):
+            code = _mint_code()
+            try:
+                conn.execute(
+                    "UPDATE users SET join_code=? WHERE id=?", (code, user_id)
+                )
+            except sqlite3.IntegrityError:
+                continue
+            return code
+    raise AuthError("Could not allocate a class code. Try again.")
+
+
+def teacher_by_join_code(code):
+    """The teacher a class code belongs to, or None."""
+    init_auth()
+    code = normalize_join_code(code)
+    if len(code) != CODE_LENGTH:
+        return None
+    with closing(db.get_connection()) as conn:
+        row = conn.execute(
+            "SELECT * FROM users WHERE join_code=? AND role=?", (code, TEACHER)
+        ).fetchone()
+    return _row_to_user(row) if row else None
+
+
+def join_class(student_id, code):
+    """Put a child in the class whose code they typed.
+
+    Typing a second teacher's code moves the child rather than adding them to
+    both: a child sits in one class, and their old teacher stops seeing them.
+    """
+    teacher = teacher_by_join_code(code)
+    if teacher is None:
+        raise AuthError("No class has that code. Check it with your teacher.")
+    db.set_student_teacher(student_id, teacher["id"])
+    return teacher
+
+
+def teacher_of_student(student_id):
+    """The teacher whose class this child is in, or None."""
+    teacher_id = db.get_student_teacher(student_id)
+    return get_user(teacher_id) if teacher_id else None

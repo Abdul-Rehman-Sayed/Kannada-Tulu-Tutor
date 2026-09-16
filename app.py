@@ -151,8 +151,12 @@ def score_recording(sid, concept, wav_bytes):
         "heard": heard,
     }
     if correct:
-        st.session_state.concept = None
-        st.session_state.pop("listen_audio", None)
+        if config.UNLOCK_ALL:
+            _browse_step(concept.get("language") or graph_engine.DEFAULT_LANGUAGE,
+                         1, keep_result=True)
+        else:
+            st.session_state.concept = None
+            st.session_state.pop("listen_audio", None)
 
 
 _POINTS = [
@@ -275,7 +279,8 @@ def _set_language(user, code):
     st.session_state.last_result = None
     st.session_state.pop("listen_audio", None)
     st.session_state.pop("confident_misses", None)
-    for key in [k for k in list(st.session_state.keys()) if k.startswith("rec_")]:
+    for key in [k for k in list(st.session_state.keys())
+                if k.startswith("rec_") or k.startswith("browse_")]:
         st.session_state.pop(key, None)
     st.session_state.view = "app"
     st.rerun()
@@ -312,7 +317,8 @@ def _goto_auth(role, tab):
 
 
 def _login_as(username, password, expected_role):
-    user = auth.login(username, password)
+    with ui.loading("Signing you in…"):
+        user = auth.login(username, password)
     if user["role"] != expected_role:
         actual = "teacher" if user["role"] == auth.TEACHER else "learner"
         raise auth.AuthError(
@@ -404,13 +410,22 @@ def _student_auth():
             u2 = st.text_input("Username", placeholder="letters and numbers")
             p2 = st.text_input("Password", type="password",
                                help=f"At least {auth.MIN_PASSWORD} characters.")
+            code = st.text_input(
+                "Class code", placeholder="from your teacher — optional",
+                help="The short code your teacher reads out. It puts your work "
+                     "on their class list. Leave it blank if you have not been "
+                     "given one; you can join a class later.",
+            )
             make = st.form_submit_button("Create account", type="primary",
                                          width="stretch",
                                          icon=":material/person_add:")
         if make:
             try:
-                _finish_login(auth.register(
-                    u2, p2, display_name=name or u2, role=auth.STUDENT))
+                with ui.loading("Creating your account…"):
+                    created = auth.register(
+                        u2, p2, display_name=name or u2, role=auth.STUDENT,
+                        join_code=code)
+                _finish_login(created)
             except auth.AuthError as e:
                 st.error(str(e), icon=":material/error:")
 
@@ -460,9 +475,11 @@ def _teacher_auth():
                                          icon=":material/person_add:")
         if make:
             try:
-                _finish_login(auth.register(
-                    u2, p2, display_name=name or u2,
-                    role=auth.TEACHER, teacher_pin=pin))
+                with ui.loading("Creating your account…"):
+                    created = auth.register(
+                        u2, p2, display_name=name or u2,
+                        role=auth.TEACHER, teacher_pin=pin)
+                _finish_login(created)
             except auth.AuthError as e:
                 st.error(str(e), icon=":material/error:")
 
@@ -522,8 +539,8 @@ def render_stages(stages):
         return
     cells = []
     for s in stages:
-        cls = {"done": "stg stg-done", "current": "stg stg-now"}.get(
-            s["state"], "stg stg-locked")
+        cls = {"done": "stg stg-done", "current": "stg stg-now",
+               "open": "stg stg-open"}.get(s["state"], "stg stg-locked")
         pct = (s["mastered"] / s["total"] * 100) if s["total"] else 0
         caption = {"locked": "locked",
                    "done": f"all {s['total']} done"}.get(
@@ -772,7 +789,141 @@ def render_feedback():
         )
 
 
+
+
+def _browse_key(language):
+    return f"browse_idx_{language}"
+
+
+def _browse_position(sid, language):
+    """Which card the Back / Next arrows are pointing at.
+
+    It starts wherever the tutor would have put this learner anyway, so
+    opening the app with the lock off lands on exactly the same card as with
+    it on.  The arrows move freely from there.
+    """
+    order = graph_engine.browse_order(language)
+    if not order:
+        return 0, order
+
+    key = _browse_key(language)
+    if key not in st.session_state:
+        nxt = graph_engine.get_next_concept(sid, language)
+        start = 0
+        if nxt:
+            start = next((i for i, d in enumerate(order)
+                          if d["concept_id"] == nxt["concept_id"]), 0)
+        st.session_state[key] = start
+
+    idx = max(0, min(int(st.session_state[key]), len(order) - 1))
+    st.session_state[key] = idx
+    return idx, order
+
+
+def _clear_card_state(keep_result=False):
+    """Forget everything tied to the card being left behind."""
+    if not keep_result:
+        st.session_state.last_result = None
+    st.session_state.pop("listen_audio", None)
+    st.session_state.pop("scored_sig", None)
+    for stale in [k for k in list(st.session_state.keys()) if k.startswith("rec_")]:
+        st.session_state.pop(stale, None)
+
+
+def _browse_step(language, delta, keep_result=False):
+    order = graph_engine.browse_order(language)
+    if not order:
+        return
+    key = _browse_key(language)
+    idx = int(st.session_state.get(key, 0)) + delta
+    st.session_state[key] = max(0, min(idx, len(order) - 1))
+    _clear_card_state(keep_result)
+
+
+def _browse_label(number, concept):
+    word = concept.get("display_word") or concept.get("kannada_word") or ""
+    stage = graph_engine.stage_of(concept)
+    return (f"{number}. {word} — {concept['transliteration']} "
+            f"· {stage['title']}")
+
+
+def render_browse_bar(sid, language):
+    """Back, Next, and a box to jump anywhere in the syllabus.
+
+    TESTING ONLY, and it says so on screen: with the lock off a child could
+    otherwise be looking at a sentence on their first morning and nobody would
+    know the gate had been lifted.
+    """
+    idx, order = _browse_position(sid, language)
+    if not order:
+        return
+    stage = graph_engine.stage_of(order[idx])
+
+    st.markdown(
+        f'<div class="testbar"><span class="tag">Testing</span>'
+        f"<span>The lock is off — every letter, word, phrase and sentence is "
+        f"open. Card <b>{idx + 1}</b> of <b>{len(order)}</b> &nbsp;·&nbsp; "
+        f'stage {stage["number"]}, {_esc(stage["title"].lower())}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    back, jump, fwd = st.columns([1, 2.6, 1], gap="small",
+                                 vertical_alignment="center")
+    with back:
+        if st.button("Back", width="stretch", icon=":material/arrow_back:",
+                     disabled=idx == 0, key=f"browse_back_{language}"):
+            _browse_step(language, -1)
+            st.rerun()
+    with fwd:
+        if st.button("Next", width="stretch", icon=":material/arrow_forward:",
+                     disabled=idx >= len(order) - 1,
+                     key=f"browse_next_{language}"):
+            _browse_step(language, 1)
+            st.rerun()
+    with jump:
+        labels = [_browse_label(i + 1, d) for i, d in enumerate(order)]
+        picked = st.selectbox(
+            "Jump to any concept", labels, index=idx,
+            key=f"browse_jump_{language}_{idx}", label_visibility="collapsed",
+        )
+        chosen = labels.index(picked)
+        if chosen != idx:
+            st.session_state[_browse_key(language)] = chosen
+            _clear_card_state()
+            st.rerun()
+    ui.spacer(10)
+
+
+def _unlocked_stages(stages, concept):
+    """The stage strip with nothing greyed out as shut.
+
+    With the lock off, "locked" on the strip is simply untrue — the learner
+    can be standing inside that stage — so the strip marks whichever stage the
+    card on screen belongs to and lets every other stage show its real tally.
+    """
+    level = (concept or {}).get("level")
+    out = []
+    for s in stages:
+        state = "done" if s["cleared"] >= s["total"] else "open"
+        if s["level"] == level:
+            state = "current"
+        out.append({**s, "state": state})
+    return out
+
+
 def current_concept(student_id, language):
+    if config.UNLOCK_ALL:
+        idx, order = _browse_position(student_id, language)
+        st.session_state.concept = order[idx] if order else None
+        return st.session_state.concept
+
+    if any(k.startswith("browse_") for k in st.session_state):
+        for key in [k for k in list(st.session_state.keys())
+                    if k.startswith("browse_")]:
+            st.session_state.pop(key, None)
+        _clear_card_state()
+        st.session_state.concept = None
+
     if st.session_state.get("concept") is None:
         st.session_state.concept = graph_engine.get_next_concept(student_id, language)
     return st.session_state.concept
@@ -780,7 +931,7 @@ def current_concept(student_id, language):
 
 def _clear_learning_state():
     for k in list(st.session_state.keys()):
-        if k in _SESSION_KEYS or k.startswith("rec_"):
+        if k in _SESSION_KEYS or k.startswith("rec_") or k.startswith("browse_"):
             st.session_state.pop(k, None)
 
 
@@ -791,6 +942,41 @@ def logout():
     st.session_state.pop("language", None)
     st.session_state.view = "landing"
     st.rerun()
+
+
+def _sidebar_class(user):
+    """Which class this learner is in, and the box to join one.
+
+    A child in nobody's class reads on every dashboard exactly like a child
+    who has done no work at all - they are simply not on one.  So the box
+    stays in front of them, with the reason, until they have joined.
+    """
+    student_id = user.get("student_id")
+    if not student_id:
+        return
+
+    teacher = auth.teacher_of_student(student_id)
+    if teacher:
+        st.sidebar.markdown(
+            f'<div class="sb-class"><div class="lbl">Class</div>'
+            f'<div class="nm">{_esc(teacher["display_name"])}</div></div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    with st.sidebar.form("join_class_form"):
+        st.caption("You are not in a class. Your teacher cannot see your work "
+                   "until you join one.")
+        code = st.text_input("Class code", placeholder="e.g. LX7-46M")
+        joined = st.form_submit_button("Join class", width="stretch",
+                                       icon=":material/group_add:")
+    if joined:
+        try:
+            with ui.loading("Joining…"):
+                auth.join_class(student_id, code)
+            st.rerun()
+        except auth.AuthError as e:
+            st.sidebar.error(str(e), icon=":material/error:")
 
 
 def app_sidebar(user, language=None, mastered=None, total=None, by_level=None):
@@ -810,6 +996,9 @@ def app_sidebar(user, language=None, mastered=None, total=None, by_level=None):
         f'<div class="nm">{_esc(user["display_name"])}</div>{lang_line}</div>',
         unsafe_allow_html=True,
     )
+
+    if user["role"] != auth.TEACHER:
+        _sidebar_class(user)
 
     if total:
         st.sidebar.progress(mastered / total if total else 0.0)
@@ -849,7 +1038,11 @@ def student_view(user, language):
     beside = bool(concept) and concept.get("level") == graph_engine.WORDS_LEVEL
     ui.narrow(1080 if beside else 720)
 
-    render_stages(stages)
+    if config.UNLOCK_ALL:
+        render_browse_bar(sid, language)
+        render_stages(_unlocked_stages(stages, st.session_state.get("concept")))
+    else:
+        render_stages(stages)
     render_feedback()
 
     if concept is None:
@@ -877,7 +1070,8 @@ def student_view(user, language):
             st.rerun()
         return
 
-    render_stage_change(stages, concept)
+    if not config.UNLOCK_ALL:
+        render_stage_change(stages, concept)
     stage = next((s for s in stages if s["level"] == concept.get("level")), None)
 
     if beside:
@@ -900,9 +1094,10 @@ def render_lesson_controls(sid, concept, language):
              else "Listen to the word")
     if st.button(label, width="stretch", icon=":material/volume_up:"):
         try:
-            audio_path = media.get_audio(
-                concept["concept_id"], graph_engine.listen_form(concept),
-                lang=graph_engine.language_info(language)["asr"])
+            with ui.loading("Fetching how it sounds…"):
+                audio_path = media.get_audio(
+                    concept["concept_id"], graph_engine.listen_form(concept),
+                    lang=graph_engine.language_info(language)["asr"])
             st.session_state.listen_audio = (concept["concept_id"], audio_path)
         except Exception as e:
             st.error(
@@ -983,7 +1178,8 @@ def _alphabet_chart(student_id, language):
 
 def _cognitive_map(student_id, language, display_name):
     try:
-        plan = cogmap.layout(student_id, language)
+        with ui.loading("Drawing the lesson plan…"):
+            plan = cogmap.layout(student_id, language)
     except Exception:
         return
     if not plan:
@@ -1068,7 +1264,9 @@ def _class_rows(students):
 
 
 def _class_overview(students):
-    rows = _class_rows(students)
+    with ui.loading(f"Adding up {len(students)} "
+                    f"{'child' if len(students) == 1 else 'children'}…"):
+        rows = _class_rows(students)
 
     st.subheader("What needs you today")
     ui.note(
@@ -1079,7 +1277,8 @@ def _class_overview(students):
     _findings(insight.class_findings(safe))
 
     ui.spacer(20)
-    all_attempts = db.get_attempts()
+    ids = [r["_id"] for r in rows]
+    all_attempts = db.get_attempts(student_ids=ids)
     sum_learned = sum(r["Learned"] for r in rows)
     sum_total = sum(r["Concepts"] for r in rows)
     avg_pct = int(round(sum_learned / sum_total * 100)) if sum_total else 0
@@ -1115,13 +1314,13 @@ def _class_overview(students):
         },
     )
 
-    _hardest_concepts()
+    _hardest_concepts(ids)
     _class_trend(all_attempts)
     _class_export(table)
 
 
-def _hardest_concepts():
-    stats = db.get_concept_stats()
+def _hardest_concepts(student_ids=None):
+    stats = db.get_concept_stats(student_ids)
     if not stats:
         return
 
@@ -1238,7 +1437,8 @@ def _student_detail(students):
         )
         language = labels[chosen]
 
-    progress = graph_engine.get_student_progress(sid, language)
+    with ui.loading(f"Looking up {display_name}'s progress…"):
+        progress = graph_engine.get_student_progress(sid, language)
     learned = sum(1 for p in progress if p["mastered"])
     attempted = sum(1 for p in progress if p["attempts"] > 0)
     struggling = [p for p in progress
@@ -1380,27 +1580,99 @@ def _student_detail(students):
     _cognitive_map(sid, language, display_name)
 
 
+def _class_code_panel(code):
+    """The teacher's class code, big enough to read out to a room.
+
+    This is the only thing that puts a child on this dashboard and not on the
+    one next door, so it is the first thing on the page rather than buried in
+    a settings expander.
+    """
+    ui.card(
+        f'<div class="classcode">'
+        f'<div class="lbl">Your class code</div>'
+        f'<div class="code">{_esc(auth.format_join_code(code))}</div>'
+        f"<p>Read this out to your class. A child types it when they create "
+        f"their account, or afterwards in the box on the left of their own "
+        f"screen, and from then on their work appears here.</p>"
+        f"<p class=\"tiny\">It admits a child to your class and nothing else. "
+        f"It is not a password, it opens no dashboard, and it shows nobody "
+        f"else's work.</p>"
+        f"</div>"
+    )
+
+
+def _unassigned_notice(strays, code):
+    """Children who are in nobody's class.
+
+    Everyone who signed up before class codes existed is one of these, and so
+    is anyone who left the box blank.  They are on no dashboard at all, so
+    without saying so here they would simply look lost.  A teacher cannot pull
+    them in - the code is the child's move - so the notice says what to do
+    rather than offering a button that would race the teacher next door.
+    """
+    if not strays:
+        return
+    shown = [s["name"] for s in strays[:12]]
+    more = f", and {len(strays) - 12} more" if len(strays) > 12 else ""
+    ui.spacer(18)
+    st.info(
+        f"**{len(strays)} "
+        f"{'learner is' if len(strays) == 1 else 'learners are'} not in any "
+        f"class yet** — {', '.join(shown)}{more}. Their work is being saved, "
+        f"but it will not show on anyone's dashboard until they enter a class "
+        f"code. Give them yours: **{auth.format_join_code(code)}**.",
+        icon=":material/person_search:",
+    )
+
+
 def teacher_view(user):
+    """One teacher's own class, and nobody else's.
+
+    The dashboard used to list every child in the database, which is fine for
+    one teacher and useless for three: with a shared list no teacher can tell
+    which Ravi is theirs, and every number on the page - the class average, the
+    hardest words, the daily trend - is computed over other people's children.
+    Everything here is now scoped to the roster below.
+    """
     app_sidebar(user)
     st.title("Teacher dashboard")
 
-    students = db.get_all_students()
+    code = auth.ensure_join_code(user["id"])
+    _class_code_panel(code)
+
+    students = db.get_students_for_teacher(user["id"])
+    strays = db.get_unassigned_students()
+
     if not students:
-        st.info("No children yet — ask a learner to create an account and begin.",
-                icon=":material/school:")
+        ui.spacer(18)
+        st.info(
+            "Nobody has joined your class yet. Read your class code out to "
+            "them — a child who enters it appears here straight away.",
+            icon=":material/school:",
+        )
+        _unassigned_notice(strays, code)
         return
 
-    tab_overview, tab_detail = st.tabs(["The class", "One child"])
+    ui.spacer(18)
+    tab_overview, tab_detail = st.tabs(
+        [f"The class ({len(students)})", "One child"])
     with tab_overview:
         _class_overview(students)
+        _unassigned_notice(strays, code)
     with tab_detail:
         _student_detail(students)
 
 
 def main():
-    db.init_db()
-    auth.init_auth()
     ui.inject()
+    if graph_engine.is_loaded():
+        db.init_db()
+        auth.init_auth()
+    else:
+        with ui.loading("Starting the tutor — building the curriculum…"):
+            db.init_db()
+            auth.init_auth()
+            graph_engine.load_graph()
     if not os.environ.get("TUTOR_SKIP_WARMUP"):
         start_model_warmup()
 

@@ -19,3 +19,13 @@ TEACHER_PIN = str(
 )
 
 IS_DEFAULT_PIN = TEACHER_PIN == DEFAULT_PIN
+
+
+def _flag(name, default=False):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in ("", "0", "off", "false", "no")
+
+
+UNLOCK_ALL = _flag("TUTOR_UNLOCK_ALL", default=True)

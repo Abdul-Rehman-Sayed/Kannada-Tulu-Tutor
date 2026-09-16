@@ -59,6 +59,14 @@ def init_db():
         have = {r["name"] for r in conn.execute("PRAGMA table_info(students)")}
         if "language" not in have:
             conn.execute("ALTER TABLE students ADD COLUMN language TEXT")
+        if "teacher_user_id" not in have:
+            conn.execute(
+                "ALTER TABLE students ADD COLUMN teacher_user_id INTEGER"
+            )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_students_teacher "
+            "ON students(teacher_user_id)"
+        )
     global _initialized
     _initialized = True
 
@@ -178,32 +186,51 @@ def get_mastery_rows(student_id):
         return [dict(r) for r in rows]
 
 
-def get_attempts(student_id=None):
+def _class_clause(student_ids, column="student_id"):
+    """SQL that narrows a query to one teacher's class.
+
+    None means every child, which is what the single-teacher app did and what
+    the tests still ask for.  An empty list means a class with nobody in it,
+    and that has to match nothing rather than everything - `IN ()` is not
+    valid SQL, so it becomes a false clause instead.
+    """
+    if student_ids is None:
+        return "", []
+    ids = [int(i) for i in student_ids]
+    if not ids:
+        return " AND 1=0", []
+    return f" AND {column} IN ({','.join('?' for _ in ids)})", ids
+
+
+def get_attempts(student_id=None, student_ids=None):
     _ensure_init()
+    where, params = ["1=1"], []
+    if student_id is not None:
+        where.append("a.student_id = ?")
+        params.append(student_id)
+    clause, extra = _class_clause(student_ids, "a.student_id")
+    params += extra
     with closing(get_connection()) as conn:
-        if student_id is None:
-            rows = conn.execute(
-                "SELECT a.*, s.name AS student_name FROM attempts a "
-                "JOIN students s ON s.id = a.student_id ORDER BY a.timestamp DESC, a.id DESC"
-            ).fetchall()
-        else:
-            rows = conn.execute(
-                "SELECT a.*, s.name AS student_name FROM attempts a "
-                "JOIN students s ON s.id = a.student_id "
-                "WHERE a.student_id=? ORDER BY a.timestamp DESC, a.id DESC",
-                (student_id,),
-            ).fetchall()
+        rows = conn.execute(
+            "SELECT a.*, s.name AS student_name FROM attempts a "
+            "JOIN students s ON s.id = a.student_id "
+            f"WHERE {' AND '.join(where)}{clause} "
+            "ORDER BY a.timestamp DESC, a.id DESC",
+            params,
+        ).fetchall()
         return [dict(r) for r in rows]
 
 
-def get_concept_stats():
+def get_concept_stats(student_ids=None):
     _ensure_init()
+    clause, params = _class_clause(student_ids)
     with closing(get_connection()) as conn:
         rows = conn.execute(
             "SELECT concept_id, COUNT(*) AS tries, "
             "       COUNT(DISTINCT student_id) AS students, "
             "       SUM(correct) AS correct, AVG(score) AS mean_score "
-            "FROM attempts GROUP BY concept_id"
+            f"FROM attempts WHERE 1=1{clause} GROUP BY concept_id",
+            params,
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -263,3 +290,50 @@ def set_student_language(student_id, language):
         conn.execute(
             "UPDATE students SET language=? WHERE id=?", (language, student_id)
         )
+
+
+
+
+def set_student_teacher(student_id, teacher_user_id):
+    _ensure_init()
+    with closing(get_connection()) as conn, conn:
+        conn.execute(
+            "UPDATE students SET teacher_user_id=? WHERE id=?",
+            (teacher_user_id, student_id),
+        )
+
+
+def get_student_teacher(student_id):
+    """The user id of the teacher this child joined, or None."""
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        row = conn.execute(
+            "SELECT teacher_user_id FROM students WHERE id=?", (student_id,)
+        ).fetchone()
+        return (row["teacher_user_id"] if row else None) or None
+
+
+def get_students_for_teacher(teacher_user_id):
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT * FROM students WHERE teacher_user_id=? ORDER BY name",
+            (teacher_user_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_unassigned_students():
+    """Children in no class at all.
+
+    Everyone who signed up before class codes existed lands here, and so does
+    anyone who skipped the code box.  A teacher cannot pull them in - that is
+    the child's move, with the code - but the dashboard has to say they exist,
+    or their work looks like it was lost.
+    """
+    _ensure_init()
+    with closing(get_connection()) as conn:
+        rows = conn.execute(
+            "SELECT * FROM students WHERE teacher_user_id IS NULL ORDER BY name"
+        ).fetchall()
+        return [dict(r) for r in rows]

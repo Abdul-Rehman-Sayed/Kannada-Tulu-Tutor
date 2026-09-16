@@ -232,6 +232,16 @@ def load_graph(language=None, force_reload=False):
     return G
 
 
+def is_loaded():
+    """Has the curriculum graph been built in this process yet?
+
+    The first build parses the vocabulary and wires up every concept, which is
+    slow enough to want a spinner over it; every call after that is free, and
+    a spinner flashing on every rerun would be worse than none at all.
+    """
+    return _GRAPH is not None
+
+
 def concept_info(concept_id):
     G = load_graph()
     return dict(G.nodes[concept_id]) if concept_id in G else None
@@ -629,3 +639,18 @@ def concepts_by_category(language=KANNADA, exclude_letters=True):
         nodes.sort(key=lambda d: (d["difficulty"], d["concept_id"]))
     return dict(sorted(out.items(),
                        key=lambda kv: (min(d["difficulty"] for d in kv[1]), kv[0])))
+
+
+def browse_order(language=DEFAULT_LANGUAGE):
+    """Every concept of one track in the order it is taught.
+
+    The same order `get_next_concept` walks towards, but laid out flat and all
+    at once, with no regard for what the learner has cleared.  Only the
+    unlocked browse mode uses it: the tutor proper never sees past the next
+    card.
+    """
+    G = load_graph(language)
+    ranks = letter_ranks(language)
+    nodes = [dict(d) for _, d in G.nodes(data=True)]
+    nodes.sort(key=lambda d: _teaching_order(d, ranks))
+    return nodes

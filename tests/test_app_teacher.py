@@ -20,7 +20,8 @@ CARD = 'class="card word-card"'
 from tutor import auth
 
 LOGIN_USER, LOGIN_PASS = 0, 1
-NEW_NAME, NEW_USER, NEW_PASS, NEW_PIN = 2, 3, 4, 5
+NEW_NAME, NEW_USER, NEW_PASS = 2, 3, 4
+NEW_PIN = NEW_CODE = 5
 BTN_BACK, BTN_SWITCH, BTN_SIGNIN, BTN_CREATE = 0, 1, 2, 3
 
 FAILURES = []
@@ -40,15 +41,43 @@ def _auth_page(teacher=False):
     return at
 
 
-def _signup(name, user, pw, teacher=False, pin=""):
+def _signup(name, user, pw, teacher=False, pin="", code=""):
     at = _auth_page(teacher=teacher)
     at.text_input[NEW_NAME].set_value(name)
     at.text_input[NEW_USER].set_value(user)
     at.text_input[NEW_PASS].set_value(pw)
     if teacher:
         at.text_input[NEW_PIN].set_value(pin)
+    elif code:
+        at.text_input[NEW_CODE].set_value(code)
     at.button[BTN_CREATE].click().run()
     return at
+
+
+def _code_of(at):
+    """The class code of whoever is signed in, read back from the database."""
+    user = auth.get_user(at.session_state["user"]["id"])
+    return (user or {}).get("join_code")
+
+
+def _join_class(at, code):
+    """Type a class code into the box in the learner's sidebar."""
+    boxes = [t for t in at.text_input if t.label == "Class code"]
+    assert boxes, f"no class-code box on the learner's screen: "                   f"{[t.label for t in at.text_input]}"
+    boxes[0].set_value(auth.format_join_code(code))
+    labels = [b.label for b in at.button]
+    assert "Join class" in labels, f"no Join class button: {labels}"
+    at.button[labels.index("Join class")].click().run()
+    return at
+
+
+def _tables(at):
+    """Only the data tables - the class list, not the prose around it."""
+    return " ".join(f.value.to_csv(index=False) for f in at.dataframe)
+
+
+def _informs(at, phrase):
+    return any(phrase in str(getattr(i, "value", "")) for i in at.info)
 
 
 def _choose_language(at, name="Kannada"):
@@ -99,10 +128,53 @@ def run():
     teacher = _signup("Mrs Rao", "mrs_rao_t", "chalkdust!",
                       teacher=True, pin="teacher-checkpoint-pin")
     check("with the deployer's PIN, the dashboard opens", _shows_dashboard(teacher))
-    check("...and the class list is populated with the real students",
-          "Ravi" in _text(teacher))
+
+    rao_code = _code_of(teacher)
+    check("...and the teacher is given a class code to read out",
+          bool(rao_code) and auth.format_join_code(rao_code) in _text(teacher))
+    check("...and a child who has joined no class is not on the class list",
+          "Ravi" not in _tables(teacher))
+    check("...but the dashboard says that child exists, rather than losing them",
+          _informs(teacher, "not in any class"))
     check("...and no other child's name leaked into the student's own page",
           "Mrs Rao" not in _text(student))
+
+    print("\nA child joining a class with the code:")
+    ravi = _join_class(_choose_language(_signin("ravi_t", "sunflower22")), rao_code)
+    check("the code is accepted and the class shown to the child",
+          "Mrs Rao" in _text(ravi))
+    check("...and the child is not told any other class code",
+          not _informs(ravi, "not in a class"))
+
+    after = _signin("mrs_rao_t", "chalkdust!", teacher=True)
+    check("...and the child now appears on that teacher's class list",
+          "Ravi" in _tables(after))
+
+    print("\nTwo teachers, two classes:")
+    other = _signup("Mr Shetty", "mr_shetty_t", "blackboard!",
+                    teacher=True, pin="teacher-checkpoint-pin")
+    shetty_code = _code_of(other)
+    check("a second teacher gets a different code",
+          bool(shetty_code) and shetty_code != rao_code)
+
+    asha = _join_class(
+        _choose_language(_signup("Asha", "asha_t", "password1")), shetty_code)
+    check("a second child joins the second teacher's class",
+          "Mr Shetty" in _text(asha))
+
+    rao = _signin("mrs_rao_t", "chalkdust!", teacher=True)
+    shetty = _signin("mr_shetty_t", "blackboard!", teacher=True)
+    check("the first teacher sees their own child",
+          "Ravi" in _tables(rao))
+    check("...and NOT the other teacher's child",
+          "Asha" not in _tables(rao))
+    check("the second teacher sees their own child",
+          "Asha" in _tables(shetty))
+    check("...and NOT the first teacher's child",
+          "Ravi" not in _tables(shetty))
+    check("...and neither teacher is shown the other's class code",
+          auth.format_join_code(shetty_code) not in _text(rao)
+          and auth.format_join_code(rao_code) not in _text(shetty))
 
     print("\nSigning back in:")
     check("a teacher signing in at the teacher door returns to the dashboard",

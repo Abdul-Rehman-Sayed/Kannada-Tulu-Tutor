@@ -57,8 +57,8 @@ There are two doors, named for who walks through them.
 |---|---|---|
 | Entry point | **Start learning** | **Teacher sign in** |
 | Sign in with | username + password | username + password |
-| Create an account with | name, username, password | name, username, password, **teacher PIN** |
-| Lands on | the flashcard loop | the class dashboard |
+| Create an account with | name, username, password, *class code (optional)* | name, username, password, **teacher PIN** |
+| Lands on | the flashcard loop | their own class dashboard |
 
 The teacher PIN is a **registration secret**, required once when the account is
 created — not a password typed in front of a classroom on every visit. It appears
@@ -67,6 +67,10 @@ kind of account is refused and explained, so nobody ends up in a view that does
 not match the account they typed.
 
 The teacher PIN defaults to `1234` — **change it** (see *Deploying*).
+
+Accounts live in a SQLite file on whichever machine is running the app, so one
+account does **not** work on a second machine running its own copy — see *An
+account does not follow you to another machine*.
 
 Every password is stored as a **scrypt** hash with a per-user random salt, and
 compared in constant time. The role lives on the user row and is re-read from the
@@ -78,6 +82,41 @@ in one class are routinely both called Ravi. Sign-up allocates a new learner row
 rather than reusing whichever one happens to match by name, and a duplicate shows
 on the dashboard with the username appended — `Ravi`, then `Ravi (ravi_b)` — so a
 teacher can tell them apart.
+
+### Which teacher gets which child
+
+A school runs two or three teachers at once, and a dashboard listing every child
+in the building is no use to any of them: nobody can tell which Ravi is theirs,
+and every class-wide number on the page — the average, the hardest words, the
+daily trend — is computed over other people's children.
+
+So each teacher has a **class code**, and a child belongs to exactly one class.
+
+- A teacher account is given a six-character code when it is created — `GH2-3JQ`,
+  from an alphabet with no `I`, `O`, `0` or `1`, because it gets read out loud and
+  copied off a whiteboard. It is the first thing on their dashboard. Teacher
+  accounts made before class codes existed are given one the next time they sign
+  in, rather than having to be remade.
+- A child types it into the **Class code** box when they create their account, or
+  afterwards into the box in their own sidebar, which stays in front of them until
+  they have joined one. From then on their work appears on that teacher's
+  dashboard and on no other.
+- Typing a second teacher's code **moves** the child rather than adding them to
+  both. A child sits in one class, and their old teacher stops seeing them.
+
+Assignment is deliberately the child's move rather than the teacher's. A teacher
+picking children off a shared list races the teacher next to them for the same
+child, and neither can see what the other has already done.
+
+The code is **not a secret and not a password.** It admits a child to a class and
+does nothing else: it opens no dashboard, needs no password to be useful to its
+owner, and shows nobody else's work. A wrong code is refused *before* the account
+is written, so a mistyped code never leaves a child with a half-made account.
+
+Children who are in no class — everyone who signed up before class codes existed,
+and anyone who left the box blank — are named on every dashboard under a notice
+saying so. Their work is still being recorded; it is simply on nobody's list until
+they enter a code. No teacher can pull them in, which is the same rule as above.
 
 ---
 
@@ -493,6 +532,34 @@ unmastered concept that is ready, so an unpassable one is served forever and the
 rest of the curriculum is unreachable. `tests/test_graph.py` has a regression test
 that drives a learner who answers *everything* wrong and asserts they still progress.
 
+### The lock is currently off
+
+**This build ships with the prerequisite lock lifted.** `UNLOCK_ALL` in
+`tutor/config.py` defaults to `True`, which turns the lesson loop into a browser:
+the card gains **Back** and **Next** arrows and a box that jumps straight to any
+of the 243 Kannada or 161 Tulu concepts, whether or not it has been earned. The
+stage strip stops greying stages out, because with the lock off "locked" is
+simply untrue, and a banner across the top of the card says the lock is lifted —
+otherwise a child could be looking at a sentence on their first morning and
+nobody would know why.
+
+Nothing else changes. Speaking a card still scores it and still writes mastery,
+so anything practised while browsing counts normally.
+
+**To put the lock back**, change that one default to `False`:
+
+```python
+UNLOCK_ALL = _flag("TUTOR_UNLOCK_ALL", default=False)
+```
+
+The arrows, the jump box and the banner all hang off that flag and go with it,
+and a session that was open at the time is pulled back to the card the learner
+had actually reached rather than being left standing in a sentence. `TUTOR_UNLOCK_ALL=off`
+does the same thing for a single run. `browse_mode_tests` in `tests/test_app_boot.py`
+covers both directions — every concept reachable with the flag on, gate and
+banner gone with it off — and the rest of the suite runs locked, because the
+lock is what a classroom actually gets.
+
 ## How progress is measured
 
 Mastery is a **recency-weighted moving average** rather than a running total:
@@ -512,6 +579,14 @@ recogniser actually heard.
 ## The teacher dashboard
 
 The dashboard is read-only over the same database — no recogniser involved.
+
+**It shows one teacher's class and nobody else's.** The roster, the four metrics,
+*What the class finds hardest* and the daily trend are all computed over the
+children who joined *this* teacher's class code (see *Which teacher gets which
+child*); `get_attempts()` and `get_concept_stats()` take the class's student ids
+and filter on them in SQL. An empty class matches nothing rather than everything —
+`IN ()` is not valid SQL, so it becomes a false clause. `test_app_teacher` runs two
+teachers side by side and asserts neither sees the other's child or class code.
 
 ### It is written for a teacher, not for an analyst
 
@@ -576,6 +651,29 @@ from, so a sentence and the number it came from can never disagree.
   repeatable mispronunciation worth correcting directly.
 - A curriculum picker (a child who switched tracks has history on both), the full
   concept list and attempt history behind expanders, and a per-child CSV export.
+
+---
+
+## Nothing on screen is silently busy
+
+Streamlit blocks the whole page while a callback runs, and a blocked page looks
+exactly like a crashed one. Every boundary that can take a visible moment shows a
+spinner with a running clock — `ui.loading()`, one helper, so the wording and the
+counter stay the same everywhere:
+
+| What is being waited for | How long it can take |
+|---|---|
+| Building the curriculum on first boot | ~0.8 s, once per process — and only then; the spinner is skipped on every rerun after it |
+| **Listen**, on a word not yet cached | a network round trip to gTTS; after the first play it is served off disk |
+| Waking the speech recogniser | tens of seconds on a cold start, first time only |
+| Scoring a recording | a second or two |
+| Signing in, creating an account, joining a class | a deliberate scrypt hash, plus the write |
+| Adding up a class, or one child's progress | one graph walk per child — it shows with a full class |
+| Drawing the lesson plan | lays out every concept in the track |
+
+The counter is the point: a spinner with no clock is indistinguishable from a
+frozen tab after about two seconds, and the two slowest things here are well past
+that.
 
 ---
 
@@ -669,6 +767,36 @@ The cache is regenerable and is not kept in the repository.
 
 ## Deploying
 
+### An account does not follow you to another machine
+
+**Known limitation.** Accounts and progress live in one SQLite file,
+`data/tutor.db`, on the machine the app is running on. It is gitignored, so it is
+never pushed and never pulled.
+
+That has a consequence worth stating plainly, because it reads as a login bug:
+
+> If two devices each run `streamlit run app.py`, they each have their **own**
+> database. An account created on one **does not exist** on the other, so signing
+> in there fails with *Incorrect username or password* — which is accurate. The
+> account is not broken; it is not there. The same applies to teacher accounts and
+> to class codes: a code minted on one laptop matches no class on another.
+
+There are three ways this bites, and one of them is data loss:
+
+| How it is run | What happens |
+|---|---|
+| `streamlit run` on each device | Separate databases. Accounts, progress and class codes do not cross. |
+| One deployed URL (Streamlit Community Cloud) | Everyone shares the container's database — until the container restarts or redeploys, which **wipes it**, because `data/tutor.db` is gitignored and is not in the image. |
+| Docker without a volume | The database dies with the container. Mount one: `-v tutor-data:/app/data`. |
+
+**The fix is a database that lives outside the machine** — a hosted Postgres
+(Neon, Supabase) or a hosted SQLite (Turso/libSQL) behind `TUTOR_DB_PATH`'s
+replacement — so that every device talks to the same store. That work is not done
+here: `tutor/db.py` and `tutor/auth.py` both open `sqlite3` connections directly,
+and moving them behind one connection layer is the change that has to happen
+first. Until then, **run the app in one place and have everyone open that URL**,
+over HTTPS so the microphone works.
+
 **Set the teacher PIN.** A default PIN on a public URL is the same as no PIN, and
 the app warns you on the teacher screen until you change it.
 
@@ -729,6 +857,7 @@ uploads. If recordings arrive silent, lower the browser's shields for the site.
 | `TUTOR_WHISPER_MODEL` | *(auto)* | Override the speech model (size, Hub id, or path). |
 | `TUTOR_MIC_GATE` | *on* | Set to `off` to bypass the microphone quality gate. |
 | `TUTOR_SKIP_WARMUP` | *(unset)* | Skip loading the model at boot (used by the tests). |
+| `TUTOR_UNLOCK_ALL` | ***on*** | **Testing.** Lifts the prerequisite lock — see *The lock is currently off*. Set to `off` to put it back. |
 | `TUTOR_CONTACT` | *(unset)* | Your email/URL, sent to Wikimedia when fetching images. |
 
 Everything else lives in `.streamlit/config.toml`: the theme, the 5 MB upload cap
