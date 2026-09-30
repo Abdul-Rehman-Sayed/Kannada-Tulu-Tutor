@@ -26,26 +26,44 @@ def test_audio():
 
 
 def test_images():
-    print("2) Images")
+    print("2) Photographs")
     os.makedirs(media.IMAGE_DIR, exist_ok=True)
 
-    real_name = "real_sample.png"
+    real_name = "real_sample.jpg"
     real_path = os.path.join(media.IMAGE_DIR, real_name)
-    Image.new("RGB", (120, 120), (80, 160, 90)).save(real_path)
+    Image.new("RGB", (120, 90), (80, 160, 90)).save(real_path)
     try:
-        resolved = media.get_image(real_name, label="ಅ")
-        print(f"   real image  -> {resolved}")
-        assert resolved == real_path, "should resolve the real file, not a placeholder"
-        assert "placeholders" not in resolved
+        resolved = media.photo_path(real_name)
+        print(f"   real photo    -> {resolved}")
+        assert resolved == real_path, "should resolve the real file"
+        uri = media.photo_data_uri(real_name)
+        assert uri and uri.startswith("data:image/jpeg;base64,"), uri
+        print(f"   inline        -> {uri[:40]}... ({len(uri)} chars)")
     finally:
         os.remove(real_path)
 
-    ph = media.get_image("definitely_missing.png", label="ಅಮ್ಮ")
-    print(f"   missing img -> {ph}")
-    assert os.path.exists(ph), "placeholder was not created"
-    with Image.open(ph) as im:
-        print(f"   placeholder is a valid {im.size} {im.mode} PNG")
-    print("   -> open the placeholder png to confirm it shows the word on a gray card.")
+    for missing in ("definitely_missing.jpg", "", None):
+        assert media.photo_path(missing) is None, \
+            f"a missing photo must give no picture, not a stand-in: {missing!r}"
+        assert media.photo_data_uri(missing) is None
+    print("   missing photo -> no picture at all (no placeholder card)")
+
+    assert media.photo_credit("") == ""
+
+    import csv
+    vocab = os.path.join(os.path.dirname(media.IMAGE_DIR), "vocabulary.csv")
+    with open(vocab, encoding="utf-8") as f:
+        photos = {r["image_file"] for r in csv.DictReader(f) if r["image_file"]}
+    for name in sorted(photos):
+        assert media.photo_data_uri(name), f"{name} is on a card but does not load"
+        with open(media.CREDITS_PATH, encoding="utf-8") as f:
+            licence = next(r["licence"] for r in csv.DictReader(f)
+                           if r["image_file"] == name)
+        if licence.lower().startswith("cc by"):
+            assert licence in media.photo_credit(name), \
+                f"{name} is {licence} but its card would not credit the author"
+    print(f"   all {len(photos)} card photographs load, and every CC BY one "
+          "carries its credit")
     print()
 
 

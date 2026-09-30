@@ -73,10 +73,12 @@ def alphabet_chart(student_id, language=graph_engine.KANNADA):
             else:
                 status = "not started"
             cells.append({
-                "glyph": node["kannada_word"],
+                "glyph": graph_engine.shown_word(node),
+                "script": "tu" if graph_engine.in_tulu_lipi(node) else "kn",
                 "roman": node["transliteration"],
                 "state": cell_state,
-                "title": f"{node['kannada_word']} ({node['transliteration']}) — "
+                "title": f"{graph_engine.shown_word(node)} "
+                         f"({node['kannada_word']}, {node['transliteration']}) — "
                          f"{status}.",
             })
         if cells:
@@ -139,7 +141,7 @@ def student_findings(student_id, language=graph_engine.KANNADA, name="This child
         nxt = graph_engine.get_next_concept(student_id, language)
         if nxt:
             out.append(_finding(
-                f"Their first lesson will be <b class='kn'>{nxt['display_word']}</b> "
+                f"Their first lesson will be <b class='kn'>{graph_engine.shown_word(nxt)}</b> "
                 f"({nxt['transliteration']}).", do=True))
         return out
 
@@ -206,7 +208,7 @@ def student_findings(student_id, language=graph_engine.KANNADA, name="This child
         out.append(_finding(f"{name} has finished this whole curriculum."))
     else:
         out.append(_finding(
-            f"Next lesson: <b class='kn'>{nxt['display_word']}</b> "
+            f"Next lesson: <b class='kn'>{graph_engine.shown_word(nxt)}</b> "
             f"({nxt['transliteration']} — {nxt['english_meaning']})."))
 
     last = max((row["last_seen"] for row in attempted if row["last_seen"]),
@@ -291,7 +293,7 @@ def hardest_for_class(min_students=2, min_tries=3):
             continue
         out.append({
             "concept_id": stat["concept_id"],
-            "word": info.get("display_word") or info["kannada_word"],
+            "word": graph_engine.shown_word(info),
             "roman": info["transliteration"],
             "meaning": info["english_meaning"],
             "language": info.get("language", graph_engine.KANNADA),

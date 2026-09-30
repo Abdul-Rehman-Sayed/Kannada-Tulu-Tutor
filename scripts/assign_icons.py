@@ -1,13 +1,18 @@
-"""Stamp an `icon` on every row of data/vocabulary.csv.
+"""Decide the picture on every row of data/vocabulary.csv.
 
 Run it after editing the curriculum:  python -m scripts.assign_icons
 
-A letter takes no drawing at all: it is taught on its own, and its card shows
-the letter itself.  It used to borrow the drawing of an example word - the ka
-card showed a lotus, for kamala - which put a word on a card that is meant to
-teach one letter.  A phrase or a sentence takes the drawing of the thing it is
-about ("the cow gives milk" shows the cow).  Everything else is looked up from
-its English meaning.  Rows already carrying an icon are left alone.
+- A letter takes no picture: it is taught on its own.
+- A number draws itself (icon "count:N", the numeral over N beads) and a
+  colour draws itself (icon "red" etc., the colour itself).
+- Everything else shows a real photograph from data/images, or nothing.  A
+  word keeps its photograph only if one was chosen for it (the files that
+  scripts/fetch_images.py writes); a phrase or sentence shows the photograph
+  of what it is about, unless PICTURES gives it its own.  A word with no
+  photograph that shows it plainly - please, wind, salt - gets no picture
+  rather than a near miss.
+
+It is idempotent: run it twice and the file does not change.
 """
 import csv
 import os
@@ -24,23 +29,37 @@ from tutor import illustrations
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VOCAB = os.path.join(BASE, "data", "vocabulary.csv")
+IMAGE_DIR = os.path.join(BASE, "data", "images")
 
-BY_ID = {
-    "P001": "mother", "P002": "house", "P003": "school", "P004": "cow",
-    "P005": "eye", "P006": "fish", "P007": "flower", "P008": "leaf",
-    "P009": "milk", "P010": "sky", "P011": "elephant", "P012": "child",
-    "P013": "fruit", "P014": "friend",
-    "S001": "house", "S002": "book", "S003": "friend", "S004": "school",
-    "S005": "school", "S006": "book", "S007": "milk", "S008": "water",
-    "S009": "rice", "S010": "ball", "S011": "school", "S012": "mother",
-    "S013": "father", "S014": "grandmother", "S015": "brother",
-    "S016": "child", "S017": "cow", "S018": "dog", "S019": "cat",
-    "S020": "fish", "S021": "bird", "S022": "elephant", "S023": "monkey",
-    "S024": "peacock", "S025": "sun", "S026": "moon", "S027": "rain",
-    "S028": "fruit", "S029": "flower", "S030": "eye",
-    "TP001": "house", "TP002": "school", "TP003": "cow", "TP004": "eye",
-    "TP005": "fish", "TP006": "milk",
+PICTURES = {
+    "S005": "S005.jpg", "S006": "S006.jpg", "S007": "S007.jpg",
+    "S008": "S008.jpg", "S009": "S009.jpg", "S010": "S010.jpg",
+    "S011": "S011.jpg", "S014": "S014.jpg", "S016": "S016.jpg",
+    "S017": "S017.jpg", "S018": "S018.jpg", "S019": "S019.jpg",
+    "S020": "S020.jpg", "S021": "S021.jpg", "S023": "S023.jpg",
+    "S028": "S028.jpg",
+    "P005": "W095.jpg", "S030": "W095.jpg", "TP004": "W095.jpg",
+    "P006": "", "TP005": "",
+    "R001": "R001.jpg", "TR001": "R001.jpg", "TR002": "R001.jpg",
 }
+
+
+def picture(row):
+    cid = row["concept_id"]
+    category = row["category"]
+    if category in ("vowels", "consonants"):
+        return "", ""
+    if category == "numbers":
+        icon = row.get("icon", "")
+        if not icon.startswith("count:"):
+            raise SystemExit(f"{cid} is a number with no count: icon")
+        return icon, ""
+    if category == "colours":
+        return illustrations.resolve(row["english_meaning"]) or "", ""
+    photo = PICTURES.get(cid, row.get("image_file", ""))
+    if photo and not os.path.isfile(os.path.join(IMAGE_DIR, photo)):
+        photo = ""
+    return "", photo
 
 
 def main():
@@ -48,45 +67,29 @@ def main():
         reader = csv.DictReader(f)
         columns = list(reader.fieldnames)
         rows = [dict(r) for r in reader]
-
     if "icon" not in columns:
         columns.append("icon")
 
-    stamped, unresolved = 0, []
+    changed = 0
     for row in rows:
-        cid = row["concept_id"]
-        if row.get("icon"):
-            continue
-        if row["category"] in ("vowels", "consonants"):
-            continue
-
-        if cid in BY_ID:
-            icon = BY_ID[cid]
-        else:
-            icon = row["english_meaning"].strip().lower()
-
-        resolved = illustrations.resolve(icon)
-        if not resolved:
-            unresolved.append((cid, row["category"], icon))
-            continue
-        row["icon"] = resolved
-        stamped += 1
+        icon, photo = picture(row)
+        if (row.get("icon", ""), row.get("image_file", "")) != (icon, photo):
+            changed += 1
+        row["icon"], row["image_file"] = icon, photo
 
     with open(VOCAB, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
         w.writeheader()
         w.writerows(rows)
 
-    needs = [r for r in rows
-             if r["category"] not in ("vowels", "consonants")]
-    have = sum(1 for r in needs if r.get("icon"))
-    print(f"  stamped this run : {stamped}")
-    print(f"  rows with a icon : {have} of {len(needs)} "
+    shown = [r for r in rows if r["category"] not in ("vowels", "consonants")]
+    photos = sum(1 for r in shown if r["image_file"])
+    drawn = sum(1 for r in shown if r["icon"])
+    print(f"  rows changed this run : {changed}")
+    print(f"  photographs           : {photos}")
+    print(f"  numbers and colours   : {drawn}")
+    print(f"  no picture            : {len(shown) - photos - drawn} "
           f"(letters take none)")
-    if unresolved:
-        print(f"  no drawing for   : {len(unresolved)}")
-        for cid, cat, icon in unresolved:
-            print(f"    {cid:<7} {cat:<11} {icon}")
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ FAST = [
     ("speech scorer",      [sys.executable, "-m", "tests.test_pronunciation"]),
     ("accounts + hashing", [sys.executable, "-m", "tests.test_auth"]),
     ("curriculum graph",   [sys.executable, "-m", "tests.test_graph"]),
+    ("tulu lipi",          [sys.executable, "-m", "tests.test_tulu_lipi"]),
     ("media + images",     [sys.executable, "-m", "tests.test_media"]),
     ("app boots",          [sys.executable, "-m", "tests.test_app_boot"]),
     ("access separation",  [sys.executable, "-m", "tests.test_app_teacher"]),

@@ -76,22 +76,45 @@ def main(path):
     letters = [r for r in rows
                if (r.get("category") or "").strip() in ("vowels", "consonants")]
 
+    image_dir = os.path.join(os.path.dirname(os.path.abspath(path)), "images")
+    credits_path = os.path.join(image_dir, "CREDITS.csv")
+    credits = {}
+    if os.path.exists(credits_path):
+        with open(credits_path, encoding="utf-8-sig") as f:
+            credits = {c["image_file"]: c for c in csv.DictReader(f)}
+
     if illustrations is not None:
         for r in rows:
             cid = r["concept_id"].strip()
             icon = (r.get("icon") or "").strip()
-            is_letter = (r.get("category") or "").strip() in ("vowels",
-                                                              "consonants")
-            if is_letter:
-                if icon:
+            photo = (r.get("image_file") or "").strip()
+            category = (r.get("category") or "").strip()
+            if category in ("vowels", "consonants"):
+                if icon or photo:
                     problems.append(
-                        f"{cid} is a letter but carries the picture '{icon}' — "
-                        "a letter is taught on its own, with no picture of a "
-                        "word")
-            elif not icon:
-                problems.append(f"{cid} has no icon")
-            elif not illustrations.has(icon):
-                problems.append(f"{cid} icon '{icon}' has no drawing")
+                        f"{cid} is a letter but carries a picture — a letter "
+                        "is taught on its own")
+                continue
+            if category == "numbers" and not icon.startswith("count:"):
+                problems.append(f"{cid} is a number without its counting card")
+            if icon and not illustrations.has(icon):
+                problems.append(f"{cid} icon '{icon}' is not a number or a "
+                                "colour — nothing else is drawn")
+            if icon and photo:
+                problems.append(f"{cid} has both a drawing and a photograph")
+            if photo:
+                if not os.path.isfile(os.path.join(image_dir, photo)):
+                    problems.append(f"{cid} shows {photo}, which is missing")
+                credit = credits.get(photo)
+                if not credit or not (credit.get("licence") and credit.get("source")):
+                    problems.append(f"{cid} shows {photo}, which has no "
+                                    "licence and source in CREDITS.csv")
+
+        used = {(r.get("image_file") or "").strip() for r in rows}
+        if os.path.isdir(image_dir):
+            for name in sorted(os.listdir(image_dir)):
+                if name.lower().endswith(".jpg") and name not in used:
+                    problems.append(f"data/images/{name} is on no card")
 
     for r in letters:
         cid = r["concept_id"].strip()

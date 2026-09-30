@@ -11,6 +11,13 @@ _CSS = f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap');
 
+@font-face{{
+  font-family:'Tulu Mallige';
+  src:url('app/static/fonts/Mallige-v1.4.ttf') format('truetype');
+  unicode-range:U+11380-113FF;
+  font-display:swap;
+}}
+
 :root{{
 
   --ink:#17150F;
@@ -36,8 +43,9 @@ _CSS = f"""
   --warn:{CAUTION}; --warn-bg:#FAF6EA; --warn-brd:#E0D3AE;
 
   --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
-  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --kannada:'Noto Sans Kannada','Nirmala UI','Tunga',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI','Tulu Mallige',sans-serif;
+  --kannada:'Noto Sans Kannada','Nirmala UI','Tunga','Tulu Mallige',sans-serif;
+  --tulu:'Tulu Mallige','Noto Sans Kannada',sans-serif;
 }}
 
 .stApp{{ background:var(--paper); }}
@@ -49,6 +57,7 @@ html,body,[class*="css"],.stMarkdown,button,input,textarea,select{{
 }}
 
 .kn{{ font-family:var(--kannada); }}
+.tu{{ font-family:var(--tulu); }}
 
 h1,h2,h3,h4,.serif{{
   font-family:var(--serif);
@@ -147,6 +156,11 @@ h1,h2,h3,h4,.serif{{
   border-radius:var(--r-sm); overflow:hidden; background:var(--surface);
 }}
 .pic svg{{ display:block; width:100%; height:auto; }}
+.pic img{{ display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; }}
+.pic figcaption{{
+  padding:5px 10px 6px; font-size:10.5px; line-height:1.35; color:var(--faint);
+  text-align:right; border-top:1px solid var(--rule);
+}}
 
 /* The family of words that grows out of the letter, beside the word card. */
 .lw{{
@@ -210,10 +224,17 @@ h1,h2,h3,h4,.serif{{
   border:1px solid var(--rule-strong); border-radius:var(--r-sm);
   background:var(--wash);
 }}
-.letter-tile .kn{{
+.letter-tile .kn,.letter-tile .tu{{
   display:block; font-size:clamp(84px,18vw,132px); line-height:1;
   font-weight:500; color:var(--ink);
 }}
+.letter-tile .tu{{ line-height:1.2; }}
+.letter-tile .also{{
+  display:block; margin-top:10px; font-size:13px; color:var(--muted);
+}}
+.letter-tile .also .kn{{ display:inline; font-size:22px; font-weight:600; color:var(--body); }}
+.isfor .line .l.tu{{ font-family:var(--tulu); }}
+.cell .g.tu{{ font-family:var(--tulu); }}
 
 /* The stages of the syllabus, and where the learner has got to. */
 .stages{{

@@ -1,3 +1,26 @@
+"""The card photographs: python -m scripts.fetch_images
+
+Every photograph on a card was chosen by hand, one at a time, from Wikimedia
+Commons (free licences only), and is named below by its exact file.  A search
+is never trusted to pick: searches for this deck returned pigs for "buffalo",
+the Earth from space for "sea", milk-glass tableware for "milk" and a racist
+caricature for "child drinking milk".  The rule each photograph had to pass:
+
+- it is a real photograph, not a drawing, painting or diagram;
+- a child can tell what the word means from the picture alone;
+- nothing in it is frightening, unkind or unfit for a classroom.
+
+A word with no photograph that passes gets no picture at all - see PICTURES
+in scripts/assign_icons.py for which cards show which photograph.
+
+    python -m scripts.fetch_images                 # fetch what is missing
+    python -m scripts.fetch_images --force         # fetch everything again
+    python -m scripts.fetch_images --contact-sheet # LOOK at them all
+
+Landscape photographs are cropped to 4:3.  Portrait ones are shown whole on
+a blurred copy of themselves, because cropping them cut off heads and tails.
+Credits for every photograph are written to data/images/CREDITS.csv.
+"""
 import argparse
 import csv
 import io
@@ -5,11 +28,10 @@ import json
 import os
 import sys
 import time
-import urllib.error
 import urllib.parse
 import urllib.request
 
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -17,174 +39,138 @@ except Exception:
     pass
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VOCAB = os.path.join(BASE, "data", "vocabulary.csv")
 IMAGE_DIR = os.path.join(BASE, "data", "images")
 CREDITS = os.path.join(IMAGE_DIR, "CREDITS.csv")
 
 API = "https://commons.wikimedia.org/w/api.php"
-
-_CONTACT = os.environ.get("TUTOR_CONTACT", "https://github.com/ - set TUTOR_CONTACT")
-UA = f"KannadaTuluLiteracyTutor/1.0 ({_CONTACT}) python-urllib"
-
-REQUEST_PAUSE = 1.1
-MAX_RETRIES = 4
+UA = ("KannadaTuluTutor/1.0 "
+      "(https://github.com/Abdul-Rehman-Sayed/Major-Project-Attempt-2) python-urllib")
 
 CARD_W, CARD_H = 640, 480
+SOURCE_WIDTH = 1280
+REQUEST_PAUSE = 0.5
 
-_FREE_HINTS = ("cc", "public domain", "pd", "gfdl", "attribution")
+PHOTOS = {
+    "W001.jpg": "File:Mother and Child at Village of West Bengal,India.jpg",
+    "W002.jpg": "File:Father and Daughter - Sundarbans District - South of Kolkata - India (12355917333).jpg",
+    "W003.jpg": "File:Big brother holding little brother's hand walking home from school, Shiraz, Iran (15515926721).jpg",
+    "W004.jpg": "File:Brother sister love.jpg",
+    "W005.jpg": "File:Smiling little boy of Laos.jpg",
+    "W006.jpg": "File:Smiling little girl Mounica.jpg",
+    "W007.jpg": "File:Smiling Baby.jpg",
+    "W008.jpg": "File:Grandpa Smile.jpg",
+    "W009.jpg": "File:Grandmother and daughter.jpg",
+    "W010.jpg": "File:Good Old School Friends (Unsplash).jpg",
+    "W011.jpg": "File:Cow near Bhopal India 01.jpg",
+    "W012.jpg": "File:Indian pariah dog -'Shanu' in village Ghel, District Fatehgarh Sahib, Punjab.jpg",
+    "W013.jpg": "File:Cat August 2010-4.jpg",
+    "W014.jpg": "File:Elephas maximus (Bandipur).jpg",
+    "W015.jpg": "File:Humayun, Marwari Stallion of Virendra Kankariya.jpg",
+    "W016.jpg": "File:Asian water buffalo (Bubalus bubalis) Yala.jpg",
+    "W017.jpg": "File:Swaledale Sheep, Lake District, England - June 2009.jpg",
+    "W018.jpg": "File:Mouse white background.jpg",
+    "W019.jpg": "File:Carassius wild golden fish 2013 G1.jpg",
+    "W020.jpg": "File:House sparrow male in Prospect Park (53532).jpg",
+    "W021.jpg": "File:Hen with chicks, Raisen district, MP, India.jpg",
+    "W022.jpg": "File:Bengal tiger (Panthera tigris tigris) female 3 crop.jpg",
+    "W023.jpg": "File:Glass-of-water.jpg",
+    "W025.jpg": "File:Flaming wood.JPG",
+    "W026.jpg": "File:Mumbai-rains.jpg",
+    "W027.jpg": "File:Blue sky and sun.png",
+    "W028.jpg": "File:FullMoon2010.jpg",
+    "W029.jpg": "File:Night Sky Stars Trees 02.jpg",
+    "W030.jpg": "File:Usamljeni jasen - panoramio (cropped).jpg",
+    "W031.jpg": "File:(MHNT) Hibiscus moscheutos - Red swamp rose-mallow flower - Les Martels, Giroussens Tarn.jpg",
+    "W032.jpg": "File:Lisc lipy.jpg",
+    "W033.jpg": "File:Dry Forest SH-80 K Gudi BR Hills Karnataka May24 A7CR 00062.jpg",
+    "W034.jpg": "File:Sea Waves of western Coast.jpg",
+    "W035.jpg": "File:A bowl of rice.jpg",
+    "W036.jpg": "File:Glass of Milk (33657535532).jpg",
+    "W038.jpg": "File:A basket of fruits.jpg",
+    "W039.jpg": "File:Bananas on black background 02.jpg",
+    "W040.jpg": "File:Curd in a traditional Manipuri earthen pot.JPG",
+    "W041.jpg": "File:Würfelzucker -- 2018 -- 3564.jpg",
+    "W042.jpg": "File:2020-05-08 19 34 28 Chapati being made in a pan in the Franklin Farm section of Oak Hill, Fairfax County, Virginia.jpg",
+    "W044.jpg": "File:Close-up photograph of the eye of a baby with reflection of the scene in the pupil.jpg",
+    "W045.jpg": "File:Human right ear (cropped).jpg",
+    "W048.jpg": "File:Right Hand Palm.png",
+    "W049.jpg": "File:People walking on the street in Nairobi, Kenya.jpg",
+    "W050.jpg": "File:06-10-06smile.jpg",
+    "W067.jpg": "File:Lowry and Denis Piers House, Fontainhas - 19th-20th century (4276312842).jpg",
+    "W068.jpg": "File:Goa, India -- Traditional-style wooden door.jpg",
+    "W069.jpg": "File:Set of fourteen side chairs MET DP110780.jpg",
+    "W070.jpg": "File:An Earthen Lamp (Diya).jpg",
+    "W071.jpg": "File:Old Books 01.JPG",
+    "W072.jpg": "File:Govt Primary School Ramgarh, Punjab, India.jpg",
+    "W073.jpg": "File:Pencils hb.jpg",
+    "W074.jpg": "File:Поезд на фоне горы Шатрище. Воронежская область.jpg",
+    "W075.jpg": "File:School bus, Indore.jpg",
+    "W076.jpg": "File:Air India 787-8 (VT-ANB).jpg",
+    "W077.jpg": "File:Mangos - single and halved.jpg",
+    "W078.jpg": "File:Red Apple.jpg",
+    "W079.jpg": "File:Oranges - whole-halved-segment.jpg",
+    "W080.jpg": "File:Green Grape 3.jpg",
+    "W081.jpg": "File:Watermelon.jpg",
+    "W082.jpg": "File:Russet potato cultivar with sprouts.jpg",
+    "W083.jpg": "File:Solanum melongena 24 08 2012 (1).JPG",
+    "W084.jpg": "File:Okra Lady`s Finger.jpg",
+    "W085.jpg": "File:Masala dosa 01.jpg",
+    "W086.jpg": "File:Idli Sambar Food by Ms Ujwala Kasambe DSCN9744 (2).jpg",
+    "W087.jpg": "File:Honey dripper load.jpg",
+    "W088.jpg": "File:Butter block.JPG",
+    "W089.jpg": "File:Bonnet Macaque HD.jpg",
+    "W090.jpg": "File:Rose-ringed parakeet (Psittacula krameri borealis) male Jaipur.jpg",
+    "W091.jpg": "File:Corvus splendens.jpg",
+    "W092.jpg": "File:023 Indian peafowl in Jim Corbett National Park Photo by Giles Laurent.jpg",
+    "W093.jpg": "File:Oryctolagus cuniculus Rcdo.jpg",
+    "W094.jpg": "File:Funambulus palmarum (Bengaluru).jpg",
+    "W095.jpg": "File:A child in India (cropped).jpg",
+    "W096.jpg": "File:Girl with long black hair, rear view.jpg",
+    "W097.jpg": "File:Index finger = to attention.JPG",
+    "W098.jpg": "File:Cumulus clouds in Russia. img 058.jpg",
+    "W099.jpg": "File:Kali River 620.JPG",
+    "W100.jpg": "File:Cirrus uncinus clouds in the morning sky.jpg",
+    "W101.jpg": "File:Five Pebbles.jpg",
+    "W102.jpg": "File:Cozy bedroom with a large bed and simple decor in a modern home.jpg",
+    "W103.jpg": "File:Fischerkirche (window), Born a. Darß.jpg",
+    "W104.jpg": "File:Clock at the Malching S-Bahn station 02.jpg",
+    "W105.jpg": "File:Just a soccer ball (34782492153).jpg",
+    "W106.jpg": "File:Blue Business Shirt.jpg",
+    "W107.jpg": "File:Woman with a Sparkler.jpg",
+    "W108.jpg": "File:Audi e-tron (Edit1).jpg",
+    "R001.jpg": "File:Namaste a greetngs gesture by a local lady while meeting whom she knew at Okhaldunga Nepal IMG 3068.jpg",
+    "S005.jpg": "File:School on a rainy day.jpg",
+    "S006.jpg": "File:A child reading a book by Pratham Books - Flickr - Pratham Books (2).jpg",
+    "S007.jpg": "File:Sipahh - girl.jpg",
+    "S008.jpg": "File:Boy drinks water from glass in a cozy home environment.jpg",
+    "S009.jpg": "File:Mahima 2 years old Tamil child eating rice.jpg",
+    "S010.jpg": "File:Child playing football.jpg",
+    "S011.jpg": "File:School Girls in India.jpg",
+    "S014.jpg": "File:Oma beim Vorlesen.jpg",
+    "S016.jpg": "File:Spinning tire swing with child.jpg",
+    "S017.jpg": "File:Cow milking, rear view, near Mehsana, Gujarat, India.jpg",
+    "S018.jpg": "File:Dog guarding the door of his house.jpg",
+    "S019.jpg": "File:Cute cats drinking milk.jpg",
+    "S020.jpg": "File:Tropical Fish Swimming Underwater (46256605951).jpg",
+    "S021.jpg": "File:Juvenile white-tailed tropicbird flying against blue sky (Niue).jpg",
+    "S023.jpg": "File:006 Baby rhesus macaque in Jim Corbett National Park Photo by Giles Laurent.jpg",
+    "S028.jpg": "File:Mangifera indica var. José.JPG",
+}
+
+FOCUS = {}
 
 
-def _open(url, timeout=30):
+def _open(url, timeout=60):
     delay = 2.0
-    last = None
-    for _ in range(MAX_RETRIES):
+    for attempt in range(5):
         req = urllib.request.Request(url, headers={"User-Agent": UA})
         try:
             return urllib.request.urlopen(req, timeout=timeout).read()
-        except urllib.error.HTTPError as e:
-            last = e
-            if e.code == 429:
-                wait = float(e.headers.get("Retry-After") or delay)
-                print(f"        rate-limited; waiting {wait:.0f}s")
-                time.sleep(min(wait, 60))
-                delay *= 2
-                continue
-            if 500 <= e.code < 600:
-                time.sleep(delay)
-                delay *= 2
-                continue
-            raise
-        except urllib.error.URLError as e:
-            last = e
+        except Exception:
+            if attempt == 4:
+                raise
             time.sleep(delay)
             delay *= 2
-    raise last
-
-
-def _get(params):
-    url = API + "?" + urllib.parse.urlencode({**params, "format": "json"})
-    return json.loads(_open(url))
-
-
-def _is_free(licence):
-    lic = (licence or "").strip().lower()
-    if not lic:
-        return False
-    return any(h in lic for h in _FREE_HINTS)
-
-
-WIKI_API = "https://en.wikipedia.org/w/api.php"
-
-OVERRIDE = {
-    "V01": ("wiki", "Mother"),
-    "V03": ("wiki", "House mouse"),
-    "V05": ("wiki", "Salt"),
-    "V07": ("wiki", "Rishi"),
-    "V12": ("commons", "child reading book"),
-    "C07": ("wiki", "Chital"),
-    "C11": ("commons", "metal tin box"),
-    "C13": ("commons", "archery arrow"),
-    "C14": ("commons", "boy face portrait smiling"),
-    "C15": ("wiki", "Children's literature"),
-    "C20": ("wiki", "Fruit"),
-    "C24": ("wiki", "Machine"),
-    "C30": ("wiki", "Sun"),
-    "C32": ("commons", "rain drops falling"),
-    "W001": ("wiki", "Mother"),
-    "W002": ("wiki", "Father"),
-    "W003": ("wiki", "Sibling"),
-    "W004": ("wiki", "Sibling"),
-    "W005": ("wiki", "Boy"),
-    "W006": ("wiki", "Girl"),
-    "W007": ("commons", "smiling child portrait"),
-    "W009": ("commons", "grandmother portrait"),
-    "W010": ("wiki", "Friendship"),
-    "W016": ("wiki", "Pig"),
-    "W018": ("wiki", "House mouse"),
-    "W020": ("wiki", "House sparrow"),
-    "W026": ("commons", "rain drops falling"),
-    "W027": ("wiki", "Sun"),
-    "W031": ("wiki", "Flower"),
-    "W034": ("wiki", "Ocean"),
-    "W035": ("commons", "cooked rice bowl"),
-    "W036": ("wiki", "Milk"),
-    "W038": ("wiki", "Fruit"),
-    "W042": ("wiki", "Roti"),
-    "W043": ("commons", "boy face portrait smiling"),
-    "W044": ("wiki", "Human eye"),
-    "W045": ("wiki", "Ear"),
-    "W046": ("wiki", "Human nose"),
-    "W047": ("wiki", "Lip"),
-    "W048": ("wiki", "Hand"),
-    "W049": ("commons", "human legs walking jeans"),
-    "W050": ("wiki", "Human tooth"),
-    "W068": ("commons", "wooden door house"),
-}
-
-
-def search_wikipedia_image(query, title=None):
-    if title:
-        params = {"action": "query", "titles": title}
-    else:
-        params = {"action": "query", "generator": "search",
-                  "gsrsearch": query, "gsrlimit": 1, "gsrnamespace": 0}
-    params.update({"prop": "pageimages", "piprop": "thumbnail|name", "pithumbsize": 800})
-
-    url = WIKI_API + "?" + urllib.parse.urlencode({**params, "format": "json"})
-    data = json.loads(_open(url))
-    pages = (data.get("query") or {}).get("pages") or {}
-    for page in pages.values():
-        thumb = (page.get("thumbnail") or {}).get("source")
-        fname = page.get("pageimage")
-        if not thumb or not fname:
-            continue
-        licence, author = _commons_licence(f"File:{fname}")
-        if not _is_free(licence):
-            continue
-        return thumb, licence, author, f"File:{fname}"
-    return None, None, None, None
-
-
-def _commons_licence(file_title):
-    try:
-        data = _get({"action": "query", "titles": file_title,
-                     "prop": "imageinfo", "iiprop": "extmetadata"})
-    except Exception:
-        return "", ""
-    for page in ((data.get("query") or {}).get("pages") or {}).values():
-        meta = ((page.get("imageinfo") or [{}])[0]).get("extmetadata") or {}
-        return (
-            (meta.get("LicenseShortName") or {}).get("value", ""),
-            _strip_html((meta.get("Artist") or {}).get("value", "")),
-        )
-    return "", ""
-
-
-def search_image(query):
-    data = _get({
-        "action": "query",
-        "generator": "search",
-        "gsrsearch": f"filetype:bitmap {query}",
-        "gsrnamespace": 6,
-        "gsrlimit": 8,
-        "prop": "imageinfo",
-        "iiprop": "url|extmetadata",
-        "iiurlwidth": 800,
-    })
-    pages = (data.get("query") or {}).get("pages") or {}
-    ordered = sorted(pages.values(), key=lambda p: p.get("index", 999))
-
-    for page in ordered:
-        info = (page.get("imageinfo") or [{}])[0]
-        meta = info.get("extmetadata") or {}
-        licence = (meta.get("LicenseShortName") or {}).get("value", "")
-        author = (meta.get("Artist") or {}).get("value", "")
-        url = info.get("thumburl") or info.get("url")
-        if not url or not _is_free(licence):
-            continue
-        author = _strip_html(author)
-        return url, licence, author, page.get("title", "")
-    return None, None, None, None
 
 
 def _strip_html(s):
@@ -196,225 +182,141 @@ def _strip_html(s):
             depth = max(0, depth - 1)
         elif depth == 0:
             out.append(ch)
-    return " ".join("".join(out).split())[:120]
+    return " ".join("".join(out).split())[:80]
 
 
-def download_card(url, dest):
-    raw = _open(url, timeout=60)
-    img = Image.open(io.BytesIO(raw))
-    img = ImageOps.exif_transpose(img)
-    img = img.convert("RGB")
-    img = ImageOps.fit(img, (CARD_W, CARD_H), method=Image.LANCZOS, centering=(0.5, 0.4))
-    tmp = dest + ".part"
-    img.save(tmp, "JPEG", quality=86, optimize=True)
-    os.replace(tmp, dest)
+def image_info(titles):
+    params = {"action": "query", "titles": "|".join(titles), "prop": "imageinfo",
+              "iiprop": "url|extmetadata", "iiurlwidth": SOURCE_WIDTH,
+              "format": "json"}
+    data = json.loads(_open(API + "?" + urllib.parse.urlencode(params)))
+    query = data.get("query") or {}
+    found = {}
+    for page in query.get("pages", {}).values():
+        info = (page.get("imageinfo") or [{}])[0]
+        meta = info.get("extmetadata") or {}
+        found[page.get("title")] = {
+            "url": info.get("thumburl") or info.get("url"),
+            "licence": (meta.get("LicenseShortName") or {}).get("value", ""),
+            "author": _strip_html((meta.get("Artist") or {}).get("value", "")),
+        }
+    for norm in query.get("normalized", []):
+        if norm["to"] in found:
+            found[norm["from"]] = found[norm["to"]]
+    return found
 
 
-def load_rows():
-    with open(VOCAB, encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+def card(raw, focus=0.45):
+    img = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+    if img.width / img.height >= 1.15:
+        return ImageOps.fit(img, (CARD_W, CARD_H), Image.LANCZOS, centering=(0.5, focus))
+    ground = ImageOps.fit(img, (CARD_W, CARD_H), Image.LANCZOS)
+    ground = ground.filter(ImageFilter.GaussianBlur(28))
+    ground = Image.blend(ground, Image.new("RGB", ground.size, (245, 243, 236)), 0.35)
+    img.thumbnail((CARD_W, CARD_H), Image.LANCZOS)
+    ground.paste(img, ((CARD_W - img.width) // 2, (CARD_H - img.height) // 2))
+    return ground
 
 
-_SWATCHES = {
-    "red": (208, 63, 52), "green": (46, 139, 87), "yellow": (240, 190, 40),
-    "blue": (52, 110, 200), "black": (38, 40, 48), "white": (250, 250, 252),
-}
-
-_KN_DIGITS = "೦೧೨೩೪೫೬೭೮೯"
-_NUMBERS = {
-    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
-    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
-}
+def load_credits():
+    if not os.path.exists(CREDITS):
+        return {}
+    with open(CREDITS, encoding="utf-8-sig", newline="") as f:
+        return {r["image_file"]: r for r in csv.DictReader(f)}
 
 
-def _kn_numeral(n):
-    return "".join(_KN_DIGITS[int(d)] for d in str(n))
+def write_credits(credits):
+    with open(CREDITS, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["image_file", "title", "licence",
+                                          "author", "source"])
+        w.writeheader()
+        for name in sorted(credits):
+            if name in PHOTOS:
+                w.writerow({k: credits[name].get(k, "") for k in w.fieldnames})
 
 
-def draw_colour_card(meaning, dest):
-    rgb = _SWATCHES[meaning]
-    img = Image.new("RGB", (CARD_W, CARD_H), (250, 250, 252))
-    d = ImageDraw.Draw(img)
-    m = 48
-    luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
-    outline = (120, 126, 140) if luma > 200 else (255, 255, 255)
-    d.rounded_rectangle([m, m, CARD_W - m, CARD_H - m], radius=28, fill=rgb,
-                        outline=outline, width=3)
-    img.save(dest, "JPEG", quality=92)
-
-
-def draw_number_card(meaning, dest):
-    from PIL import ImageDraw
-    n = _NUMBERS[meaning]
-    img = Image.new("RGB", (CARD_W, CARD_H), (250, 250, 252))
-    d = ImageDraw.Draw(img)
-
-    cols = 5
-    rows_n = (n + cols - 1) // cols
-    r, gap = 34, 26
-    grid_h = rows_n * (2 * r) + (rows_n - 1) * gap
-    top = (CARD_H - grid_h) / 2 + 40
-    for i in range(n):
-        row, col = divmod(i, cols)
-        in_row = min(cols, n - row * cols)
-        grid_w = in_row * (2 * r) + (in_row - 1) * gap
-        left = (CARD_W - grid_w) / 2
-        cx = left + col * (2 * r + gap) + r
-        cy = top + row * (2 * r + gap) + r
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(92, 107, 192))
-
-    numeral = _kn_numeral(n)
-    font = _card_font(96)
-    box = d.textbbox((0, 0), numeral, font=font)
-    d.text(((CARD_W - (box[2] - box[0])) / 2, 26), numeral, fill=(43, 45, 66), font=font)
-    img.save(dest, "JPEG", quality=92)
-
-
-def _card_font(size):
-    from PIL import ImageFont
-    for path in (
-        r"C:\Windows\Fonts\Nirmala.ttc",
-        r"C:\Windows\Fonts\Tunga.ttf",
-        "/usr/share/fonts/truetype/noto/NotoSansKannada-Regular.ttf",
-    ):
-        if os.path.exists(path):
-            try:
-                return ImageFont.truetype(path, size)
-            except Exception:
+def fetch(names, force=False):
+    credits = load_credits()
+    todo = [n for n in names
+            if force or n not in credits or "title" not in credits[n]
+            or not os.path.exists(os.path.join(IMAGE_DIR, n))]
+    failed = []
+    for i in range(0, len(todo), 20):
+        batch = todo[i:i + 20]
+        info = image_info([PHOTOS[n] for n in batch])
+        for name in batch:
+            title = PHOTOS[name]
+            meta = info.get(title)
+            if not meta or not meta["url"]:
+                failed.append((name, "not found on Commons"))
                 continue
-    return ImageFont.load_default()
+            try:
+                dest = os.path.join(IMAGE_DIR, name)
+                card(_open(meta["url"]), FOCUS.get(name, 0.45)).save(
+                    dest + ".part", "JPEG", quality=85, optimize=True, progressive=True)
+                os.replace(dest + ".part", dest)
+            except Exception as e:
+                failed.append((name, str(e)))
+                continue
+            credits[name] = {
+                "image_file": name, "title": title, "licence": meta["licence"],
+                "author": meta["author"] or "unknown",
+                "source": "https://commons.wikimedia.org/wiki/"
+                          + urllib.parse.quote(title.replace(" ", "_")),
+            }
+            print(f"  {name:9} {meta['licence']:14} {title[5:70]}")
+            time.sleep(REQUEST_PAUSE)
+    write_credits(credits)
+    return failed
 
 
-def draw_local(row, dest):
-    meaning = (row.get("english_meaning") or "").strip().lower()
-    if row.get("category") == "colours" and meaning in _SWATCHES:
-        draw_colour_card(meaning, dest)
-        return True
-    if row.get("category") == "numbers" and meaning in _NUMBERS:
-        draw_number_card(meaning, dest)
-        return True
-    return False
-
-
-def contact_sheet(rows, per_page=36):
-    from PIL import ImageDraw
-
-    have = [r for r in rows if os.path.exists(os.path.join(IMAGE_DIR, r["image_file"]))]
-    if not have:
-        sys.exit("No images fetched yet.")
-
-    cols, thumb, cap = 6, 190, 30
-    font = _card_font(15)
-    pages = (len(have) + per_page - 1) // per_page
-    outs = []
-
-    for pg in range(pages):
-        chunk = have[pg * per_page:(pg + 1) * per_page]
-        rows_n = (len(chunk) + cols - 1) // cols
-        sheet = Image.new("RGB", (cols * thumb, rows_n * (thumb + cap)), (250, 250, 252))
-        d = ImageDraw.Draw(sheet)
-        for i, r in enumerate(chunk):
-            x, y = (i % cols) * thumb, (i // cols) * (thumb + cap)
-            im = Image.open(os.path.join(IMAGE_DIR, r["image_file"]))
-            im = ImageOps.fit(im, (thumb - 4, thumb - 4), method=Image.LANCZOS)
-            sheet.paste(im, (x + 2, y + 2))
-            label = f'{r["concept_id"]} {r["english_meaning"]}'[:30]
-            d.text((x + 4, y + thumb + 4), label, fill=(30, 32, 44), font=font)
-        out = os.path.join(BASE, "data", f"contact_sheet_{pg + 1}.jpg")
-        sheet.save(out, "JPEG", quality=85)
-        outs.append(out)
-        print(f"Contact sheet page {pg + 1} ({len(chunk)} images) -> {out}")
-    return outs
+def contact_sheet(names):
+    font = ImageFont.load_default()
+    for path in (r"C:\Windows\Fonts\arial.ttf",
+                 "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"):
+        if os.path.exists(path):
+            font = ImageFont.truetype(path, 15)
+            break
+    have = [n for n in names if os.path.exists(os.path.join(IMAGE_DIR, n))]
+    cols, tw, th, cap, per_page = 6, 240, 180, 22, 42
+    for page in range((len(have) + per_page - 1) // per_page):
+        chunk = have[page * per_page:(page + 1) * per_page]
+        rows = (len(chunk) + cols - 1) // cols
+        sheet = Image.new("RGB", (cols * tw, rows * (th + cap)), "white")
+        draw = ImageDraw.Draw(sheet)
+        for i, name in enumerate(chunk):
+            x, y = (i % cols) * tw, (i // cols) * (th + cap)
+            im = Image.open(os.path.join(IMAGE_DIR, name)).convert("RGB")
+            sheet.paste(im.resize((tw - 4, th - 4)), (x + 2, y + 2))
+            draw.text((x + 4, y + th), name[:-4], fill="black", font=font)
+        out = os.path.join(BASE, "data", f"contact_sheet_{page + 1}.jpg")
+        sheet.save(out, "JPEG", quality=82)
+        print(f"contact sheet -> {out}")
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--force", action="store_true", help="re-fetch images that already exist")
-    ap.add_argument("--only", default="", help="comma-separated concept ids")
+    ap.add_argument("--force", action="store_true", help="fetch every photograph again")
+    ap.add_argument("--only", default="", help="comma-separated image files, e.g. W001.jpg")
     ap.add_argument("--contact-sheet", action="store_true", help="build a montage and exit")
     args = ap.parse_args()
 
     os.makedirs(IMAGE_DIR, exist_ok=True)
-    rows = load_rows()
-
+    names = list(PHOTOS)
+    if args.only:
+        wanted = {n.strip() for n in args.only.split(",")}
+        names = [n for n in names if n in wanted]
     if args.contact_sheet:
-        contact_sheet(rows)
+        contact_sheet(names)
         return
 
-    if args.only:
-        wanted = {c.strip() for c in args.only.split(",")}
-        rows = [r for r in rows if r["concept_id"] in wanted]
-
-    credits, failed = [], []
-    if os.path.exists(CREDITS):
-        with open(CREDITS, encoding="utf-8-sig") as f:
-            credits = [r for r in csv.DictReader(f)]
-
-    for i, r in enumerate(rows, 1):
-        cid = r["concept_id"]
-        dest = os.path.join(IMAGE_DIR, r["image_file"])
-        query = (r.get("image_query") or r.get("english_meaning") or "").strip()
-
-        if os.path.exists(dest) and not args.force:
-            print(f"[{i:3}/{len(rows)}] {cid:5} have    {r['image_file']}")
-            continue
-
-        try:
-            if draw_local(r, dest):
-                credits = [c for c in credits if c.get("concept_id") != cid]
-                print(f"[{i:3}/{len(rows)}] {cid:5} drawn   {r['english_meaning']}")
-                continue
-        except Exception as e:
-            print(f"[{i:3}/{len(rows)}] {cid:5} ERROR   drawing card: {e}")
-            failed.append((cid, str(e)))
-            continue
-
-        if not query:
-            failed.append((cid, "no image_query"))
-            continue
-
-        try:
-            source, target = OVERRIDE.get(cid, (None, None))
-            if source == "commons":
-                url, licence, author, page = search_image(target)
-            elif source == "wiki":
-                url, licence, author, page = search_wikipedia_image(target, title=target)
-            else:
-                url, licence, author, page = search_wikipedia_image(query)
-                if not url:
-                    url, licence, author, page = search_image(query)
-            if not url:
-                print(f"[{i:3}/{len(rows)}] {cid:5} MISS    no free image for {query!r}")
-                failed.append((cid, f"no free image for {query!r}"))
-                continue
-            download_card(url, dest)
-            credits = [c for c in credits if c.get("concept_id") != cid]
-            credits.append({
-                "concept_id": cid, "image_file": r["image_file"], "query": query,
-                "source_page": page, "licence": licence, "author": author,
-                "source_url": url,
-            })
-            print(f"[{i:3}/{len(rows)}] {cid:5} ok      {query!r} <- {licence}")
-        except Exception as e:
-            print(f"[{i:3}/{len(rows)}] {cid:5} ERROR   {query!r}: {e}")
-            failed.append((cid, str(e)))
-        time.sleep(REQUEST_PAUSE)
-
-    if credits:
-        with open(CREDITS, "w", encoding="utf-8-sig", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=[
-                "concept_id", "image_file", "query", "source_page",
-                "licence", "author", "source_url",
-            ])
-            w.writeheader()
-            w.writerows(sorted(credits, key=lambda c: c["concept_id"]))
-        print(f"\nAttribution for {len(credits)} images -> {CREDITS}")
-
+    failed = fetch(names, args.force)
+    print(f"\n{len(names) - len(failed)} of {len(names)} photographs in place; "
+          f"credits in {CREDITS}")
+    for name, why in failed:
+        print(f"  FAILED {name}: {why}")
     if failed:
-        print(f"\n{len(failed)} concept(s) have no image (the app draws a lettered "
-              f"card for these, so nothing breaks):")
-        for cid, why in failed:
-            print(f"  {cid:5} {why}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

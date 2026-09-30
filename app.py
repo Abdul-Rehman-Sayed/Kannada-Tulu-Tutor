@@ -130,7 +130,7 @@ def score_recording(sid, concept, wav_bytes):
     if outcome == pronunciation.OUTCOME_SOFT:
         misses[cid] = misses.get(cid, 0) + 1
         st.session_state.last_result = {
-            "word": graph_engine.display_word(concept), "expected": expected,
+            "word": graph_engine.shown_word(concept), "expected": expected,
             "translit": concept["transliteration"], "score": score,
             "correct": False, "heard": heard,
         }
@@ -143,7 +143,7 @@ def score_recording(sid, concept, wav_bytes):
 
     graph_engine.update_mastery(sid, cid, correct, raw_score=score, heard=heard)
     st.session_state.last_result = {
-        "word": graph_engine.display_word(concept),
+        "word": graph_engine.shown_word(concept),
         "expected": expected,
         "translit": concept["transliteration"],
         "score": score,
@@ -589,26 +589,32 @@ def render_stage_change(stages, concept):
 
 
 def render_picture(concept):
-    """The drawing above the word.
+    """The picture above the word: a real photograph, or nothing at all.
 
-    Always a drawing from our own library, never a photograph.  The cards used
-    to fall back to photographs fetched off the web for anything not drawn yet,
-    and what came back was not fit to put in front of a child - the bell
-    arrived as a labelled engineering diagram on a black ground.  Nothing
-    reaches a card now that has not been drawn here on purpose; where there is
-    no drawing the library sets the word itself, which is plain but safe.
+    Every photograph was chosen by hand to show the word on its own, so a child
+    can tell what the word means from the picture alone.  A word with no such
+    photograph - please, kindness, father goes to work - gets no picture rather
+    than a near miss, because a wrong picture teaches the wrong word.
 
-    A letter never gets here at all: a letter is taught on its own, and the
-    picture it used to show was borrowed from an example word.
+    Numbers and colours draw their own: the numeral over that many beads, and
+    the colour itself.  A letter never gets a picture: it is taught on its own.
     """
     if graph_engine.is_letter(concept):
         return
-    word = graph_engine.display_word(concept)
-    icon = concept.get("icon") or concept.get("english_meaning", "")
-    st.markdown(
-        f'<div class="pic">{illustrations.render(icon, label=word)}</div>',
-        unsafe_allow_html=True,
-    )
+    image_file = concept.get("image_file")
+    photo = media.photo_data_uri(image_file)
+    if photo:
+        credit = media.photo_credit(image_file)
+        caption = f"<figcaption>{_esc(credit)}</figcaption>" if credit else ""
+        st.markdown(
+            f'<figure class="pic photo"><img src="{photo}" '
+            f'alt="{_esc(concept.get("english_meaning", ""))}">{caption}</figure>',
+            unsafe_allow_html=True,
+        )
+        return
+    drawing = illustrations.render(concept.get("icon"))
+    if drawing:
+        st.markdown(f'<div class="pic">{drawing}</div>', unsafe_allow_html=True)
 
 
 def render_letter_family(concept, language):
@@ -656,7 +662,8 @@ def render_letter_family(concept, language):
 
     st.markdown(
         f'<div class="lw"><div class="lw-hd">'
-        f'<span class="kn">{_esc(letter["kannada_word"])}</span> '
+        f'<span class="{"tu" if graph_engine.in_tulu_lipi(letter) else "kn"}">'
+        f"{_esc(graph_engine.shown_word(letter))}</span> "
         f'words from this letter'
         f'<span class="n">{len(rows)}</span></div>'
         f'<ul class="lw-list">{body}</ul>'
@@ -675,20 +682,41 @@ def render_letter_card(concept):
     no example word, and no picture borrowed from one.  The words come later,
     once the whole alphabet is done.
     """
-    letter = graph_engine.display_word(concept)
+    letter = graph_engine.shown_word(concept)
     kind = "vowel" if concept["category"] == "vowels" else "consonant"
+    script = "tu" if graph_engine.in_tulu_lipi(concept) else "kn"
+
+    also = shared = ""
+    if script == "tu":
+        kannada = graph_engine.display_word(concept)
+        also = (f'<span class="also">In the Kannada script: '
+                f'<span class="kn">{_esc(kannada)}</span></span>')
+        twins = [c for c in graph_engine.letters_in_order(concept["language"])
+                 .get(concept["category"], [])
+                 if c["concept_id"] != concept["concept_id"]
+                 and graph_engine.shown_word(c) == letter]
+        if twins:
+            other = twins[0]
+            shared = (f'<div class="gloss">Tulu lipi writes '
+                      f'<b>{_esc(concept["transliteration"])}</b> and '
+                      f'<b>{_esc(other["transliteration"])}</b> with this one '
+                      f'letter; the Kannada script uses two ('
+                      f'<span class="kn">{_esc(kannada)}</span>, '
+                      f'<span class="kn">{_esc(graph_engine.display_word(other))}'
+                      f"</span>).</div>")
 
     ui.card(
-        f'<div class="letter-tile"><span class="kn">{_esc(letter)}</span></div>'
+        f'<div class="letter-tile"><span class="{script}">{_esc(letter)}</span>'
+        f"{also}</div>"
         f'<div class="translit">{_esc(concept["transliteration"])}</div>'
         f'<div class="meaning">A single {kind} &mdash; learn the sound it '
         f"makes.</div>"
         f'<div class="tags"><span>{_esc(concept["category"])}</span>'
         f'<span>Stage 1 &middot; Letters</span></div>'
         f'<div class="isfor"><p class="lead">Say this</p>'
-        f'<div class="line"><span class="l">{_esc(letter)}</span></div>'
+        f'<div class="line"><span class="l {script}">{_esc(letter)}</span></div>'
         f'<div class="gloss">Just the letter, on its own &mdash; '
-        f'<b>{_esc(concept["transliteration"])}</b></div></div>',
+        f'<b>{_esc(concept["transliteration"])}</b></div>{shared}</div>',
         extra="word-card",
     )
 
@@ -721,10 +749,12 @@ def render_word_card(concept, language=None, stage=None):
     if language:
         parent = graph_engine.letter_of(concept["concept_id"], language)
         if parent and word.startswith(parent["kannada_word"]):
+            script = "tu" if graph_engine.in_tulu_lipi(parent) else "kn"
             grew_html = (
                 f'<div class="isfor"><p class="lead">The letter it grew from'
                 f'</p><div class="line">'
-                f'<span class="l">{_esc(parent["kannada_word"])}</span>'
+                f'<span class="l {script}">'
+                f"{_esc(graph_engine.shown_word(parent))}</span>"
                 f'<span class="j">is for</span>'
                 f'<span class="a">{_esc(word)}</span></div>'
                 f'<div class="gloss">You have already learned '
@@ -841,7 +871,7 @@ def _browse_step(language, delta, keep_result=False):
 
 
 def _browse_label(number, concept):
-    word = concept.get("display_word") or concept.get("kannada_word") or ""
+    word = graph_engine.shown_word(concept)
     stage = graph_engine.stage_of(concept)
     return (f"{number}. {word} — {concept['transliteration']} "
             f"· {stage['title']}")
@@ -1168,7 +1198,7 @@ def _alphabet_chart(student_id, language):
         )
         grid = "".join(
             f'<div class="cell {c["state"]}" title="{_esc(c["title"])}">'
-            f'<div class="g">{_esc(c["glyph"])}</div>'
+            f'<div class="g {c["script"]}">{_esc(c["glyph"])}</div>'
             f'<div class="r">{_esc(c["roman"])}</div></div>'
             for c in cells
         )
@@ -1331,7 +1361,7 @@ def _hardest_concepts(student_ids=None):
             continue
         tries = s["tries"] or 0
         rows.append({
-            "Word": info.get("display_word") or info["kannada_word"],
+            "Word": graph_engine.shown_word(info),
             "Roman": info["transliteration"],
             "Meaning": info["english_meaning"],
             "Language": graph_engine.language_name(info.get("language")),

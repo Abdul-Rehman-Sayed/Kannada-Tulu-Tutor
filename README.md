@@ -191,12 +191,42 @@ not a word list.
 | 3 | Numbers | Numbers 1–50 | 50 |
 | 4 | Phrases | Two-word phrases | 6 |
 
-**Tulu starts at the alphabet too.** Tulu is written in the Kannada script, so
-its letters are the same 45 aksharas — but a Tulu learner is not sent to the
-Kannada track to get them. They are Tulu concepts of their own (`TV01`–`TV13`,
-`TC01`–`TC32`) with their own progress, so a child learning Tulu learns to read
-before they are asked to read a word, and their Tulu record is complete on its
-own. The prerequisite graph still never crosses languages.
+**Tulu starts at its own alphabet, in Tulu lipi.** A Tulu learner is not sent
+to the Kannada track for the letters. They are Tulu concepts of their own
+(`TV01`–`TV13`, `TC01`–`TC32`) with their own progress, so a child learning
+Tulu learns to read before they are asked to read a word, and their Tulu record
+is complete on its own. The prerequisite graph still never crosses languages.
+
+#### Tulu lipi: the alphabet yes, the words not yet
+
+Each Tulu letter card shows the letter in **Tulu lipi** (the Tulu-Tigalari
+script, Unicode block U+11380–U+113FF), with the same letter in the Kannada
+script underneath as a bridge. The teacher's alphabet chart, the "letter it grew
+from" line and the family panel show the Tulu lipi letter too.
+
+- The conversion lives in `tutor/tulu_lipi.py` and follows the Tulu-Tigalari
+  section of the Unicode Standard (§15.18): the virama marks the Tulu *ŭ* at the
+  end of a word, conjuncts are joined with the conjoiner, *ra* before a consonant
+  is the repha. The script has no separate short *e* and *o*, so ಎ/ಏ and ಒ/ಓ
+  share one letter each — those cards say so, and give both Kannada letters.
+- It is **display only.** The recogniser and the speech synthesiser only know
+  the Kannada script, so what is spoken and scored is unchanged.
+- The font is **Mallige** v1.4 by Prahlad Prasad Tantry (SIL OFL 1.1, Reserved
+  Font Name "Mallige"), shipped unmodified in `static/fonts/` with its licence
+  and served by Streamlit's static file serving (`enableStaticServing` in
+  `.streamlit/config.toml`). `unicode-range` means only a page with Tulu lipi
+  on it downloads it. Its glyphs were checked, letter by letter, against the
+  Unicode code chart.
+
+**Tulu words, numbers and phrases stay in the Kannada script.** No freely
+available font can join Unicode Tulu-Tigalari letters yet: Mallige has no
+conjoiner or repha and cannot place the pre-base *e* sign, so ಅಪ್ಪೆ or ಪತ್ತ್ would
+come out broken, and a broken word teaches a wrong spelling. The converter
+already handles words; switching them over needs only a font that shapes the
+script, and a change to `graph_engine.in_tulu_lipi`.
+
+`tests/test_tulu_lipi.py` checks the conversion rules, that all 45 Tulu letters
+are shown in Tulu lipi, and that nothing in Tulu lipi ever reaches the recogniser.
 
 Tulu words are sequenced the same way as Kannada ones: each sits behind the
 Tulu letter it begins with, and the stage runs letter by letter in alphabet
@@ -338,69 +368,75 @@ panel is drawn from the Tulu syllabus alone, because inventing 450 Tulu words to
 fill a column is exactly the kind of guessing the rest of the dataset refuses to
 do.
 
-### The pictures are drawn, not photographed
+### The pictures are real photographs, chosen one at a time
 
-Every card draws itself. `tutor/illustrations.py` holds 242 flat vector
-drawings — one object, bold outline, bright fill, nothing else in the frame,
-in the shape of the primer charts children actually learn from.
+A word card shows a real photograph of the thing itself, so that a child can
+tell what the word means from the picture alone. Every one of the 104
+photographs was picked by hand from Wikimedia Commons (free licences only) and
+looked at before it went on a card. Each had to pass three tests:
 
-This replaced a Wikimedia Commons image search, and it was not a cosmetic
-change. A search API cannot tell the difference between a picture *of* a thing
-and a picture *about* a thing:
+- it is a real photograph — not a drawing, a painting or a diagram;
+- it shows the word plainly, one subject in the frame where possible
+  (a white Indian cow, a single diya, a red hibiscus for "flower");
+- nothing in it is frightening, unkind or unfit for a classroom.
 
-| card | what the search returned |
-|---|---|
-| ಘ — ಘಂಟೆ (bell) | a labelled engineering diagram of a bell, numbered 1–10, on black |
-| ಗ — ಗಿಡ (sapling) | a mature flowering cherry tree in a Swiss meadow |
-| ಭ — ಭೂಮಿ (earth) | a NASA composite of the planet |
-| ಯ — ಯಂತ್ರ (machine) | factory plant, no single object in frame |
+Searching is never trusted to pick. Searches for this deck returned pigs for
+"buffalo", the Earth from space for "sea", milk-glass tableware for "milk", a
+dead rat for "mouse", a child with a bloody nose for "nose", and a racist
+caricature for "child drinking milk". `scripts/fetch_images.py` therefore names
+every photograph by its exact Commons file.
 
-None of those teaches a five-year-old anything. The drawings are ~1–2 KB each,
-stay sharp at any size, need no network, and never need reviewing for licence
-or for what happens to be in the background.
+**A word with no honest photograph gets no picture at all.** A wrong picture
+teaches the wrong word, so these 19 cards show none: *wind* (every candidate
+taught windmill, windsock or kite), *salt* (indistinguishable from sugar or
+sand), *head*, *nose* and *mouth* (they read as "face", or were close-ups unfit
+for children), *three fish* (no photograph shows exactly three), and the
+abstract courtesy words — *please*, *thank you*, *sorry*, *kindness*, *respect*.
 
-Numbers are drawn procedurally: the numeral plus that many counting beads, in
-rows of ten past ten, so twenty-four *looks* like two full rows and four —
-which is how a wall chart teaches place value. `render("count:24")`.
+A sentence shows its own photograph when one shows the action — *I drink milk*,
+*the cat drinks milk*, *grandmother tells a story*, *the monkey climbs the tree*
+— and otherwise the photograph of what it is about (*mother is at home* shows
+the mother). Kinship words are approximated honestly: *elder brother* is a big
+brother holding his little brother's hand, *elder sister* an older girl hugging
+a toddler, *younger brother* and *younger sister* a small boy and a small girl.
 
-**A card never shows a photograph.** It used to fall back to the photograph
-library for anything not yet drawn, and what came back off the web was not fit
-to put in front of a child — the bell arrived as a labelled engineering diagram
-on a black ground. Nothing reaches a card now that was not drawn here on
-purpose; anything undrawn falls back to a clean typographic card showing the
-word itself, which is plain but safe. `validate_dataset` fails the build if a
-row that needs a drawing has none, so the fallback stays theoretical: all 359
-concepts that take a picture have one.
+**Two kinds of card still draw themselves**, because the thing itself can be
+drawn exactly: a **number** is its numeral over that many counting beads, and a
+**colour** is the colour. A photograph of seven mangoes or a red car would teach
+mango, or car. That is all `tutor/illustrations.py` holds now; the 240 flat
+drawings it used to hold are gone. Letters take no picture at all.
 
-Letters take no picture at all. The picture on a letter card used to be
-borrowed from its example word, which is exactly the mixing of letters and
-words that stage one no longer does.
+Numbers are drawn procedurally, in rows of ten past ten, so twenty-four *looks*
+like two full rows and four — which is how a wall chart teaches place value.
+`render("count:24")`.
 
-#### One subject in the frame
+The numeral is written in **Kannada digits** — ೨೪, not 24 — on both tracks.
+Unicode has no Tulu digits of its own (the Tulu-Tigalari block has none, as of
+Unicode 18), and its description of the script says outright that the Kannada
+digits are the ones to use. A Tulu card pairs them with the Tulu number word:
+೨೪ with ಇರ್ವತ್ತ್ ನಾಲ್, where the Kannada card says ಇಪ್ಪತ್ತನಾಲ್ಕು.
 
-A review panel looking at the ಅಮ್ಮ (mother) card said they could not tell what
-it meant, because a child was standing next to the mother in the picture. They
-were right, and the fault was general rather than particular: `mother`,
-`father`, `brother` and `sister` were each drawn as an adult with a smaller
-figure beside them, which made all four nearly the same picture and none of
-them a picture of one thing.
+Counting is taught in the order of the numbers themselves. It used to be sorted
+by difficulty and then by concept id, and since six to ten share a difficulty
+with eleven to twenty and `N011` sorts before `W062`, eleven came straight after
+five. `number_value()` in `graph_engine` now orders the stage, and
+`tests/test_graph.py` fails if either track counts out of order, locked or
+browsed.
 
-Three rules came out of it, and the drawings now hold to them:
+#### Credits
 
-- **One subject to a frame.** Those four are now single figures, told apart by
-  height and dress — a sari and bindi, a moustache, a school shirt, a pinafore
-  with plaits — rather than by who is standing next to whom.
-- **No two letters share a picture.** Three letters (ಓ, ಥ, ಪ) were all showing
-  the same book, so the picture said nothing about which letter the card was
-  teaching. ಓ took ಓಡು (to run) and ಥ took ರಥ (chariot); all 45 letters now
-  carry a distinct drawing.
-- **The picture must be the thing, not its category.** `brinjal` and `okra`
-  were both a generic green blob; they are now drawn as themselves. `head` and
-  `face` were literally the same drawing (`_B["head"] = _B["face"]`) for two
-  different words, ತಲೆ and ಮುಖ; the head is now drawn on a neck and shoulders.
+Most photographs are CC BY or CC BY-SA, which require the author and licence
+to be named where the picture is shown, so each card carries a small credit line
+under its photograph ("Photo: … · CC BY-SA 4.0"); public-domain and CC0 ones
+need none and get none. `data/images/CREDITS.csv` lists every photograph with
+its Commons file, author, licence and source page. The photographs were cropped
+to 4:3 and resized; portrait ones are shown whole on a blurred copy of
+themselves rather than cropped.
 
-`scripts/assign_icons.py` and the letter chart in the tests will tell you if a
-letter loses its own picture again.
+`scripts/assign_icons.py` decides which card shows which picture, and
+`tests/validate_dataset.py` fails the build if a card points at a missing
+photograph, a photograph has no licence recorded, a letter carries a picture, or
+a file in `data/images/` is on no card.
 
 ### Respectful language
 
@@ -726,36 +762,25 @@ recogniser transcribes it perfectly.
 python -m scripts.build_dataset               # curriculum -> data/vocabulary.csv
 python -m scripts.upgrade_curriculum          # numbers 1-50, courtesy words, respectful swaps
 python -m scripts.letters_first               # alphabet first, in both languages
-python -m scripts.assign_icons                # give every row its drawing
+python -m scripts.assign_icons                # give every row its picture
 python -m tests.validate_asr                  # also fills the offline audio cache
 ```
 
 `upgrade_curriculum`, `letters_first` and `assign_icons` are all idempotent —
 run them twice and the file does not change. Run them in that order after any
-edit to the curriculum; `assign_icons` fails loudly, naming the row, if a
-concept ends up with no drawing.
+edit to the curriculum.
 
-The photograph fetcher is still here and still works, but nothing needs it now:
-
-```bash
-python -m scripts.fetch_images                # pictures (free licences only)
-python -m scripts.fetch_images --contact-sheet  # LOOK at them before you ship them
-```
-
-**Look at the contact sheet.** A search API will hand you a blue whale for "mother",
-a heron for "mouse", and a piece of milk-glass tableware for "milk" — all three
-actually happened here. Every image is reviewed, and the ones that needed steering
-are named explicitly in `scripts/fetch_images.py`.
-
-That reasoning is why **every** card is now drawn locally rather than fetched —
-see "The pictures are drawn, not photographed" above. What began as an exception
-for colours and numbers turned out to be the right rule for the whole deck.
-
-To review the drawings, render them to a contact sheet and *look at them*:
+The photographs are fetched by name, not searched for:
 
 ```bash
-python -c "from tutor import illustrations as i; print(len(i.ICONS))"
+python -m scripts.fetch_images                  # fetch any photograph that is missing
+python -m scripts.fetch_images --force          # fetch them all again, and rewrite CREDITS.csv
+python -m scripts.fetch_images --contact-sheet  # LOOK at every card photograph
 ```
+
+**Look at the contact sheet** after any change. To replace a photograph, put its
+exact Commons file name in `PHOTOS` in `scripts/fetch_images.py`, fetch it with
+`--only`, look at it, then run `python -m scripts.assign_icons`.
 
 Spoken audio is generated with gTTS on first use and cached at
 `data/audio/{concept_id}_{hash}.mp3`. The filename carries a hash of the text, so
@@ -858,7 +883,6 @@ uploads. If recordings arrive silent, lower the browser's shields for the site.
 | `TUTOR_MIC_GATE` | *on* | Set to `off` to bypass the microphone quality gate. |
 | `TUTOR_SKIP_WARMUP` | *(unset)* | Skip loading the model at boot (used by the tests). |
 | `TUTOR_UNLOCK_ALL` | ***on*** | **Testing.** Lifts the prerequisite lock — see *The lock is currently off*. Set to `off` to put it back. |
-| `TUTOR_CONTACT` | *(unset)* | Your email/URL, sent to Wikimedia when fetching images. |
 
 Everything else lives in `.streamlit/config.toml`: the theme, the 5 MB upload cap
 that bounds a recording, and the error-detail setting described under *Data and
@@ -896,15 +920,16 @@ names carry the rest: each one states the behaviour it protects.
 | `tutor/graph_engine.py` | The two curricula, sequencing per language, and the no-trap parking rule |
 | `tutor/pronunciation.py` | Speech recognition, romanisation, scoring, and the microphone gate |
 | `tutor/db.py` | SQLite: students, mastery (EMA), attempt history, class aggregates |
-| `tutor/media.py` | Text-to-speech (cached) and image resolution |
-| `tutor/illustrations.py` | The 240 flat card drawings, and the procedural counting cards |
+| `tutor/media.py` | Text-to-speech (cached), card photographs and their credit lines |
+| `tutor/illustrations.py` | The counting cards (numeral in Kannada digits over beads) and colour swatches |
+| `tutor/tulu_lipi.py` | Kannada-script Tulu to Tulu lipi (Tulu-Tigalari), for display |
 | `tutor/cogmap.py` | Lays out the prerequisite graph for the structural view at the foot of a child's page |
 | `tutor/config.py` | The teacher registration PIN, from env or Streamlit secrets |
 | `scripts/build_dataset.py` | **The curriculum itself** — generates `data/vocabulary.csv` |
 | `scripts/upgrade_curriculum.py` | Numbers to 50, courtesy words, and the respectful-language swaps |
 | `scripts/letters_first.py` | Letters taught alone, the Tulu alphabet, every word behind its letter, counting on its own |
-| `scripts/assign_icons.py` | Gives every curriculum row its drawing |
-| `scripts/fetch_images.py` | Free-licensed pictures + attribution, and locally drawn cards |
+| `scripts/assign_icons.py` | Decides every row's picture: photograph, counting card, colour, or none |
+| `scripts/fetch_images.py` | The hand-picked Commons photographs, by exact file, and their credits |
 | `scripts/convert_model.py` | Builds the offline Kannada speech model |
 
 `tutor/` is a package so the teaching code is importable as one unit and cannot be
@@ -924,7 +949,7 @@ run as modules from the root (`python -m scripts.build_dataset`) so that
 | Romanisation | indic-transliteration |
 | Storage | SQLite, via the standard library |
 | Speech synthesis | gTTS, cached to disk |
-| Images | Pillow |
+| Images | Hand-picked Wikimedia Commons photographs, processed with Pillow |
 
 The only neural model in the application is Whisper, used purely for inference and
 run entirely on the local CPU. Everything else is classical: graph traversal, edit

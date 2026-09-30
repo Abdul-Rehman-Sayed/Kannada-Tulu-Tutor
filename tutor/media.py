@@ -1,23 +1,15 @@
+import base64
+import csv
+import functools
 import glob
 import hashlib
 import os
 import tempfile
 
-from PIL import Image, ImageDraw, ImageFont
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AUDIO_DIR = os.path.join(BASE_DIR, "data", "audio")
 IMAGE_DIR = os.path.join(BASE_DIR, "data", "images")
-PLACEHOLDER_DIR = os.path.join(BASE_DIR, "data", "placeholders")
-
-_FONT_CANDIDATES = [
-    r"C:\Windows\Fonts\Nirmala.ttc",
-    r"C:\Windows\Fonts\NirmalaB.ttc",
-    r"C:\Windows\Fonts\Tunga.ttf",
-    "/usr/share/fonts/truetype/noto/NotoSansKannada-Regular.ttf",
-    r"C:\Windows\Fonts\arial.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-]
+CREDITS_PATH = os.path.join(IMAGE_DIR, "CREDITS.csv")
 
 
 def get_audio(concept_id, text, lang="kn"):
@@ -55,68 +47,50 @@ def get_audio(concept_id, text, lang="kn"):
     return path
 
 
-def get_image(image_file, label=None):
-    if image_file:
-        real = os.path.join(IMAGE_DIR, os.path.basename(image_file))
-        if os.path.exists(real):
-            return real
+def photo_path(image_file):
+    """The photograph for a card, or None.
 
-    return _make_placeholder(label or _stem(image_file) or "?", image_file)
+    None is a real answer, not a gap to fill: a card whose word has no
+    photograph that shows it plainly gets no picture at all, rather than a
+    placeholder or a near miss.
+    """
+    if not image_file:
+        return None
+    path = os.path.join(IMAGE_DIR, os.path.basename(image_file))
+    return path if os.path.isfile(path) else None
 
 
-def _stem(filename):
-    if not filename:
+@functools.lru_cache(maxsize=None)
+def _data_uri(path, mtime):
+    with open(path, "rb") as f:
+        return "data:image/jpeg;base64," + base64.b64encode(f.read()).decode("ascii")
+
+
+def photo_data_uri(image_file):
+    path = photo_path(image_file)
+    return _data_uri(path, os.path.getmtime(path)) if path else None
+
+
+@functools.lru_cache(maxsize=1)
+def _credits(mtime):
+    with open(CREDITS_PATH, encoding="utf-8-sig", newline="") as f:
+        return {r["image_file"]: r for r in csv.DictReader(f)}
+
+
+def photo_credit(image_file):
+    """Who took a photograph and under what licence, as one short line.
+
+    Most of the photographs are CC BY or CC BY-SA, which require the author and
+    licence to be named where the picture is shown.  Public-domain ones need no
+    credit and get none.
+    """
+    if not image_file or not os.path.exists(CREDITS_PATH):
         return ""
-    return os.path.splitext(os.path.basename(filename))[0]
-
-
-def _load_font(size):
-    for candidate in _FONT_CANDIDATES:
-        if os.path.exists(candidate):
-            try:
-                return ImageFont.truetype(candidate, size)
-            except Exception:
-                continue
-    return ImageFont.load_default()
-
-
-def _make_placeholder(text, image_file=None):
-    os.makedirs(PLACEHOLDER_DIR, exist_ok=True)
-    key = f"{image_file}|{text}" if image_file else str(text)
-    stem = "".join(c if (c.isascii() and c.isalnum()) else "_" for c in key)[:32]
-    digest = hashlib.md5(key.encode("utf-8")).hexdigest()[:8]
-    path = os.path.join(PLACEHOLDER_DIR, f"ph_{stem}_{digest}.png")
-    if os.path.exists(path):
-        return path
-
-    width, height = 400, 300
-    img = Image.new("RGB", (width, height), (210, 210, 210))
-    draw = ImageDraw.Draw(img)
-
-    draw.rectangle([4, 4, width - 5, height - 5], outline=(150, 150, 150), width=3)
-
-    text = str(text)
-    font = _load_font(56)
-    try:
-        bbox = draw.textbbox((0, 0), text, font=font)
-        tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    except Exception:
-        tw, th = font.getsize(text) if hasattr(font, "getsize") else (len(text) * 20, 40)
-    draw.text(
-        ((width - tw) / 2, (height - th) / 2 - 10),
-        text,
-        fill=(70, 70, 70),
-        font=font,
-    )
-
-    caption = "(image unavailable)"
-    cfont = _load_font(20)
-    try:
-        cb = draw.textbbox((0, 0), caption, font=cfont)
-        cw = cb[2] - cb[0]
-    except Exception:
-        cw = len(caption) * 8
-    draw.text(((width - cw) / 2, height - 44), caption, fill=(120, 120, 120), font=cfont)
-
-    img.save(path)
-    return path
+    row = _credits(os.path.getmtime(CREDITS_PATH)).get(os.path.basename(image_file))
+    if not row:
+        return ""
+    licence = row.get("licence", "").strip()
+    if licence.lower() in ("public domain", "cc0", "pd"):
+        return ""
+    author = row.get("author", "").strip() or "unknown"
+    return f"Photo: {author} · {licence}"

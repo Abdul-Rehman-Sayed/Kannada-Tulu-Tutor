@@ -4,7 +4,7 @@ from collections import deque
 import pandas as pd
 import networkx as nx
 
-from . import db
+from . import db, tulu_lipi
 
 VOCAB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "vocabulary.csv")
 LETTER_WORDS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "letter_words.csv")
@@ -36,8 +36,8 @@ LANGUAGES = {
         "code": TULU,
         "name": "Tulu",
         "native": "ತುಳು",
-        "blurb": "Tulu is written in the Kannada script, so it starts with the "
-                 "same alphabet — then words, counting and phrases.",
+        "blurb": "Starts with the Tulu alphabet in its own script, Tulu lipi "
+                 "— then words, counting and phrases.",
         "asr": "kn",
     },
 }
@@ -57,6 +57,29 @@ def display_word(concept):
     if (concept.get("language") or KANNADA) == TULU:
         return (concept.get("tulu_word") or concept.get("kannada_word") or "").strip()
     return (concept.get("kannada_word") or "").strip()
+
+
+def in_tulu_lipi(concept):
+    """Is this concept shown in Tulu lipi?  The Tulu alphabet is.
+
+    Tulu words stay in the Kannada script for now: the only free font for
+    Unicode Tulu-Tigalari draws every letter but cannot join them, so a word
+    with a conjunct in it would come out broken.  A single letter never needs
+    joining, so the alphabet can be shown in its own script today.
+    """
+    concept = concept or {}
+    return ((concept.get("language") or KANNADA) == TULU
+            and concept.get("category") in ("vowels", "consonants"))
+
+
+def shown_word(concept):
+    """What the learner reads on screen - never what is spoken or scored.
+
+    Speech still runs on the Kannada-script text (the recogniser and the
+    speech synthesiser only know that script), so this is for display alone.
+    """
+    word = display_word(concept or {})
+    return tulu_lipi.convert(word) if in_tulu_lipi(concept) else word
 
 
 LETTERS_LEVEL = "Basic"
@@ -304,6 +327,17 @@ def letter_ranks(language=DEFAULT_LANGUAGE):
     return index
 
 
+def number_value(concept):
+    """The number a counting card teaches (1-50), or None for anything else."""
+    icon = ((concept or {}).get("icon") or "").strip().lower()
+    if not icon.startswith("count:"):
+        return None
+    try:
+        return int(icon.split(":", 1)[1])
+    except ValueError:
+        return None
+
+
 def _teaching_order(node, ranks):
     """Where a concept sits in the syllabus, as a sort key.
 
@@ -312,14 +346,20 @@ def _teaching_order(node, ranks):
     read kamala with most of the alphabet still unlearned.  Sorting by stage
     holds the whole of the letters back until every letter is cleared.
 
-    Then, in the word stage only, the letter the word grew out of - so a child
+    Then, in the word stage, the letter the word grew out of - so a child
     meets all of ka's words together and the panel beside the card stays put
-    while they do.  Counting keeps its own order, which is numeric and has
-    nothing to do with the alphabet.
+    while they do.  Counting goes by the number itself.  Difficulty and id
+    cannot order it: six to ten share a difficulty with eleven to twenty, and
+    N011 sorts before W062, which put eleven straight after five.
     """
     cid = node["concept_id"]
     level = node.get("level")
-    group = ranks.get(cid, 0) if level == WORDS_LEVEL else 0
+    if level == WORDS_LEVEL:
+        group = ranks.get(cid, 0)
+    elif level == NUMBERS_LEVEL:
+        group = number_value(node) or 0
+    else:
+        group = 0
     return (stage_rank(level), group, node["difficulty"], cid)
 
 
@@ -378,7 +418,7 @@ def get_student_progress(student_id, language=DEFAULT_LANGUAGE):
             {
                 "concept_id": cid,
                 "language": node.get("language", KANNADA),
-                "word": node.get("display_word") or node["kannada_word"],
+                "word": shown_word(node),
                 "kannada_word": node["kannada_word"],
                 "tulu_word": node["tulu_word"],
                 "transliteration": node["transliteration"],
@@ -393,7 +433,8 @@ def get_student_progress(student_id, language=DEFAULT_LANGUAGE):
                 "last_seen": r["last_seen"] if r else None,
             }
         )
-    progress.sort(key=lambda p: (p["difficulty"], p["concept_id"]))
+    ranks = letter_ranks(language)
+    progress.sort(key=lambda p: _teaching_order(G.nodes[p["concept_id"]], ranks))
     return progress
 
 
