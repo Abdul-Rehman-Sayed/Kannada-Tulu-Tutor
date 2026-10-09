@@ -6,7 +6,22 @@ __pycache__
 **/__pycache__
 *.pyc
 
-data/tutor.db
+.venv
+venv
+env
+.env
+.env.*
+.vscode
+.idea
+.pytest_cache
+*.log
+
+paper
+
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
 data/placeholders
 data/asr_transcripts.json
 data/contact_sheet*.jpg

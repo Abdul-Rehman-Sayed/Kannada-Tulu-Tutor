@@ -55,13 +55,11 @@ def _signup(name, user, pw, teacher=False, pin="", code=""):
 
 
 def _code_of(at):
-    """The class code of whoever is signed in, read back from the database."""
     user = auth.get_user(at.session_state["user"]["id"])
     return (user or {}).get("join_code")
 
 
 def _join_class(at, code):
-    """Type a class code into the box in the learner's sidebar."""
     boxes = [t for t in at.text_input if t.label == "Class code"]
     assert boxes, f"no class-code box on the learner's screen: "                   f"{[t.label for t in at.text_input]}"
     boxes[0].set_value(auth.format_join_code(code))
@@ -72,7 +70,6 @@ def _join_class(at, code):
 
 
 def _tables(at):
-    """Only the data tables - the class list, not the prose around it."""
     return " ".join(f.value.to_csv(index=False) for f in at.dataframe)
 
 

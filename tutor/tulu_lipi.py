@@ -1,18 +1,3 @@
-"""Tulu written in its own script, Tulu lipi (Tulu-Tigalari, U+11380..U+113FF).
-
-The curriculum stores every Tulu word in the Kannada script, because that is
-what the recogniser hears and what the speech synthesiser reads.  This turns
-that text into Tulu lipi for display, following the Tulu-Tigalari section of
-the Unicode Standard (section 15.18):
-
-- a virama never forms a conjunct: it kills the vowel, or marks the Tulu
-  vowel u at the end of a word (patt(u), nal(u));
-- conjuncts, doubled consonants included, are joined with the conjoiner;
-- ra with no vowel before a consonant is written as the repha;
-- the script does not tell short e and o from long ones, so e and ee both
-  become ee, and o and oo both become oo;
-- digits stay Kannada digits - the standard says so.
-"""
 import unicodedata
 
 VIRAMA = "\U000113CE"
@@ -55,7 +40,6 @@ _DROP = {"‌", "‍", "಼"}
 
 
 def convert(text):
-    """Kannada-script Tulu -> Tulu lipi.  Anything not Kannada passes through."""
     s = unicodedata.normalize("NFC", text or "")
     out = []
     i = 0

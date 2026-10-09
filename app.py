@@ -9,7 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from tutor import (
-    auth, cogmap, config, db, graph_engine, illustrations, insight, media,
+    auth, cogmap, db, graph_engine, illustrations, insight, media,
     pronunciation, ui,
 )
 
@@ -107,7 +107,8 @@ def score_recording(sid, concept, wav_bytes):
         return
 
     expected, alternates = pronunciation.accepted_forms(concept)
-    score, correct = pronunciation.score_pronunciation(expected, heard, alternates)
+    score, correct = pronunciation.score_pronunciation(
+        expected, heard, alternates, rivals=graph_engine.rivals(concept))
 
     cid = concept["concept_id"]
     misses = st.session_state.setdefault("confident_misses", {})
@@ -151,12 +152,8 @@ def score_recording(sid, concept, wav_bytes):
         "heard": heard,
     }
     if correct:
-        if config.UNLOCK_ALL:
-            _browse_step(concept.get("language") or graph_engine.DEFAULT_LANGUAGE,
-                         1, keep_result=True)
-        else:
-            st.session_state.concept = None
-            st.session_state.pop("listen_audio", None)
+        st.session_state.concept = None
+        st.session_state.pop("listen_audio", None)
 
 
 _POINTS = [
@@ -279,8 +276,7 @@ def _set_language(user, code):
     st.session_state.last_result = None
     st.session_state.pop("listen_audio", None)
     st.session_state.pop("confident_misses", None)
-    for key in [k for k in list(st.session_state.keys())
-                if k.startswith("rec_") or k.startswith("browse_")]:
+    for key in [k for k in list(st.session_state.keys()) if k.startswith("rec_")]:
         st.session_state.pop(key, None)
     st.session_state.view = "app"
     st.rerun()
@@ -488,14 +484,6 @@ def _teacher_auth():
                     "the PIN set by whoever deployed this app.",
                     icon=":material/info:")
 
-        if config.IS_DEFAULT_PIN:
-            st.warning(
-                "This deployment is still using the default teacher PIN. Set "
-                "`TUTOR_TEACHER_PIN` (environment variable, or Streamlit secrets) "
-                "before letting students near it.",
-                icon=":material/warning:",
-            )
-
 
 _RETRY_TEXT = {
     pronunciation.TOO_QUIET: (
@@ -530,17 +518,12 @@ _RETRY_TEXT = {
 
 
 def render_stages(stages):
-    """The strip across the top saying which stage the learner is in.
-
-    Letters, then words, then phrases, then sentences - and the learner can
-    see at a glance which one they are on and what is still shut.
-    """
     if not stages:
         return
     cells = []
     for s in stages:
-        cls = {"done": "stg stg-done", "current": "stg stg-now",
-               "open": "stg stg-open"}.get(s["state"], "stg stg-locked")
+        cls = {"done": "stg stg-done", "current": "stg stg-now"}.get(
+            s["state"], "stg stg-locked")
         pct = (s["mastered"] / s["total"] * 100) if s["total"] else 0
         caption = {"locked": "locked",
                    "done": f"all {s['total']} done"}.get(
@@ -563,12 +546,6 @@ def render_stages(stages):
 
 
 def render_stage_change(stages, concept):
-    """Mark the moment a learner crosses from one stage into the next.
-
-    Finishing the alphabet is the biggest thing that happens in this app, and
-    it used to pass without a word: the card simply stopped being a letter and
-    started being a word.
-    """
     level = concept.get("level")
     previous = st.session_state.get("last_level")
     st.session_state.last_level = level
@@ -589,16 +566,6 @@ def render_stage_change(stages, concept):
 
 
 def render_picture(concept):
-    """The picture above the word: a real photograph, or nothing at all.
-
-    Every photograph was chosen by hand to show the word on its own, so a child
-    can tell what the word means from the picture alone.  A word with no such
-    photograph - please, kindness, father goes to work - gets no picture rather
-    than a near miss, because a wrong picture teaches the wrong word.
-
-    Numbers and colours draw their own: the numeral over that many beads, and
-    the colour itself.  A letter never gets a picture: it is taught on its own.
-    """
     if graph_engine.is_letter(concept):
         return
     image_file = concept.get("image_file")
@@ -618,13 +585,6 @@ def render_picture(concept):
 
 
 def render_letter_family(concept, language):
-    """The words that grow out of this word's letter, beside the card.
-
-    A child working through ka meets kamala, then kannu, then kage, and the
-    whole family stays on screen the whole time - so the sound is seen opening
-    word after word, not met once and gone.  The list scrolls, so a long
-    family never pushes the microphone off the screen.
-    """
     letter = graph_engine.letter_of(concept["concept_id"], language)
     if not letter:
         return
@@ -652,13 +612,16 @@ def render_letter_family(concept, language):
 
     body = "".join(item(r, i) for i, r in enumerate(taught, 1))
     if reading:
-        body += ('<li class="lw-split">more words with this letter, to read '
-                 "only</li>")
+        body += ('<li class="lw-split">Extra words · reading practice, '
+                 "not tested</li>")
         body += "".join(item(r, i) for i, r in enumerate(reading, len(taught) + 1))
 
-    foot = (f"You are asked for the first {len(taught)}; the rest are to read."
+    foot = (f"Words 1–{len(taught)} are in the lessons: you will be asked to "
+            f"say each one. Words {len(taught) + 1}–{len(rows)} are extra "
+            f"reading practice and are never tested."
             if reading else
-            f"All {len(taught)} are yours to say, one after another.")
+            f"All {len(taught)} words are in the lessons: you will be asked "
+            f"to say each one, in this order.")
 
     st.markdown(
         f'<div class="lw"><div class="lw-hd">'
@@ -674,14 +637,6 @@ def render_letter_family(concept, language):
 
 
 def render_letter_card(concept):
-    """A letter, on its own.
-
-    The card used to read "a is for amma" and ask the child to say both, which
-    put whole words in front of a child who could not yet read one letter.  A
-    letter card now carries the letter, the sound it makes, and nothing else -
-    no example word, and no picture borrowed from one.  The words come later,
-    once the whole alphabet is done.
-    """
     letter = graph_engine.shown_word(concept)
     kind = "vowel" if concept["category"] == "vowels" else "consonant"
     script = "tu" if graph_engine.in_tulu_lipi(concept) else "kn"
@@ -722,7 +677,6 @@ def render_letter_card(concept):
 
 
 def render_word_card(concept, language=None, stage=None):
-    """A word, a phrase or a sentence, with the letter it grew out of."""
     if graph_engine.is_letter(concept):
         render_letter_card(concept)
         return
@@ -819,141 +773,7 @@ def render_feedback():
         )
 
 
-
-
-def _browse_key(language):
-    return f"browse_idx_{language}"
-
-
-def _browse_position(sid, language):
-    """Which card the Back / Next arrows are pointing at.
-
-    It starts wherever the tutor would have put this learner anyway, so
-    opening the app with the lock off lands on exactly the same card as with
-    it on.  The arrows move freely from there.
-    """
-    order = graph_engine.browse_order(language)
-    if not order:
-        return 0, order
-
-    key = _browse_key(language)
-    if key not in st.session_state:
-        nxt = graph_engine.get_next_concept(sid, language)
-        start = 0
-        if nxt:
-            start = next((i for i, d in enumerate(order)
-                          if d["concept_id"] == nxt["concept_id"]), 0)
-        st.session_state[key] = start
-
-    idx = max(0, min(int(st.session_state[key]), len(order) - 1))
-    st.session_state[key] = idx
-    return idx, order
-
-
-def _clear_card_state(keep_result=False):
-    """Forget everything tied to the card being left behind."""
-    if not keep_result:
-        st.session_state.last_result = None
-    st.session_state.pop("listen_audio", None)
-    st.session_state.pop("scored_sig", None)
-    for stale in [k for k in list(st.session_state.keys()) if k.startswith("rec_")]:
-        st.session_state.pop(stale, None)
-
-
-def _browse_step(language, delta, keep_result=False):
-    order = graph_engine.browse_order(language)
-    if not order:
-        return
-    key = _browse_key(language)
-    idx = int(st.session_state.get(key, 0)) + delta
-    st.session_state[key] = max(0, min(idx, len(order) - 1))
-    _clear_card_state(keep_result)
-
-
-def _browse_label(number, concept):
-    word = graph_engine.shown_word(concept)
-    stage = graph_engine.stage_of(concept)
-    return (f"{number}. {word} — {concept['transliteration']} "
-            f"· {stage['title']}")
-
-
-def render_browse_bar(sid, language):
-    """Back, Next, and a box to jump anywhere in the syllabus.
-
-    TESTING ONLY, and it says so on screen: with the lock off a child could
-    otherwise be looking at a sentence on their first morning and nobody would
-    know the gate had been lifted.
-    """
-    idx, order = _browse_position(sid, language)
-    if not order:
-        return
-    stage = graph_engine.stage_of(order[idx])
-
-    st.markdown(
-        f'<div class="testbar"><span class="tag">Testing</span>'
-        f"<span>The lock is off — every letter, word, phrase and sentence is "
-        f"open. Card <b>{idx + 1}</b> of <b>{len(order)}</b> &nbsp;·&nbsp; "
-        f'stage {stage["number"]}, {_esc(stage["title"].lower())}</span></div>',
-        unsafe_allow_html=True,
-    )
-
-    back, jump, fwd = st.columns([1, 2.6, 1], gap="small",
-                                 vertical_alignment="center")
-    with back:
-        if st.button("Back", width="stretch", icon=":material/arrow_back:",
-                     disabled=idx == 0, key=f"browse_back_{language}"):
-            _browse_step(language, -1)
-            st.rerun()
-    with fwd:
-        if st.button("Next", width="stretch", icon=":material/arrow_forward:",
-                     disabled=idx >= len(order) - 1,
-                     key=f"browse_next_{language}"):
-            _browse_step(language, 1)
-            st.rerun()
-    with jump:
-        labels = [_browse_label(i + 1, d) for i, d in enumerate(order)]
-        picked = st.selectbox(
-            "Jump to any concept", labels, index=idx,
-            key=f"browse_jump_{language}_{idx}", label_visibility="collapsed",
-        )
-        chosen = labels.index(picked)
-        if chosen != idx:
-            st.session_state[_browse_key(language)] = chosen
-            _clear_card_state()
-            st.rerun()
-    ui.spacer(10)
-
-
-def _unlocked_stages(stages, concept):
-    """The stage strip with nothing greyed out as shut.
-
-    With the lock off, "locked" on the strip is simply untrue — the learner
-    can be standing inside that stage — so the strip marks whichever stage the
-    card on screen belongs to and lets every other stage show its real tally.
-    """
-    level = (concept or {}).get("level")
-    out = []
-    for s in stages:
-        state = "done" if s["cleared"] >= s["total"] else "open"
-        if s["level"] == level:
-            state = "current"
-        out.append({**s, "state": state})
-    return out
-
-
 def current_concept(student_id, language):
-    if config.UNLOCK_ALL:
-        idx, order = _browse_position(student_id, language)
-        st.session_state.concept = order[idx] if order else None
-        return st.session_state.concept
-
-    if any(k.startswith("browse_") for k in st.session_state):
-        for key in [k for k in list(st.session_state.keys())
-                    if k.startswith("browse_")]:
-            st.session_state.pop(key, None)
-        _clear_card_state()
-        st.session_state.concept = None
-
     if st.session_state.get("concept") is None:
         st.session_state.concept = graph_engine.get_next_concept(student_id, language)
     return st.session_state.concept
@@ -961,7 +781,7 @@ def current_concept(student_id, language):
 
 def _clear_learning_state():
     for k in list(st.session_state.keys()):
-        if k in _SESSION_KEYS or k.startswith("rec_") or k.startswith("browse_"):
+        if k in _SESSION_KEYS or k.startswith("rec_"):
             st.session_state.pop(k, None)
 
 
@@ -975,12 +795,6 @@ def logout():
 
 
 def _sidebar_class(user):
-    """Which class this learner is in, and the box to join one.
-
-    A child in nobody's class reads on every dashboard exactly like a child
-    who has done no work at all - they are simply not on one.  So the box
-    stays in front of them, with the reason, until they have joined.
-    """
     student_id = user.get("student_id")
     if not student_id:
         return
@@ -1068,11 +882,7 @@ def student_view(user, language):
     beside = bool(concept) and concept.get("level") == graph_engine.WORDS_LEVEL
     ui.narrow(1080 if beside else 720)
 
-    if config.UNLOCK_ALL:
-        render_browse_bar(sid, language)
-        render_stages(_unlocked_stages(stages, st.session_state.get("concept")))
-    else:
-        render_stages(stages)
+    render_stages(stages)
     render_feedback()
 
     if concept is None:
@@ -1100,8 +910,7 @@ def student_view(user, language):
             st.rerun()
         return
 
-    if not config.UNLOCK_ALL:
-        render_stage_change(stages, concept)
+    render_stage_change(stages, concept)
     stage = next((s for s in stages if s["level"] == concept.get("level")), None)
 
     if beside:
@@ -1119,7 +928,6 @@ def student_view(user, language):
 
 
 def render_lesson_controls(sid, concept, language):
-    """Listen, then say it - the part of the card the child actually works."""
     label = ("Listen to the letter" if graph_engine.is_letter(concept)
              else "Listen to the word")
     if st.button(label, width="stretch", icon=":material/volume_up:"):
@@ -1611,12 +1419,6 @@ def _student_detail(students):
 
 
 def _class_code_panel(code):
-    """The teacher's class code, big enough to read out to a room.
-
-    This is the only thing that puts a child on this dashboard and not on the
-    one next door, so it is the first thing on the page rather than buried in
-    a settings expander.
-    """
     ui.card(
         f'<div class="classcode">'
         f'<div class="lbl">Your class code</div>'
@@ -1632,14 +1434,6 @@ def _class_code_panel(code):
 
 
 def _unassigned_notice(strays, code):
-    """Children who are in nobody's class.
-
-    Everyone who signed up before class codes existed is one of these, and so
-    is anyone who left the box blank.  They are on no dashboard at all, so
-    without saying so here they would simply look lost.  A teacher cannot pull
-    them in - the code is the child's move - so the notice says what to do
-    rather than offering a button that would race the teacher next door.
-    """
     if not strays:
         return
     shown = [s["name"] for s in strays[:12]]
@@ -1656,14 +1450,6 @@ def _unassigned_notice(strays, code):
 
 
 def teacher_view(user):
-    """One teacher's own class, and nobody else's.
-
-    The dashboard used to list every child in the database, which is fine for
-    one teacher and useless for three: with a shared list no teacher can tell
-    which Ravi is theirs, and every number on the page - the class average, the
-    hardest words, the daily trend - is computed over other people's children.
-    Everything here is now scoped to the roster below.
-    """
     app_sidebar(user)
     st.title("Teacher dashboard")
 

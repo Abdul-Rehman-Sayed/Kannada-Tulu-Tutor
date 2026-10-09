@@ -13,7 +13,6 @@ os.close(_fd)
 os.environ["TUTOR_DB_PATH"] = _TMP_DB
 os.environ["TUTOR_SKIP_WARMUP"] = "1"
 os.environ["TUTOR_TEACHER_PIN"] = "boot-test-pin"
-os.environ["TUTOR_UNLOCK_ALL"] = "off"
 
 from streamlit.testing.v1 import AppTest
 
@@ -184,11 +183,6 @@ def no_emoji_tests():
 
 
 def word_stage_tests():
-    """The word stage, once the whole alphabet is behind the learner.
-
-    Two things have to be true of it: the letter's family of words is on the
-    screen beside the card, and the card names the letter the word grew out of.
-    """
     from tutor import db, graph_engine
 
     print("\nWord stage:")
@@ -229,88 +223,10 @@ def word_stage_tests():
     return True
 
 
-def browse_mode_tests():
-    """The testing unlock: every concept reachable, by arrow or by jump.
-
-    The rest of this file runs with the lock ON, because the lock is what the
-    app ships to a classroom.  This one test turns it off the way
-    tutor/config.py does and checks the three things that then have to hold:
-    the gate is gone, the arrows move, and the jump box lands where it says.
-    """
-    from tutor import config, graph_engine
-
-    print("\nBrowse mode (TUTOR_UNLOCK_ALL):")
-    at = _choose_language(
-        _signup(_goto_signup(_fresh()), "Tester", "tester_b", "sunflower24"))
-    assert not at.exception, at.exception
-
-    config.UNLOCK_ALL = True
-    try:
-        at.run()
-        assert not at.exception, f"raised with the lock off: {at.exception}"
-
-        order = graph_engine.browse_order(graph_engine.KANNADA)
-        blob = " ".join(m.value for m in at.markdown)
-        assert 'class="testbar"' in blob, \
-            "nothing on screen says the lock has been lifted"
-        assert at.session_state["concept"]["concept_id"] == order[0]["concept_id"], \
-            "a brand-new learner did not start on the first card"
-        print(f"  OK  lock off, banner shown, {len(order)} cards reachable")
-
-        labels = [b.label for b in at.button]
-        assert "Next" in labels and "Back" in labels, \
-            f"the browse arrows are missing: {labels}"
-        at.button[labels.index("Next")].click().run()
-        assert not at.exception, at.exception
-        assert at.session_state["concept"]["concept_id"] == order[1]["concept_id"], \
-            "Next did not move the card on"
-        print(f"  OK  Next moved {order[0]['concept_id']} -> "
-              f"{order[1]['concept_id']}")
-
-        labels = [b.label for b in at.button]
-        at.button[labels.index("Back")].click().run()
-        assert at.session_state["concept"]["concept_id"] == order[0]["concept_id"], \
-            "Back did not move the card back"
-        print("  OK  Back returned to the card before it")
-
-        target = next(i for i, d in reversed(list(enumerate(order)))
-                      if d["level"] == "Sentences")
-        box = at.selectbox[0]
-        box.select(box.options[target]).run()
-        assert not at.exception, f"raised after jumping: {at.exception}"
-        landed = at.session_state["concept"]
-        assert landed["concept_id"] == order[target]["concept_id"], \
-            (f"jump landed on {landed['concept_id']}, "
-             f"not {order[target]['concept_id']}")
-        assert landed["level"] == "Sentences", \
-            "the jump box cannot reach the sentence stage"
-        blob = " ".join(m.value for m in at.markdown)
-        assert CARD in blob, "no card rendered after the jump"
-        print(f"  OK  jumped to a locked-stage sentence "
-              f"({landed['concept_id']}) and it rendered")
-    finally:
-        config.UNLOCK_ALL = False
-
-    at.run()
-    assert not at.exception, at.exception
-    blob = " ".join(m.value for m in at.markdown)
-    assert 'class="testbar"' not in blob, \
-        "the testing banner survived the flag going back to False"
-    labels = [b.label for b in at.button]
-    assert "Next" not in labels and "Back" not in labels, \
-        f"the browse arrows survived the flag going back to False: {labels}"
-    assert at.session_state["concept"]["level"] == "Basic", \
-        "with the lock back on the learner is not returned to the letters"
-    print("  OK  flag back to False: banner, arrows and jump box all gone, "
-          "and the gate is back")
-    return True
-
-
 def run():
     ok = landing_tests()
     ok &= student_journey_tests()
     ok &= word_stage_tests()
-    ok &= browse_mode_tests()
     ok &= teacher_boundary_tests()
     ok &= no_emoji_tests()
     print("\nBoot test PASSED." if ok else "\nBoot test FAILED.")

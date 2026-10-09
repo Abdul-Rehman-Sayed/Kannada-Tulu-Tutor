@@ -187,13 +187,6 @@ def get_mastery_rows(student_id):
 
 
 def _class_clause(student_ids, column="student_id"):
-    """SQL that narrows a query to one teacher's class.
-
-    None means every child, which is what the single-teacher app did and what
-    the tests still ask for.  An empty list means a class with nobody in it,
-    and that has to match nothing rather than everything - `IN ()` is not
-    valid SQL, so it becomes a false clause instead.
-    """
     if student_ids is None:
         return "", []
     ids = [int(i) for i in student_ids]
@@ -292,8 +285,6 @@ def set_student_language(student_id, language):
         )
 
 
-
-
 def set_student_teacher(student_id, teacher_user_id):
     _ensure_init()
     with closing(get_connection()) as conn, conn:
@@ -304,7 +295,6 @@ def set_student_teacher(student_id, teacher_user_id):
 
 
 def get_student_teacher(student_id):
-    """The user id of the teacher this child joined, or None."""
     _ensure_init()
     with closing(get_connection()) as conn:
         row = conn.execute(
@@ -324,13 +314,6 @@ def get_students_for_teacher(teacher_user_id):
 
 
 def get_unassigned_students():
-    """Children in no class at all.
-
-    Everyone who signed up before class codes existed lands here, and so does
-    anyone who skipped the code box.  A teacher cannot pull them in - that is
-    the child's move, with the code - but the dashboard has to say they exist,
-    or their work looks like it was lost.
-    """
     _ensure_init()
     with closing(get_connection()) as conn:
         rows = conn.execute(

@@ -107,6 +107,9 @@ def register(username, password, display_name=None, role=STUDENT,
         raise AuthError("Unknown account type.")
 
     if role == TEACHER:
+        if not config.TEACHER_PIN:
+            raise AuthError("Teacher sign-up is closed: no teacher PIN has been "
+                            "set for this app.")
         _guard_rate_limit(f"register:{username}")
         given = str(teacher_pin or "").encode("utf-8")
         actual = str(config.TEACHER_PIN).encode("utf-8")
@@ -228,22 +231,15 @@ def teacher_exists():
         ).fetchone() is not None
 
 
-
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 CODE_LENGTH = 6
 
 
 def normalize_join_code(raw):
-    """A typed code, as it is stored: upper case, letters and digits only.
-
-    Children type the separator, or a space, or neither, so none of that is
-    kept - CODE-123, code123 and 'Code 123' are all the same class.
-    """
     return "".join(c for c in (raw or "").upper() if c.isalnum())
 
 
 def format_join_code(code):
-    """The code as it is shown and read out: three, a dash, three."""
     code = normalize_join_code(code)
     half = CODE_LENGTH // 2
     return f"{code[:half]}-{code[half:]}" if len(code) == CODE_LENGTH else code
@@ -254,12 +250,6 @@ def _mint_code():
 
 
 def ensure_join_code(user_id):
-    """This teacher's class code, minting one the first time it is asked for.
-
-    Teachers made before class codes existed have no code on their row; they
-    get one the first time they open the dashboard, rather than having to make
-    a new account.
-    """
     init_auth()
     with closing(db.get_connection()) as conn, conn:
         row = conn.execute(
@@ -283,7 +273,6 @@ def ensure_join_code(user_id):
 
 
 def teacher_by_join_code(code):
-    """The teacher a class code belongs to, or None."""
     init_auth()
     code = normalize_join_code(code)
     if len(code) != CODE_LENGTH:
@@ -296,11 +285,6 @@ def teacher_by_join_code(code):
 
 
 def join_class(student_id, code):
-    """Put a child in the class whose code they typed.
-
-    Typing a second teacher's code moves the child rather than adding them to
-    both: a child sits in one class, and their old teacher stops seeing them.
-    """
     teacher = teacher_by_join_code(code)
     if teacher is None:
         raise AuthError("No class has that code. Check it with your teacher.")
@@ -309,6 +293,5 @@ def join_class(student_id, code):
 
 
 def teacher_of_student(student_id):
-    """The teacher whose class this child is in, or None."""
     teacher_id = db.get_student_teacher(student_id)
     return get_user(teacher_id) if teacher_id else None

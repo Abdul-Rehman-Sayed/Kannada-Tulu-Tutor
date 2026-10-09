@@ -162,7 +162,6 @@ WORDS = [
     ("ಬಸ್ಸು",    "",        "bus",             "travel", "bus",                  False),
     ("ವಿಮಾನ",    "",        "aeroplane",       "travel", "airplane",             False),
 
-
     ("ಮಾವು",      "",        "mango",           "fruits", "mango fruit",         True),
     ("ಸೇಬು",      "",        "apple",           "fruits", "red apple",           True),
     ("ಕಿತ್ತಳೆ",   "",        "orange",          "fruits", "orange fruit",        True),
@@ -436,7 +435,6 @@ def main():
             "phrase_gloss": en,
             "image_query": "",
         })
-
 
     tulu_by_cat = {}
     for kn, tulu, en, cat, query, core in WORDS:

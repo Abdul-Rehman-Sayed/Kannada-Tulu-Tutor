@@ -1,26 +1,3 @@
-"""The card photographs: python -m scripts.fetch_images
-
-Every photograph on a card was chosen by hand, one at a time, from Wikimedia
-Commons (free licences only), and is named below by its exact file.  A search
-is never trusted to pick: searches for this deck returned pigs for "buffalo",
-the Earth from space for "sea", milk-glass tableware for "milk" and a racist
-caricature for "child drinking milk".  The rule each photograph had to pass:
-
-- it is a real photograph, not a drawing, painting or diagram;
-- a child can tell what the word means from the picture alone;
-- nothing in it is frightening, unkind or unfit for a classroom.
-
-A word with no photograph that passes gets no picture at all - see PICTURES
-in scripts/assign_icons.py for which cards show which photograph.
-
-    python -m scripts.fetch_images                 # fetch what is missing
-    python -m scripts.fetch_images --force         # fetch everything again
-    python -m scripts.fetch_images --contact-sheet # LOOK at them all
-
-Landscape photographs are cropped to 4:3.  Portrait ones are shown whole on
-a blurred copy of themselves, because cropping them cut off heads and tails.
-Credits for every photograph are written to data/images/CREDITS.csv.
-"""
 import argparse
 import csv
 import io

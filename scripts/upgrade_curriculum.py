@@ -1,16 +1,3 @@
-"""One-off migration that brings data/vocabulary.csv up to the current syllabus.
-
-Run it once:  python -m scripts.upgrade_curriculum
-
-It is idempotent - running it twice leaves the file unchanged.
-
-What it does
-  1. Replaces slang / pejorative entries with the respectful standard word.
-  2. Adds a `courtesy` topic of respectful everyday words in both languages.
-  3. Extends counting from 1-10 to 1-50 in Kannada and in Tulu (and fills the
-     two gaps, 5 and 7, that the Tulu list was missing).
-  4. Stamps every new row with an `icon` naming its flat flashcard drawing.
-"""
 import csv
 import os
 import sys

@@ -16,3 +16,4 @@ showErrorDetails = "none"
 [server]
 maxUploadSize = 5
 enableStaticServing = true
+fileWatcherType = "none"

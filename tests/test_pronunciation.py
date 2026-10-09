@@ -44,6 +44,17 @@ def scorer_tests():
     print("\nNoisy-but-correct speech is accepted (why the ratio, not exact match):")
     score, correct = pronunciation.score_pronunciation("ಅಮ್ಮ", "ಅಮ್ಮಾ")
     ok &= _check("ಅಮ್ಮಾ (extra vowel sign) accepted", correct, True)
+    _, correct = pronunciation.score_pronunciation("ಬೆರಳು", "ಬೆರಳ್")
+    ok &= _check("ಬೆರಳ್ (final vowel dropped) accepted for ಬೆರಳು", correct, True)
+
+    print("\nA word that fits what was heard better is what the child said:")
+    _, correct = pronunciation.score_pronunciation("ಬೆರಳು", "ಬೇರು", rivals=["ಬೇರು", "ಮರಳು"])
+    ok &= _check("ಬೇರು (root) rejected on the ಬೆರಳು (finger) card", correct, False)
+    for heard in ("ಬೆರಳು", "ಬೆರಳ್"):
+        _, correct = pronunciation.score_pronunciation("ಬೆರಳು", heard, rivals=["ಬೇರು", "ಮರಳು"])
+        ok &= _check(f"{heard!r} still accepted for ಬೆರಳು with ಬೇರು in play", correct, True)
+    _, correct = pronunciation.score_pronunciation("ಅ", "ಆ", rivals=["ಆ"])
+    ok &= _check("a tie is not held against the child (ಅ and ಆ once the marks go)", correct, True)
 
     print("\nLetter cards take the letter, said once or repeated:")
     letter = {"spoken_form": "ಆ", "anchor_word": "ಆನೆ", "kannada_word": "ಆ",
@@ -279,8 +290,51 @@ def decode_budget_tests():
     return ok
 
 
+def rival_tests():
+    from tutor import graph_engine
+
+    def card(language, word):
+        for _, c in graph_engine.load_graph(language).nodes(data=True):
+            if c["spoken_form"] == word:
+                return c
+        raise KeyError(f"{word!r} is not a {language} card")
+
+    print("\nIn the real course, a look-alike is not passed for the card:")
+    ok = True
+    for language, word, said, label in [
+        ("kn", "ಬೆರಳು", "ಬೇರು", "beru (root) on the beralu (finger) card"),
+        ("kn", "ಹೂವು", "ಹಾವು", "haavu (snake) on the hoovu (flower) card"),
+        ("kn", "ನಾಯಿ", "ತಾಯಿ", "taayi (mother) on the naayi (dog) card"),
+        ("kn", "ಮೂಗು", "ಮಗು", "magu (child) on the moogu (nose) card"),
+        ("kn", "ಹಲ್ಲು", "ಹಾಲು", "haalu (milk) on the hallu (tooth) card"),
+        ("kn", "ಕಾಲು", "ಕಲ್ಲು", "kallu (stone) on the kaalu (leg) card"),
+        ("kn", "ಇಪ್ಪತ್ತೊಂದು", "ಇಪ್ಪತ್ತೆರಡು", "twenty-two on the twenty-one card"),
+        ("kn", "ದಯೆ", "ದ", "only the first letter on the daye card"),
+        ("tu", "ಪಿಲಿ", "ಇಲಿ", "ili (mouse) on the Tulu pili (tiger) card"),
+        ("tu", "ಕೋರಿ", "ಕುರಿ", "kuri (sheep) on the Tulu kori (hen) card"),
+    ]:
+        concept = card(language, word)
+        expected, alternates = pronunciation.accepted_forms(concept)
+        _, correct = pronunciation.score_pronunciation(
+            expected, said, alternates, rivals=graph_engine.rivals(concept))
+        ok &= _check(label, correct, False)
+
+    print("\nEvery card still accepts its own word, in both languages:")
+    beaten = []
+    for language in graph_engine.available_languages():
+        for _, concept in graph_engine.load_graph(language).nodes(data=True):
+            expected, alternates = pronunciation.accepted_forms(concept)
+            _, correct = pronunciation.score_pronunciation(
+                expected, expected, alternates, rivals=graph_engine.rivals(concept))
+            if not correct:
+                beaten.append(concept["concept_id"])
+    ok &= _check("no card is beaten by a rival on its own word", beaten, [])
+    return ok
+
+
 def main():
     passed = scorer_tests()
+    passed &= rival_tests()
     passed &= mic_tests()
     passed &= soft_voice_tests()
     passed &= confidence_tests()

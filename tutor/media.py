@@ -48,12 +48,6 @@ def get_audio(concept_id, text, lang="kn"):
 
 
 def photo_path(image_file):
-    """The photograph for a card, or None.
-
-    None is a real answer, not a gap to fill: a card whose word has no
-    photograph that shows it plainly gets no picture at all, rather than a
-    placeholder or a near miss.
-    """
     if not image_file:
         return None
     path = os.path.join(IMAGE_DIR, os.path.basename(image_file))
@@ -78,12 +72,6 @@ def _credits(mtime):
 
 
 def photo_credit(image_file):
-    """Who took a photograph and under what licence, as one short line.
-
-    Most of the photographs are CC BY or CC BY-SA, which require the author and
-    licence to be named where the picture is shown.  Public-domain ones need no
-    credit and get none.
-    """
     if not image_file or not os.path.exists(CREDITS_PATH):
         return ""
     row = _credits(os.path.getmtime(CREDITS_PATH)).get(os.path.basename(image_file))

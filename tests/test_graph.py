@@ -174,31 +174,25 @@ def main():
                 f"{name} counting was served before the words were finished")
 
         counted = [graph_engine.number_value(c) for c in numbers]
-        browsed = [graph_engine.number_value(d)
-                   for d in graph_engine.browse_order(lang)
-                   if d["level"] == graph_engine.NUMBERS_LEVEL]
-        for how, values in (("served", counted), ("browsed", browsed)):
-            if values != list(range(1, len(values) + 1)):
-                slip = next(i for i, v in enumerate(values) if v != i + 1)
-                failures.append(
-                    f"{name} numbers {how} out of order: after "
-                    f"{values[slip - 1] if slip else 'the start'} came "
-                    f"{values[slip]}, not {slip + 1}")
-        if counted == list(range(1, len(counted) + 1)) \
-                and browsed == list(range(1, len(browsed) + 1)):
-            print(f"    counting runs 1 to {len(browsed)} in order, locked "
-                  f"or browsed")
+        if counted != list(range(1, len(counted) + 1)):
+            slip = next(i for i, v in enumerate(counted) if v != i + 1)
+            failures.append(
+                f"{name} numbers served out of order: after "
+                f"{counted[slip - 1] if slip else 'the start'} came "
+                f"{counted[slip]}, not {slip + 1}")
+        else:
+            print(f"    counting runs 1 to {len(counted)} in order")
 
-        latin = [n for n in browsed
+        latin = [n for n in counted
                  if illustrations.numeral(n) not in illustrations.render(f"count:{n}")
                  or f">{n}<" in illustrations.render(f"count:{n}")]
         if latin:
             failures.append(f"{name} counting cards not written in Kannada "
                             f"digits: {latin[:5]}")
-        elif browsed:
+        elif counted:
             print(f"    every counting card shows its Kannada numeral "
                   f"({illustrations.numeral(1)} to "
-                  f"{illustrations.numeral(browsed[-1])})")
+                  f"{illustrations.numeral(counted[-1])})")
 
         ranks = graph_engine.letter_ranks(lang)
         seen_letters, previous, revisited = set(), None, []

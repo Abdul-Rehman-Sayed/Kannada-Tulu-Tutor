@@ -1,19 +1,3 @@
-"""Decide the picture on every row of data/vocabulary.csv.
-
-Run it after editing the curriculum:  python -m scripts.assign_icons
-
-- A letter takes no picture: it is taught on its own.
-- A number draws itself (icon "count:N", the numeral over N beads) and a
-  colour draws itself (icon "red" etc., the colour itself).
-- Everything else shows a real photograph from data/images, or nothing.  A
-  word keeps its photograph only if one was chosen for it (the files that
-  scripts/fetch_images.py writes); a phrase or sentence shows the photograph
-  of what it is about, unless PICTURES gives it its own.  A word with no
-  photograph that shows it plainly - please, wind, salt - gets no picture
-  rather than a near miss.
-
-It is idempotent: run it twice and the file does not change.
-"""
 import csv
 import os
 import sys

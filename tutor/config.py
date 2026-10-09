@@ -1,7 +1,5 @@
 import os
 
-DEFAULT_PIN = "1234"
-
 
 def _from_streamlit_secrets():
     try:
@@ -15,17 +13,5 @@ def _from_streamlit_secrets():
 TEACHER_PIN = str(
     os.environ.get("TUTOR_TEACHER_PIN")
     or _from_streamlit_secrets()
-    or DEFAULT_PIN
-)
-
-IS_DEFAULT_PIN = TEACHER_PIN == DEFAULT_PIN
-
-
-def _flag(name, default=False):
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() not in ("", "0", "off", "false", "no")
-
-
-UNLOCK_ALL = _flag("TUTOR_UNLOCK_ALL", default=True)
+    or ""
+).strip()

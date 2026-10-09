@@ -1,14 +1,3 @@
-"""The two pictures a card draws for itself: counting beads and colour swatches.
-
-Every other card shows a real photograph, chosen by hand (see
-scripts/fetch_images.py), or no picture at all.  Numbers and colours are the
-exceptions because the thing itself can be drawn exactly: seven beads are
-seven, and a red swatch is red, where a photograph of seven mangoes or of a
-red car would teach mango, or car.
-
-    svg = illustrations.render("count:7")   # ೭ over seven counting beads
-    svg = illustrations.render("red")       # a red swatch
-"""
 import html
 
 W, H = 200, 150
@@ -80,22 +69,10 @@ _KN_DIGITS = "೦೧೨೩೪೫೬೭೮೯"
 
 
 def numeral(n):
-    """`n` in Kannada digits: 24 -> ೨೪.
-
-    The Tulu track uses the same digits.  It is written in the Kannada script,
-    and Unicode has no Tulu digits of its own (none in Tulu-Tigalari, as of
-    Unicode 18), so a Tulu card pairs these with the Tulu number word.
-    """
     return "".join(_KN_DIGITS[int(d)] for d in str(int(n)))
 
 
 def _counting(n):
-    """N counting beads under the number, laid out like a number chart.
-
-    Up to 10 they are big enough to count one by one.  Past that they are
-    grouped in rows of ten, so the shape of the number is what you read - which
-    is exactly how a wall chart teaches twenty-four.
-    """
     n = max(1, min(50, int(n)))
     body = [_text(numeral(n), 100, 44, 40, INK, "600")]
 
@@ -132,7 +109,6 @@ def _clean(name):
 
 
 def resolve(name):
-    """The drawing key for `name` ("count:7", "red"), or None if it has none."""
     name = _clean(name)
     if name.startswith("count:"):
         try:
@@ -144,12 +120,10 @@ def resolve(name):
 
 
 def has(name):
-    """Does a card with this icon draw its own picture?"""
     return resolve(name) is not None
 
 
 def render(name):
-    """SVG markup for a counting card or a colour swatch; "" for anything else."""
     key = resolve(name)
     if key is None:
         return ""

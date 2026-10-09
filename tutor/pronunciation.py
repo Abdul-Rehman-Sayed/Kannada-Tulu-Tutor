@@ -317,10 +317,6 @@ UNSCOREABLE_ALONE = {"ಘ", "ಛ", "ಠ", "ಢ", "ಧ"}
 
 
 def is_scoreable(concept):
-    """Can the recogniser judge this concept at all?
-
-    Everything except a handful of letters that only exist inside words.
-    """
     if (concept or {}).get("category") not in ("vowels", "consonants"):
         return True
     return (concept or {}).get("kannada_word", "").strip() not in UNSCOREABLE_ALONE
@@ -378,7 +374,15 @@ def _similarity(a, b):
     return _ratio(a, b)
 
 
-def score_pronunciation(expected_ipa_or_word, whisper_output, alternates=()):
+def _closer_rival(got, best, rivals):
+    for rival in rivals:
+        norm = _normalize(rival)
+        if norm and _similarity(norm, got) > best:
+            return True
+    return False
+
+
+def score_pronunciation(expected_ipa_or_word, whisper_output, alternates=(), rivals=()):
     got = _normalize(whisper_output)
     if not got:
         return 0.0, False
@@ -392,18 +396,12 @@ def score_pronunciation(expected_ipa_or_word, whisper_output, alternates=()):
         best = max(best, _similarity(norm, got))
 
     score = round(best, 4)
-    return score, score >= PRONUNCIATION_THRESHOLD
+    if score < PRONUNCIATION_THRESHOLD:
+        return score, False
+    return score, not _closer_rival(got, best, rivals)
 
 
 def accepted_forms(concept):
-    """What counts as having said this concept.
-
-    A letter is accepted as itself, or repeated - "a", or "a, a", which is how
-    a child answers a card that plays the sound twice.  It is not accepted as
-    its example word: the card used to ask for "a amma" and take either, which
-    would now let a child pass the card for a by saying amma without ever
-    saying the letter.
-    """
     spoken = concept.get("spoken_form") or concept.get("kannada_word", "")
     if (concept.get("category") or "") in ("vowels", "consonants"):
         letter = spoken.strip()

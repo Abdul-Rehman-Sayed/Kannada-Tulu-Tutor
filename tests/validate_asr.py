@@ -47,7 +47,8 @@ def main():
 
         heard = pronunciation.transcribe(audio)
         expected, alternates = pronunciation.accepted_forms(c)
-        score, correct = pronunciation.score_pronunciation(expected, heard, alternates)
+        score, correct = pronunciation.score_pronunciation(
+            expected, heard, alternates, rivals=graph_engine.rivals(c))
 
         if not correct:
             failures.append((cid, spoken, heard, score))

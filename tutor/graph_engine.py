@@ -4,15 +4,18 @@ from collections import deque
 import pandas as pd
 import networkx as nx
 
-from . import db, tulu_lipi
+from . import db, pronunciation, tulu_lipi
 
 VOCAB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "vocabulary.csv")
 LETTER_WORDS_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "letter_words.csv")
+LOOKALIKES_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "lookalike_words.csv")
 
 _GRAPH = None
 _SUBGRAPHS = {}
 _LETTER_WORDS = None
 _LETTER_RANKS = {}
+_LOOKALIKES = None
+_RIVALS = {}
 
 _REQUIRED_COLUMNS = [
     "concept_id", "language", "kannada_word", "tulu_word", "transliteration",
@@ -60,24 +63,12 @@ def display_word(concept):
 
 
 def in_tulu_lipi(concept):
-    """Is this concept shown in Tulu lipi?  The Tulu alphabet is.
-
-    Tulu words stay in the Kannada script for now: the only free font for
-    Unicode Tulu-Tigalari draws every letter but cannot join them, so a word
-    with a conjunct in it would come out broken.  A single letter never needs
-    joining, so the alphabet can be shown in its own script today.
-    """
     concept = concept or {}
     return ((concept.get("language") or KANNADA) == TULU
             and concept.get("category") in ("vowels", "consonants"))
 
 
 def shown_word(concept):
-    """What the learner reads on screen - never what is spoken or scored.
-
-    Speech still runs on the Kannada-script text (the recogniser and the
-    speech synthesiser only know that script), so this is for display alone.
-    """
     word = display_word(concept or {})
     return tulu_lipi.convert(word) if in_tulu_lipi(concept) else word
 
@@ -150,12 +141,10 @@ _STAGE_RANK = {s["level"]: i for i, s in enumerate(STAGES)}
 
 
 def stage_rank(level):
-    """Teaching order of a stage. Unknown levels sort last, never first."""
     return _STAGE_RANK.get(level, len(STAGES))
 
 
 def stage_of(concept):
-    """The stage a concept belongs to, as a dict from STAGES."""
     level = (concept or {}).get("level") or "Basic"
     return STAGE_BY_LEVEL.get(level, STAGES[0])
 
@@ -165,6 +154,7 @@ def load_graph(language=None, force_reload=False):
         if force_reload:
             _SUBGRAPHS.clear()
             _LETTER_RANKS.clear()
+            _RIVALS.clear()
         if language not in _SUBGRAPHS:
             full = load_graph(force_reload=force_reload)
             _SUBGRAPHS[language] = full.subgraph(
@@ -178,6 +168,7 @@ def load_graph(language=None, force_reload=False):
         return _GRAPH
     _SUBGRAPHS.clear()
     _LETTER_RANKS.clear()
+    _RIVALS.clear()
 
     if not os.path.exists(VOCAB_PATH):
         raise FileNotFoundError(f"vocabulary CSV not found at {VOCAB_PATH}")
@@ -256,12 +247,6 @@ def load_graph(language=None, force_reload=False):
 
 
 def is_loaded():
-    """Has the curriculum graph been built in this process yet?
-
-    The first build parses the vocabulary and wires up every concept, which is
-    slow enough to want a spinner over it; every call after that is free, and
-    a spinner flashing on every rerun would be worse than none at all.
-    """
     return _GRAPH is not None
 
 
@@ -287,13 +272,6 @@ def _progression_sets(student_id, G):
 
 
 def letter_ranks(language=DEFAULT_LANGUAGE):
-    """Every concept -> the alphabet position of the letter it grew out of.
-
-    The alphabet itself comes first, in its own order; everything else takes
-    the position of the letter it sits behind, so the words of one letter stay
-    together instead of being scattered across the stage by topic.  Anything
-    with no letter behind it sorts after the whole alphabet.
-    """
     cached = _LETTER_RANKS.get(language)
     if cached is not None:
         return cached
@@ -328,7 +306,6 @@ def letter_ranks(language=DEFAULT_LANGUAGE):
 
 
 def number_value(concept):
-    """The number a counting card teaches (1-50), or None for anything else."""
     icon = ((concept or {}).get("icon") or "").strip().lower()
     if not icon.startswith("count:"):
         return None
@@ -339,19 +316,6 @@ def number_value(concept):
 
 
 def _teaching_order(node, ranks):
-    """Where a concept sits in the syllabus, as a sort key.
-
-    Stage first: the prerequisite graph alone would let a word through as soon
-    as its own letter was cleared, which is how a child ended up being asked to
-    read kamala with most of the alphabet still unlearned.  Sorting by stage
-    holds the whole of the letters back until every letter is cleared.
-
-    Then, in the word stage, the letter the word grew out of - so a child
-    meets all of ka's words together and the panel beside the card stays put
-    while they do.  Counting goes by the number itself.  Difficulty and id
-    cannot order it: six to ten share a difficulty with eleven to twenty, and
-    N011 sorts before W062, which put eleven straight after five.
-    """
     cid = node["concept_id"]
     level = node.get("level")
     if level == WORDS_LEVEL:
@@ -457,13 +421,6 @@ def mastery_by_level(student_id, language=DEFAULT_LANGUAGE):
 
 
 def stage_progress(student_id, language=DEFAULT_LANGUAGE):
-    """The four stages, in order, with where this learner has got to.
-
-    `mastered` counts only what the learner said correctly; `cleared` also
-    counts the concepts they were moved past after too many tries, because
-    that is what actually opens the next stage.  A stage with nothing in it
-    for this language is left out entirely - Tulu has no sentences stage.
-    """
     progress = get_student_progress(student_id, language)
 
     tally = {}
@@ -506,7 +463,6 @@ def stage_progress(student_id, language=DEFAULT_LANGUAGE):
 
 
 def current_stage(student_id, language=DEFAULT_LANGUAGE):
-    """The stage the learner is working through right now, or None."""
     for stage in stage_progress(student_id, language):
         if stage["state"] == "current":
             return stage
@@ -514,11 +470,6 @@ def current_stage(student_id, language=DEFAULT_LANGUAGE):
 
 
 def letter_of(concept_id, language=DEFAULT_LANGUAGE):
-    """The letter a word grew out of, by walking back up its prerequisites.
-
-    Every word in the syllabus sits behind the letter it begins with, so a
-    word card can always point back at the letter that opened it.
-    """
     G = load_graph(language)
     if concept_id not in G:
         return None
@@ -561,13 +512,6 @@ def letters_in_order(language=KANNADA):
 
 
 def load_letter_words(force_reload=False):
-    """(language, letter concept_id) -> extra reading words for that letter.
-
-    A wall chart never shows one word per letter; it shows a column of them, so
-    that a child meets ka in kamala and kannu and kage and hears the same sound
-    open all three.  These are the words beyond the syllabus itself - reading
-    practice, never asked for out loud.
-    """
     global _LETTER_WORDS
     if _LETTER_WORDS is not None and not force_reload:
         return _LETTER_WORDS
@@ -601,12 +545,6 @@ def load_letter_words(force_reload=False):
 
 
 def syllabus_words_for_letter(letter_id, language=DEFAULT_LANGUAGE):
-    """The words of the word stage that grow out of one letter, in order.
-
-    Every word now sits directly behind the letter it begins with, so this is
-    simply that letter's children - the words a child will actually be asked
-    to say while they are working through this letter.
-    """
     G = load_graph(language)
     if letter_id not in G:
         return []
@@ -629,12 +567,6 @@ def syllabus_words_for_letter(letter_id, language=DEFAULT_LANGUAGE):
 
 
 def words_for_letter(letter_id, language=DEFAULT_LANGUAGE, limit=None):
-    """One letter's whole family of words, syllabus words first.
-
-    The words the child is going to be asked for come first, in the order they
-    will be asked; the extra reading words follow, so the column shows the
-    sound doing its work in more places than the syllabus has room for.
-    """
     rows = syllabus_words_for_letter(letter_id, language)
     seen = {r["word"].strip() for r in rows}
 
@@ -655,18 +587,46 @@ def is_letter(concept):
 
 
 def listen_form(concept):
-    """The text to synthesise when a child taps Listen.
-
-    A letter is one sound, and one sound synthesised on its own comes back as
-    a fifth of a second of audio - too short for a child to catch, and short
-    enough that the recogniser hears a word in it that was never there.  So a
-    letter is played twice, the way a teacher says it: "a, a".  What the child
-    is then asked to say is still the letter, once (see `accepted_forms`).
-    """
     spoken = (concept or {}).get("spoken_form", "").strip()
     if is_letter(concept) and spoken:
         return f"{spoken} {spoken}"
     return spoken
+
+
+def load_lookalikes(force_reload=False):
+    global _LOOKALIKES
+    if _LOOKALIKES is not None and not force_reload:
+        return _LOOKALIKES
+
+    words = {}
+    if os.path.exists(LOOKALIKES_PATH):
+        df = pd.read_csv(LOOKALIKES_PATH, dtype=str, encoding="utf-8",
+                         keep_default_na=False)
+        for _, row in df.iterrows():
+            word = row["word"].strip()
+            if word:
+                lang = row["language"].strip() or KANNADA
+                words.setdefault(lang, []).append(word)
+
+    _LOOKALIKES = words
+    return _LOOKALIKES
+
+
+def rivals(concept):
+    language = (concept or {}).get("language") or KANNADA
+    key = (language, (concept or {}).get("concept_id"))
+    if key not in _RIVALS:
+        letter = is_letter(concept)
+        out = []
+        for _, other in load_graph(language).nodes(data=True):
+            if other["concept_id"] == key[1] or (letter and not is_letter(other)):
+                continue
+            expected, alternates = pronunciation.accepted_forms(other)
+            out += [expected, *alternates]
+        if not letter:
+            out += load_lookalikes().get(language, [])
+        _RIVALS[key] = out
+    return _RIVALS[key]
 
 
 def concepts_by_category(language=KANNADA, exclude_letters=True):
@@ -680,18 +640,3 @@ def concepts_by_category(language=KANNADA, exclude_letters=True):
         nodes.sort(key=lambda d: (d["difficulty"], d["concept_id"]))
     return dict(sorted(out.items(),
                        key=lambda kv: (min(d["difficulty"] for d in kv[1]), kv[0])))
-
-
-def browse_order(language=DEFAULT_LANGUAGE):
-    """Every concept of one track in the order it is taught.
-
-    The same order `get_next_concept` walks towards, but laid out flat and all
-    at once, with no regard for what the learner has cleared.  Only the
-    unlocked browse mode uses it: the tutor proper never sees past the next
-    card.
-    """
-    G = load_graph(language)
-    ranks = letter_ranks(language)
-    nodes = [dict(d) for _, d in G.nodes(data=True)]
-    nodes.sort(key=lambda d: _teaching_order(d, ranks))
-    return nodes

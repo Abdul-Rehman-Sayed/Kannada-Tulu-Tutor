@@ -43,7 +43,7 @@ _CSS = f"""
   --warn:{CAUTION}; --warn-bg:#FAF6EA; --warn-brd:#E0D3AE;
 
   --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
-  --sans:'Inter',system-ui,-apple-system,'Segoe UI','Tulu Mallige',sans-serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI','Tulu Mallige','Noto Sans Kannada','Nirmala UI',sans-serif;
   --kannada:'Noto Sans Kannada','Nirmala UI','Tunga','Tulu Mallige',sans-serif;
   --tulu:'Tulu Mallige','Noto Sans Kannada',sans-serif;
 }}
@@ -150,7 +150,6 @@ h1,h2,h3,h4,.serif{{
 }}
 .facts b{{ color:var(--ink); font-weight:600; }}
 
-/* The flashcard drawing. */
 .pic{{
   max-width:420px; margin:0 auto 14px; border:1px solid var(--rule);
   border-radius:var(--r-sm); overflow:hidden; background:var(--surface);
@@ -162,7 +161,6 @@ h1,h2,h3,h4,.serif{{
   text-align:right; border-top:1px solid var(--rule);
 }}
 
-/* The family of words that grows out of the letter, beside the word card. */
 .lw{{
   background:var(--surface); border:1px solid var(--rule);
   border-radius:var(--r-sm); overflow:hidden; position:sticky; top:12px;
@@ -172,7 +170,8 @@ h1,h2,h3,h4,.serif{{
   border-bottom:1px solid var(--rule); background:var(--wash);
   font-size:13.5px; font-weight:600; color:var(--ink);
 }}
-.lw-hd .kn{{ font-size:24px; line-height:1; font-weight:500; }}
+.lw-hd .kn,.lw-hd .tu{{ font-size:24px; line-height:1; font-weight:500; }}
+.lw-hd .tu{{ line-height:1.2; }}
 .lw-hd .n{{
   margin-left:auto; font-size:11px; font-weight:700; letter-spacing:.08em;
   color:var(--muted); background:var(--paper); border:1px solid var(--rule);
@@ -181,21 +180,23 @@ h1,h2,h3,h4,.serif{{
 .lw-list{{
   list-style:none; margin:0; padding:0; max-height:60vh; overflow-y:auto;
 }}
-.lw-item{{
-  display:grid; grid-template-columns:1fr auto; gap:2px 14px;
-  align-items:baseline; padding:11px 16px 11px 44px; position:relative;
+.lw .lw-list > li{{ margin:0; list-style:none; }}
+.lw .lw-item{{
+  display:grid; grid-template-columns:auto 1fr auto; gap:2px 12px;
+  align-items:baseline; padding:11px 16px; position:relative;
   border-top:1px solid var(--rule);
 }}
-.lw-item:first-child{{ border-top:none; }}
+.lw .lw-item:first-child{{ border-top:none; }}
 .lw-n{{
-  position:absolute; left:16px; top:12px;
+  min-width:2ch; text-align:right;
   font-family:var(--serif); font-size:12px; color:var(--faint);
+  font-variant-numeric:tabular-nums;
 }}
-.lw-list .w{{ font-size:23px; line-height:1.4; color:var(--ink); font-weight:500; }}
+.lw-list .w{{ font-size:23px; line-height:1.4; color:var(--ink); font-weight:500;
+  min-width:0; overflow-wrap:anywhere; }}
 .lw-list .t{{ font-size:12.5px; color:var(--body); font-weight:600; text-align:right; }}
-.lw-list .m{{ grid-column:1/-1; font-size:12.5px; color:var(--muted); }}
+.lw-list .m{{ grid-column:2/-1; font-size:12.5px; color:var(--muted); }}
 
-/* The word the child is on right now. */
 .lw-now{{ background:var(--wash); }}
 .lw-now::before{{
   content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
@@ -207,9 +208,8 @@ h1,h2,h3,h4,.serif{{
   text-transform:uppercase; color:var(--ink);
 }}
 
-/* Where the words they will be asked for end and the reading words begin. */
-.lw-split{{
-  padding:8px 16px; border-top:1px solid var(--rule);
+.lw .lw-split{{
+  padding:8px 16px; border-top:1px solid var(--rule); line-height:1.45;
   background:var(--paper); font-size:10.5px; font-weight:700;
   letter-spacing:.08em; text-transform:uppercase; color:var(--faint);
 }}
@@ -218,7 +218,6 @@ h1,h2,h3,h4,.serif{{
   background:var(--wash); font-size:11.5px; color:var(--muted);
 }}
 
-/* A letter card carries the letter itself and no picture of a word. */
 .letter-tile{{
   max-width:260px; margin:0 auto 16px; padding:22px 16px;
   border:1px solid var(--rule-strong); border-radius:var(--r-sm);
@@ -236,7 +235,6 @@ h1,h2,h3,h4,.serif{{
 .isfor .line .l.tu{{ font-family:var(--tulu); }}
 .cell .g.tu{{ font-family:var(--tulu); }}
 
-/* The stages of the syllabus, and where the learner has got to. */
 .stages{{
   display:flex; gap:0; background:var(--surface); border:1px solid var(--rule);
   border-radius:var(--r); overflow:hidden; margin-bottom:14px;
@@ -271,13 +269,6 @@ h1,h2,h3,h4,.serif{{
 .stg .m > i{{ display:block; height:100%; background:var(--ink); }}
 .stg-locked .m{{ visibility:hidden; }}
 
-/* TESTING: with the prerequisite lock off a stage is neither shut nor the one
-   being worked - it is simply open, and reads in plain ink rather than grey. */
-.stg-open .t{{ color:var(--muted); }}
-.stg-open .c{{ color:var(--muted); }}
-.stg-open .m > i{{ background:var(--rule-strong); }}
-
-/* The teacher's class code, and the class a learner is in. */
 .classcode{{ padding:20px 24px 18px; }}
 .classcode .lbl{{
   font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
@@ -301,19 +292,6 @@ h1,h2,h3,h4,.serif{{
 }}
 .sb-class .nm{{ font-size:14px; font-weight:600; color:var(--ink); margin-top:2px; }}
 
-/* TESTING: the strip that says the lock is off.  Goes with UNLOCK_ALL. */
-.testbar{{
-  display:flex; align-items:center; gap:11px; flex-wrap:wrap;
-  padding:9px 14px; margin-bottom:10px; border-radius:var(--r-sm);
-  background:var(--warn-bg); border:1px solid var(--warn-brd);
-  font-size:12.5px; color:var(--body); line-height:1.5;
-}}
-.testbar .tag{{
-  flex:none; font-size:10px; font-weight:700; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--warn);
-  border:1px solid var(--warn-brd); border-radius:999px; padding:2px 8px;
-}}
-.testbar b{{ color:var(--ink); font-weight:600; }}
 @media (max-width:640px){{
   .stg{{ padding:8px 7px 9px; }}
   .stg .t{{ font-size:12.5px; }}
@@ -326,8 +304,6 @@ h1,h2,h3,h4,.serif{{
   color:var(--ink); font-weight:600; }}
 .stage-now p{{ margin:0; font-size:13px; color:var(--muted); line-height:1.55; }}
 
-/* "a is for amma" - on a word card, the letter that word grew out of.  On a
-   letter card it holds the letter alone: what the child is asked to say. */
 .isfor{{
   margin-top:16px; padding:14px 18px; border-radius:var(--r-sm);
   background:var(--wash); border:1px solid var(--rule); text-align:center;
@@ -356,9 +332,6 @@ h1,h2,h3,h4,.serif{{
 
 .word.long{{ font-size:clamp(28px,7vw,50px); line-height:1.4; }}
 
-/* A lone letter has no vowel sign hanging below it, but the Kannada font
-   still reserves the room, which left a hand's width of dead space under the
-   biggest thing on the screen.  Crop it back. */
 .word.solo{{ line-height:.88; margin-bottom:2px; }}
 .translit{{
   font-size:clamp(15px,2.6vw,19px); color:var(--body); font-weight:600;
@@ -436,6 +409,13 @@ div[data-baseweb="input"],
   overflow:hidden;
   transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }}
+.stSelectbox div[data-baseweb="select"],
+.stSelectbox div[data-baseweb="select"] *:not([data-testid="stIconMaterial"]),
+div[data-baseweb="popover"] li,
+div[data-baseweb="popover"] li *:not([data-testid="stIconMaterial"]){{
+  font-family:var(--sans) !important;
+}}
+
 div[data-baseweb="input"]:focus-within,
 .stSelectbox div[data-baseweb="select"] > div:focus-within{{
   border-color:var(--ink) !important;
@@ -537,8 +517,6 @@ div[data-baseweb="input"] button{{
 .cell-try .g{{ color:var(--warn); }}
 .cell-stuck{{ background:var(--no-bg); border-color:var(--no-brd); }}
 .cell-stuck .g{{ color:var(--no); }}
-/* A letter the recogniser cannot hear on its own: not the child's doing,
-   so it is greyed rather than marked. */
 .cell-mute{{ background:var(--wash); border-style:dashed;
   border-color:var(--rule-strong); }}
 .cell-mute .g{{ color:var(--faint); }}
@@ -608,19 +586,6 @@ def inject():
 
 
 def loading(message="Loading…"):
-    """A spinner for anything that can keep the page waiting.
-
-    Streamlit blocks the whole page while a callback runs, and a page that is
-    blocked looks exactly like a page that has crashed.  So every boundary
-    that can take a visible moment - building the curriculum on first boot,
-    fetching a word to listen to, adding a class up, checking a password -
-    says so while it happens.
-
-    `show_time` is the point of it: a spinner with no counter is
-    indistinguishable from a frozen tab after about two seconds, and the
-    slowest things here (a word fetched over the network, the speech model
-    waking) are well past that.
-    """
     return st.spinner(message, show_time=True)
 
 

@@ -1,29 +1,3 @@
-"""Migration that puts the alphabet first, in both languages.
-
-Run it once:  python -m scripts.letters_first
-
-It is idempotent - running it twice leaves the file unchanged.
-
-Why
-  The syllabus used to teach a letter and a word in the same breath: the card
-  for a said "a is for amma", and the child was asked to say both.  A child who
-  cannot yet read a single letter was being handed a whole word to say, and the
-  alphabet and the vocabulary were tangled together in one stage.  Tulu had no
-  alphabet at all - a Tulu learner started at whole words.
-
-What it does
-  1. Letters are taught alone.  A letter's spoken form becomes the letter, not
-     "letter + example word", and its card carries no picture of a word.  The
-     anchor word stays in the data, but only to order the word family the
-     learner meets later, once every letter is done.
-  2. Tulu gets the same alphabet.  Tulu is written in the Kannada script, so
-     its letters are the same 45 aksharas; they are added as Tulu concepts of
-     their own (TV01-TV13, TC01-TC32) with their own progress.
-  3. Every word of the word stage sits behind the letter it begins with, in
-     both languages, so "the words that grow out of this letter" is a fact of
-     the graph rather than a guess.
-  4. Counting moves into a stage of its own, after the words.
-"""
 import csv
 import os
 import sys
@@ -58,13 +32,11 @@ def is_letter(row):
 
 
 def letter_meaning(row):
-    """A letter's own description, with no example word inside it."""
     kind = "vowel" if row["category"] == "vowels" else "consonant"
     return f"the {kind} {row['transliteration']}"
 
 
 def teach_letters_alone(rows):
-    """Take the example word out of what a letter card asks a child to say."""
     changed = 0
     for row in rows:
         if not is_letter(row):
@@ -84,12 +56,6 @@ def teach_letters_alone(rows):
 
 
 def add_tulu_alphabet(rows, by_id):
-    """Give Tulu the alphabet it is actually written in.
-
-    Tulu is written in the Kannada script, so the letters are the same ones.
-    They are still concepts of their own: a Tulu learner has their own progress
-    through them, and Tulu words hang off Tulu letters, never Kannada ones.
-    """
     kn_letters = [r for r in rows if r["language"] == "kn" and is_letter(r)]
     kn_letters.sort(key=lambda r: (r["category"] != "vowels", r["concept_id"]))
 
@@ -124,7 +90,6 @@ def add_tulu_alphabet(rows, by_id):
 
 
 def letter_index(rows):
-    """(language, first glyph) -> the concept_id of that letter."""
     index = {}
     for row in rows:
         if is_letter(row):
@@ -140,11 +105,6 @@ def shown_word(row):
 
 
 def first_letter_id(row, index):
-    """The letter a word begins with.
-
-    In the Kannada script a syllable is one base letter carrying its vowel
-    signs, so the first character of a word is the letter it begins with.
-    """
     word = shown_word(row)
     if not word:
         return None
@@ -152,12 +112,6 @@ def first_letter_id(row, index):
 
 
 def reparent_words(rows, index):
-    """Hang every word of the word stage off the letter it starts with.
-
-    Counting keeps its own chain - one, two, three has an order that has
-    nothing to do with the alphabet - except for its first number, which is a
-    word like any other and needs a letter to sit behind.
-    """
     number_roots = {}
     for row in rows:
         if row["category"] == "numbers" and not row["prereq_id"]:

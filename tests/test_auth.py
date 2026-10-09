@@ -96,6 +96,16 @@ def teacher_tests():
     ok &= _check("...while the students do", "Ravi" in names, True)
 
     ok &= _check("the role is whatever the DB says", auth.get_user(t["id"])["role"], auth.TEACHER)
+
+    from tutor import config
+    real_pin = config.TEACHER_PIN
+    config.TEACHER_PIN = ""
+    try:
+        ok &= _raises("with no PIN configured, a blank PIN does not make a teacher",
+                      auth.register, "blank_pin", "password1",
+                      role=auth.TEACHER, teacher_pin="")
+    finally:
+        config.TEACHER_PIN = real_pin
     return ok
 
 
