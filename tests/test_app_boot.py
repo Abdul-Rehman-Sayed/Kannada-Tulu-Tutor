@@ -223,10 +223,47 @@ def word_stage_tests():
     return True
 
 
+def exempt_letter_tests():
+    import streamlit as st
+    import app
+    from tutor import db, graph_engine, pronunciation
+
+    print("\nA letter the app cannot score:")
+    sid = db.create_or_get_student("exempt_letter_check")
+    db.reset_student(sid)
+    while True:
+        concept = graph_engine.get_next_concept(sid, graph_engine.KANNADA)
+        if not pronunciation.is_scoreable(concept):
+            break
+        graph_engine.update_mastery(sid, concept["concept_id"], True, raw_score=1.0)
+    stuck_on = concept["concept_id"]
+
+    real = pronunciation.prepare_audio, pronunciation.transcribe_scored
+    pronunciation.prepare_audio = lambda b: (True, None, {"snr": 20, "peak": 0.5}, [0.0] * 16000)
+    pronunciation.transcribe_scored = lambda s, language=None: (
+        "ನಂತರ", {"avg_logprob": -0.05, "no_speech_prob": 0.01})
+    try:
+        for _ in range(graph_engine.PARK_AFTER_ATTEMPTS):
+            st.session_state.concept = graph_engine.get_next_concept(sid, graph_engine.KANNADA)
+            app.score_recording(sid, st.session_state.concept, b"")
+            assert st.session_state.last_result.get("retry") == pronunciation.UNSCOREABLE, \
+                st.session_state.last_result
+    finally:
+        pronunciation.prepare_audio, pronunciation.transcribe_scored = real
+
+    after = graph_engine.get_next_concept(sid, graph_engine.KANNADA)
+    assert after["concept_id"] != stuck_on, \
+        f"the learner is still stuck on {stuck_on} after {graph_engine.PARK_AFTER_ATTEMPTS} tries"
+    print(f"  OK  {stuck_on} is never marked wrong, and the learner moves on after "
+          f"{graph_engine.PARK_AFTER_ATTEMPTS} tries")
+    return True
+
+
 def run():
     ok = landing_tests()
     ok &= student_journey_tests()
     ok &= word_stage_tests()
+    ok &= exempt_letter_tests()
     ok &= teacher_boundary_tests()
     ok &= no_emoji_tests()
     print("\nBoot test PASSED." if ok else "\nBoot test FAILED.")

@@ -119,6 +119,8 @@ def score_recording(sid, concept, wav_bytes):
 
     if outcome == pronunciation.OUTCOME_RETRY:
         if not pronunciation.is_scoreable(concept):
+            graph_engine.update_mastery(sid, cid, False, raw_score=score, heard=heard)
+            st.session_state.concept = None
             reason = pronunciation.UNSCOREABLE
         elif (stats.get("snr", 99) < pronunciation.MIN_SNR
                 and stats.get("peak", 0.0) < pronunciation.LOUD_ENOUGH):
